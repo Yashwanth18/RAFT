@@ -1,48 +1,35 @@
-#include <chrono>
-#include <iostream>
-#include <mutex>
-#include <thread>
-#include <vector>
-#include "ServerSocket.h"
-#include "ServerThread.h"
+#include "ServerMain.h"
+#include "ServerTimer.h"
+#include "ServerListenSocket.h"
+
+
 
 int main(int argc, char *argv[]) {
-	int port;
-	int engineer_cnt = 0;
-	int num_peers;
-	ServerSocket socket;
-	LaptopFactory factory;
-	std::unique_ptr<ServerSocket> new_socket;
-	std::vector<std::thread> thread_vector;
+    ServerTimer timer;
+    NodeInfo node_info;
+    ServerStub stub;
 
-	if (argc < 4) {
-		std::cout << "not enough arguments" << std::endl;
-		std::cout << argv[0] <<
-		"[port #] [# unique ID] [# peers] (repeat [ID] [IP] [port #])" << std::endl;
-		return 0;
-	}
+    if (!Init_Node_Info (&node_info, argc, argv)) return 0;
+    if (!stub.Init(&node_info, argc, argv)) return 0;
 
-	port = atoi(argv[1]);
-	factory.SetFactoryId(atoi(argv[2]));
-	num_peers = atoi(argv[3]);
-	factory.SetNumPeers(num_peers);
+    timer.Start();
+    while(true){
 
-	if (factory.FillPeerServerInfo(argc, argv) < 0)		return 0;
+        if (node_info.role == LEADER){    //send heartbeat message
+          stub.Broadcast_nodeID();
+        }
 
-	std::thread admin_thread(&LaptopFactory::AdminThread, &factory);
-	thread_vector.push_back(std::move(admin_thread));
+        if (node_info.role == FOLLOWER){
 
-	if (!socket.Init(port)) {
-		std::cout << "Socket initialization failed" << std::endl;
-		return 0;
-	}
+            if (timer.Check_election_timeout()){
+                node_info.role = CANDIDATE;
+                stub.Election_Protocol();
+                node_info.role = LEADER;
+            }
 
-	while ((new_socket = socket.Accept())) {
-		std::thread engineer_thread(&LaptopFactory::EngineerThread,
-				&factory, std::move(new_socket),
-				engineer_cnt++);
+            stub.Poll(timer.Poll_timeout());
+            stub.HandlePoll(&timer);
+        }
 
-		thread_vector.push_back(std::move(engineer_thread));
-	}
-	return 0;
+    } //END white(true)
 }

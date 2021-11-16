@@ -9,15 +9,19 @@ CC := gcc
 CXX := g++
 
 # $(wildcard *.h) finds all file names with patterns (random string + ".h")
-HDRS := $(wildcard *.h)		
-SRCS := $(wildcard *.cpp)	
+HDRS := $(wildcard *.h)
+SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:.cpp=.o)		# replaces .cpp extension to .o (e.g., main.cpp -> main.o)
 				# and stores the names to OBJS
 
+
+
 # $(wildcard Server*.h) finds all file names with patterns ("Server" + random string + ".h")
-SVR_HDRS := $(wildcard Server*.h)	
+SVR_HDRS := $(wildcard Server*.h)
 SVR_SRCS := $(wildcard Server*.cpp)
 SVR_OBJS := $(SVR_SRCS:.cpp=.o)
+
+
 
 # $(wildcard Client*.h) finds all file names with patterns ("Client" + random string + ".h")
 CLNT_HDRS := $(wildcard Client*.h)
@@ -35,7 +39,7 @@ CMN_OBJS := $(CMN_SRCS:.cpp=.o)
 CFLAGS := -Wall -std=c++11 
 
 # -pthread: use of posix threads (necessary to use std::thread or pthreads)
-LFLAGS := -pthread 
+LFLAGS := -pthread
 
 # we are building two target binaries: server and client
 TARGET := server client
@@ -51,7 +55,7 @@ TARGET := server client
 # 2. If not it will check for prerequisite files.
 # 3. If the prerequisite files all exist in the folder the program will execute
 #    the next line to build the target.
-# 4. If any of the prerequisite file does not exist, the program will look for 
+# 4. If any of the prerequisite file does not exist, the program will look for
 #    rules to create the prerequisite file: it will look for rules where the
 #    prerequisite file is the target.
 
@@ -73,7 +77,7 @@ debug: $(TARGET)
 #    - $(CMN_OBJS) that include all common object files that are used for both
 #      server and client programs.
 # 2. The next line $(CXX) $(LFALGS) -o $@ $^ defines how to create server
-#    binary. This line translates to 
+#    binary. This line translates to
 #
 #      g++ -pthread -o server ServerXXX1.o ServerXXX2.o ... Common1.o ...
 #
@@ -85,11 +89,11 @@ debug: $(TARGET)
 #    it will look for another rules to create the object (.o) files
 
 server: $(SVR_OBJS) $(CMN_OBJS)
-	$(CXX) $(LFLAGS) -o $@ $^ 
+	$(CXX) $(LFLAGS) -o $@ $^
 
 # This rule defines how to build the server specific object files.
 # To build object files, corresponding source code files (i.e., cpp and h files) are
-# necessary. 
+# necessary.
 # Since we will have all the files the build command will be executed
 #   g++ -Wall -std=c++0x -c ServerXXX1.cpp ServerXXX2.cpp ...
 
@@ -99,11 +103,11 @@ $(SVR_OBJS): $(SVR_SRCS) $(SVR_HDRS)
 
 # Same applies to the client program.
 client: $(CLNT_OBJS) $(CMN_OBJS)
-	$(CXX) $(LFLAGS) -o $@ $^ 
+	$(CXX) $(LFLAGS) -o $@ $^
 
 $(CLNT_OBJS): $(CLNT_SRCS) $(CLNT_HDRS)
 	$(CXX) $(CFLAGS) $(DFLAGS) -c $(CLNT_SRCS)
-	
+
 
 # This rule compiles the common source code into object files.
 $(CMN_OBJS): $(CMN_SRCS) $(CMN_HDRS)
@@ -120,4 +124,3 @@ clean:
 # special command.
 
 .PHONY: clean debug
-

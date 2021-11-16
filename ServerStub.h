@@ -1,35 +1,56 @@
-#ifndef __SERVER_STUB_H__
-#define __SERVER_STUB_H__
+#include <poll.h>
+#include <vector>
+#include <string>
 
-#include <memory>
-#include <cstring>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include <arpa/inet.h>
-#include "ServerSocket.h"
-#include "Messages.h"
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
 
+#include "ServerListenSocket.h"
+#include "ServerTimer.h"
 
-class ServerStub {
-private:
-	std::unique_ptr<ServerSocket> socket;
-	int conn_descriptor;
-public:
-	ServerStub();
-	void Init(std::unique_ptr<ServerSocket> socket);
+struct NodeInfo{
+  int port;
+  int node_id;
+  int num_peers;
 
-	//------------------------Engineer Role--------------------------------
-	CustomerRequest ReceiveOrder();
-	int SendLaptop(LaptopInfo info);
-	int ReturnRecord(CustomerRecord record);
-
-	//---------------------------IFA Role--------------------------------
-	/* return value for the functions below:
-		-1 on failure, 1 on success, and 0 if Recv return 0 (remote connection closed
-	*/
-	int Receive_Replication_Request(ReplicationRequest * rep_req);
-	int Set_Connection_Descriptor();
-	int Get_Connection_Descriptor();
-	int Ship_Success_Status();
-
+  int role;
+  int leader_id;
 };
 
-#endif // end of #ifndef __SERVER_STUB_H__
+class ServerStub{
+private:
+    std::vector<NodeInfo> PeerServerInfo;
+    ServerListenSocket ListenSocket;
+    int num_peers;
+    int node_id;
+    int port;
+    int total_socket_num;
+
+    //polling to avoid blocking. Initialisation.
+    std::vector <pollfd> pfds;
+    int alive_fd_count;
+
+public:
+    ServerStub() {};
+
+    int Init(NodeInfo * node_info, int argc, char *argv[]);
+
+    void Init_Listen_socket();
+    int FillPeerServerInfo(int argc, char *argv[]);
+
+    void Poll(int Poll_timeout);  //Poll_timeout is in millisecond
+    void HandlePoll(ServerTimer * timer);
+
+    void Accept_Connection();
+    void Connect_To(std::string ip, int port);
+    void Broadcast_nodeID();
+    void Election_Protocol();
+};
