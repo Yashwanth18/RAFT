@@ -9,4 +9,4 @@ To Do:
 > Case where multiple nodes are candidates at the same time. 
 
 * Log replication 
-> For ease of debuggin and development purpose, create an optional command line argument that initialize the node to be leader or follower. Then, implement log replication in the case of no failure. 
+> For ease of debuggin and development purpose, assume the client program takes the role of a follower node. 
