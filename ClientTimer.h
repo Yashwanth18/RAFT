@@ -1,17 +1,17 @@
-#ifndef __Server_TIMER_H__
-#define __Server_TIMER_H__
+#ifndef __Client_TIMER_H__
+#define __Client_TIMER_H__
 
 #include <chrono>
 
 using namespace std::chrono;
 
-class ServerTimer {
+class ClientTimer {
 public:
 	time_point<std::chrono::high_resolution_clock> start_time;
 	duration<double, std::milli> elapsed_time;
 	duration<double, std::milli> election_timeout;
 
-	ServerTimer();
+	ClientTimer();
 
 	void Start();
 	void Restart();
@@ -22,4 +22,4 @@ public:
 	int Poll_timeout(); 					 //return max duration in millisecond for polling func
 };
 
-#endif // end of #ifndef __Server_TIMER_H__
+#endif // end of #ifndef __Client_TIMER_H__

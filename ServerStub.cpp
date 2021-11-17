@@ -9,7 +9,9 @@ int ServerStub::CountVote(){
     char buf[4];
 
     //Does not include the listening socket pfds[0]
-    for(int i = 1; i < num_peers + 1; i++) {     //looping through file descriptors
+    int alive_socket = pfds.size();
+    
+    for(int i = 1; i < alive_socket; i++) {     //looping through file descriptors
         if (pfds[i].revents & POLLIN) {          //got ready-to-read from poll()
             int nbytes = recv(pfds[i].fd, buf, sizeof(net_node_id_receive), 0);
 
@@ -115,10 +117,11 @@ void ServerStub:: Add_Socket_To_Poll(int new_fd){
     pfds.push_back(new_pfd);
 }
 
-void ServerStub:: Poll(int Poll_timeout){
+int ServerStub:: Poll(int Poll_timeout){
     int poll_count = poll(pfds.data(), pfds.size(), Poll_timeout);
     if( poll_count < 0 )   perror("poll");
     //std::cout << "number of ready-to-read files: "<< poll_count << '\n';
+    return poll_count;
 }
 
 int ServerStub:: Connect_To(std::string ip, int port){

@@ -1,56 +1,31 @@
-// #include <array>
-// #include <iostream>
-// #include <iomanip>
-// #include <thread>
-// #include <vector>
-//
-// #include "ClientSocket.h"
-// #include "ClientThread.h"
-// #include "ClientTimer.h"
+#include "ClientMain.h"
+#include "ClientTimer.h"
+#include "ClientListenSocket.h"
+#include <iomanip>
+
 
 int main(int argc, char *argv[]) {
-	// std::string ip;
-	// int port;
-	// int num_customers;
-	// int num_orders;
-	// int request_type;
-	// ClientTimer timer;
-	//
-	// std::vector<std::shared_ptr<ClientThreadClass>> client_vector;
-	// std::vector<std::thread> thread_vector;
-	//
-	// if (argc < 6) {
-	// 	std::cout << "not enough arguments" << std::endl;
-	// 	std::cout << argv[0] << "[ip] [port #] [# customers] ";
-	// 	std::cout << "[# orders] [request type 1 or 2 or 3]" << std::endl;
-	// 	return 0;
-	// }
-	//
-	// ip = argv[1];
-	// port = atoi(argv[2]);
-	// num_customers = atoi(argv[3]);
-	// num_orders = atoi(argv[4]);
-	// request_type = atoi(argv[5]);
-	//
-	//
-	// timer.Start();
-	// for (int i = 0; i < num_customers; i++) {
-	// 	auto client_cls = std::shared_ptr<ClientThreadClass>(new ClientThreadClass());
-	// 	std::thread client_thread(&ClientThreadClass::ThreadBody, client_cls,
-	// 			ip, port, i, num_orders, request_type);
-	//
-	// 	client_vector.push_back(std::move(client_cls));
-	// 	thread_vector.push_back(std::move(client_thread));
-	// }
-	// for (auto& th : thread_vector) {
-	// 	th.join();
-	// }
-	// timer.End();
-	//
-	// for (auto& cls : client_vector) {
-	// 	timer.Merge(cls->GetTimer());
-	// }
-	// timer.PrintStats();
+    ClientTimer timer;
+    NodeInfo node_info;
+    ClientStub clientstub;
+    int Poll_timeout;
+    int num_votes = 1;
 
-	return 1;
+    if (!Init_Node_Info (&node_info, argc, argv)){
+      return 0;
+    }
+
+    if (!clientstub.Init(&node_info, argc, argv)) {
+      return 0;
+    }
+
+    timer.Start();
+    Poll_timeout = timer.Poll_timeout();
+
+    while(true){
+        clientstub.Poll(Poll_timeout);
+        clientstub.Handle_Follower_Poll(&timer);
+    }
+
+    return 1;
 }

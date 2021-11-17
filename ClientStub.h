@@ -1,9 +1,11 @@
 #include <poll.h>
 #include <vector>
 #include <string>
+
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -11,9 +13,8 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
-#include "ServerListenSocket.h"
-#include "ServerTimer.h"
-#include "Messages.h"
+#include "ClientListenSocket.h"
+#include "ClientTimer.h"
 
 struct Peer_Info{
   int unique_id;
@@ -34,10 +35,10 @@ struct NodeInfo{
 //otherwise get the error "use of non-static data member" for initialising pfds
 #define num_total_sockets 5
 
-class ServerStub{
+class ClientStub{
 private:
-    std::vector<Peer_Info> PeerServerInfo;
-    ServerListenSocket ListenSocket;
+    std::vector<Peer_Info> PeerClientInfo;
+    ClientListenSocket ListenSocket;
     int num_peers;
     int node_id;
     int port;
@@ -47,24 +48,18 @@ private:
     int alive_connection;
 
 public:
-    ServerStub() {};
+    ClientStub() {};
 
     //initialization
     int Init(NodeInfo * node_info, int argc, char *argv[]);
-    int FillPeerServerInfo(int argc, char *argv[]);
+    int FillPeerClientInfo(int argc, char *argv[]);
 
-    int Poll(int Poll_timeout);  //Poll_timeout is in millisecond
-    int CountVote();
+    int Poll(int Poll_timeout);  //Poll_timeout is in millisecond;
+    void Handle_Follower_Poll(ClientTimer * timer);
 
-    void Handle_Follower_Poll(ServerTimer * timer);
-
-    void Broadcast_nodeID();
     void SendNodeID(int fd);
-    void Connect_and_Send_RequestVoteRPC();
-
     void Accept_Connection();
-    int Connect_To(std::string ip, int port);
 
     void Add_Socket_To_Poll(int new_fd);
-    void Print_PeerServerInfo();
+    void Print_PeerClientInfo();
 };
