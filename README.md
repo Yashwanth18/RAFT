@@ -2,6 +2,7 @@
 
 To Do:
 * Leader Election 
+> Handle error for send and recv. Right now, if a follower node quit, everything crashes. 
 > Implement Order RequestVoteRPC properly. Right now, only the rough backbone logic is there. 
 
 * Many cases to test: 
