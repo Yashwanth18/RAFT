@@ -18,6 +18,7 @@
 #define CANDIDATE 1
 #define LEADER 2
 
+
 //return 0 on failure and 1 on success
 int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
   if (argc < 4){

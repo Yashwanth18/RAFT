@@ -1,23 +1,99 @@
 #include"ServerStub.h"
 
-//return 1 on success and 0 on failure
-int ServerStub:: Init(NodeInfo * node_info, int argc, char *argv[]){
-  port = node_info -> port;
-  node_id = node_info -> node_id;
-  num_peers = node_info -> num_peers;
+//return number of successful votes
+int ServerStub::CountVote(){
+    int vote_count = 0;
 
-  total_socket_num = num_peers + 1;
-  alive_fd_count = 0;
-  for (int i = 1; i < num_peers + 1; i++)     {   pfds[i].fd = -1;  }
+    int net_node_id_receive;
+    int node_id_receive;
+    char buf[4];
 
-  Init_Listen_socket();
-  return FillPeerServerInfo(argc, argv);
+    //Does not include the listening socket pfds[0]
+    for(int i = 1; i < num_peers + 1; i++) {     //looping through file descriptors
+        if (pfds[i].revents & POLLIN) {          //got ready-to-read from poll()
+            int nbytes = recv(pfds[i].fd, buf, sizeof(net_node_id_receive), 0);
+
+            if (nbytes <= 0){  //connection closed or error
+                close(pfds[i].fd);
+                alive_connection --;
+                pfds.erase(pfds.begin()+i);     //delete
+            }
+
+            else{        //got good data
+                memcpy(&net_node_id_receive, buf, sizeof(net_node_id_receive));
+                node_id_receive = ntohl(net_node_id_receive);
+                std::cout << "node_id_receive: " << node_id_receive << '\n';
+                vote_count ++;
+            }
+
+        } //End got ready-to-read from poll()
+    } // End looping through file descriptors
+
+    std::cout << "vote_count"<< vote_count << '\n';
+    return vote_count;
 }
 
-void ServerStub::Init_Listen_socket(){
-  pfds[0].fd = ListenSocket.Init(port);
-  pfds[0].events = POLLIN;      // Report ready to read on incoming connection
-  alive_fd_count = 1;           //for the listening port
+
+void ServerStub:: Handle_Follower_Poll(ServerTimer * timer){
+  int net_node_id_receive;
+  int node_id_receive;
+  char buf[4];
+
+  for(int i = 0; i < num_peers + 1; i++) {   //looping through file descriptors
+      if (pfds[i].revents & POLLIN) {          //got ready-to-read from poll()
+
+          if (i==0){ //events at the listening socket
+            Accept_Connection();
+          }
+
+          else{ //events from established connection
+              int nbytes = recv(pfds[i].fd, buf, sizeof(net_node_id_receive), 0);
+
+              if (nbytes <= 0){  //connection closed or error
+                  close(pfds[i].fd);
+                  alive_connection --;
+                  pfds.erase(pfds.begin()+i);     //delete
+              }
+
+              else{             //got good data
+                  memcpy(&net_node_id_receive, buf, sizeof(net_node_id_receive));
+                  node_id_receive = ntohl(net_node_id_receive);
+                  std::cout << "node_id_receive: " << node_id_receive << '\n';
+
+                  //to-do: implement a real ReplyVoteRPC
+                  SendNodeID(pfds[i].fd);
+
+              } //End got good data
+          } //End events from established connection
+
+          timer -> Restart();
+      } //End got ready-to-read from poll()
+
+  } // End looping through file descriptors
+}
+
+void ServerStub:: Connect_and_Send_RequestVoteRPC(){
+  for (int i = 0; i < num_peers; i++){
+      pfds[i+1].fd = Connect_To(PeerServerInfo[i].IP, PeerServerInfo[i].port);
+      SendNodeID(pfds[i+1].fd);
+  }
+}
+
+void ServerStub:: Broadcast_nodeID(){
+    for (int i = 0; i < num_peers; i++){
+        SendNodeID(pfds[i+1].fd);
+    }
+}
+
+void ServerStub:: SendNodeID(int fd){
+    char buf[4];
+    int net_node_id;
+
+    net_node_id = htonl(node_id);
+    memcpy(buf, &net_node_id, sizeof(net_node_id));
+
+    //to-do: do error handling error here
+    send(fd, buf, sizeof(net_node_id), 0);
 }
 
 void ServerStub:: Accept_Connection(){
@@ -25,28 +101,34 @@ void ServerStub:: Accept_Connection(){
   struct sockaddr_in addr;
   unsigned int addr_size = sizeof(addr);
 
-  //pfds[0].fd is the listening socket
+  //the listening socket is pfds[0].fd
   new_fd = accept(pfds[0].fd, (struct sockaddr *) &addr, &addr_size);
   if (new_fd < 0) perror ("accept");
 
-  pfds[alive_fd_count].fd = new_fd;
-  pfds[alive_fd_count].events = POLLIN;
-  alive_fd_count ++;
+  Add_Socket_To_Poll(new_fd);
+}
+
+void ServerStub:: Add_Socket_To_Poll(int new_fd){
+    pollfd new_pfd;
+    new_pfd.fd = new_fd;
+    new_pfd.events = POLLIN;
+    pfds.push_back(new_pfd);
 }
 
 void ServerStub:: Poll(int Poll_timeout){
-  int poll_count = poll(pfds.data(), alive_fd_count, Poll_timeout); //number of ready to read files
-  if( poll_count < 0 )   perror("poll");
-  std::cout << "poll count: "<< poll_count << '\n';
+    int poll_count = poll(pfds.data(), pfds.size(), Poll_timeout);
+    if( poll_count < 0 )   perror("poll");
+    //std::cout << "number of ready-to-read files: "<< poll_count << '\n';
 }
 
+int ServerStub:: Connect_To(std::string ip, int port){
 //return the new file descriptor
-int ServerStub::Connect_To(std::string ip, int port){
+
     int new_fd;
     struct sockaddr_in addr;
 
-    new_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd_ < 0) {
+    new_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (new_fd < 0) {
         perror("ERROR: failed to create a socket");
         return -1;
     }
@@ -56,7 +138,9 @@ int ServerStub::Connect_To(std::string ip, int port){
     addr.sin_addr.s_addr = inet_addr(ip.c_str());
     addr.sin_port = htons(port);
 
-    if (connect(fd_, (struct sockaddr *) &addr, sizeof(addr)) < 0){
+
+    //to-do: do error handling for connect. The same as Programming Assignment 2
+    if (connect(new_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0){
       perror("connect: ");
       return -1;
     }
@@ -65,74 +149,12 @@ int ServerStub::Connect_To(std::string ip, int port){
     return new_fd;
 }
 
-/* restart the timer:
-if receive connection from a candidate
-if receive heartbeat message from leader
-if receive RequestVote message from candidate
-*/
-void ServerStub:: HandlePoll(ServerTimer * timer){
-
-  for(int i = 0; i < total_socket_num; i++) {   //looping through file descriptors
-      if (pfds[i].revents & POLLIN) {          //got ready-to-read from poll()
-
-          if (i==0){      //events at the listening socket
-            Accept_Connection();
-          }
-
-          else{
-              int net_leader_id;
-              char buf[4];
-              int nbytes = recv(pfds[i].fd, buf, sizeof(net_leader_id), 0);
-
-              if (nbytes <= 0){  //connection closed or error
-                  close(pfds[i].fd);
-                  pfds[i].fd = -1;
-
-                  alive_fd_count --;  //use vector instead?
-              }
-
-              else{
-
-                  memcpy(&net_leader_id, buf, sizeof(net_leader_id));
-                  leader_id = ntohl(net_leader_id);
-                  std::cout << leader_id << '\n';   //print the message
-
-              }
-          } //End events from old connection
-
-          timer -> Restart();
-      } //End got ready-to-read from poll()
-
-  } // End looping through file descriptors
-}
-
-
-void ServerStub:: Broadcast_nodeID(){
-  char buf[4];
-  int net_leader_id;
-
-  for (int i = 1; i < total_socket_num; i++){
-      net_leader_id = htonl(node_id);
-      memcpy(buf, &net_leader_id, sizeof(net_leader_id));
-      send(pfds[i+1].fd, buf, sizeof(net_leader_id), 0);
-  }
-
-}
-
-void ServerStub:: Election_Protocol(){
-  for (int i = 0; i < num_peers; i++){
-      pfds[i+1].fd = Connect_To(PeerServerInfo[i].IP, PeerServerInfo[i].port);
-      Broadcast_nodeID();
-  }
-
-
+int ServerStub:: FillPeerServerInfo(int argc, char *argv[]){
 //return 0 on failure and 1 on success
-int ServerStub::
-FillPeerServerInfo(int argc, char *argv[]){
 
   for (int i = 1; i <= num_peers; i++){
 
-    if (argc <= 3*i + 3){std::vector<NodeInfo> PeerServerInfo;
+    if (argc <= 3*i + 3){
 			std::cout << "not enough arguments" << std::endl;
 			std::cout << "./server [port #] [unique ID] [# peers] \
                       (repeat [ID] [IP] [port #])	" << std::endl;
@@ -144,17 +166,34 @@ FillPeerServerInfo(int argc, char *argv[]){
 			std::string IP = argv[3*i + 2];
 			int port = atoi(argv[3*i + 3]);
 
-			ServerInfo peer_server_info {unique_id, IP, port};
+			Peer_Info peer_server_info {unique_id, IP, port};
 			PeerServerInfo.push_back(peer_server_info);
 		}
 
 	} //END for loop
-
 	return 1;
 }
 
+void ServerStub:: Print_PeerServerInfo(){
+  for (int i = 0; i < num_peers; i++){
+    std::cout << "id: "<< PeerServerInfo[i].unique_id  << '\n';
+    std::cout << "IP: "<< PeerServerInfo[i].IP  << '\n';
+    std::cout << "Port: "<< PeerServerInfo[i].port  << '\n';
+    std::cout << "------------------"<< '\n';
+  }
+}
 
+int ServerStub:: Init(NodeInfo * node_info, int argc, char *argv[]){
+//return 1 on success and 0 on failure
+  port = node_info -> port;
+  node_id = node_info -> node_id;
+  num_peers = node_info -> num_peers;
 
+  Add_Socket_To_Poll(ListenSocket.Init(port));
+  //for (int i = 1; i < num_total_sockets; i++)   { pfds[i].fd = -1;  }
+
+  return FillPeerServerInfo(argc, argv);
+}
 
 
 // // -------- receive request vote ----//

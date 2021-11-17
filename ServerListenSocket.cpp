@@ -5,12 +5,14 @@ int ServerListenSocket::Init(int port) {
 	struct sockaddr_in addr;
 
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
-	fcntl(fd_, F_SETFL, O_NONBLOCK);   //set socket to non-blocking
+
 
 	if (fd_ < 0) {
 		perror("ERROR: failed to create a socket");
 		return false;
 	}
+
+	fcntl(fd_, F_SETFL, O_NONBLOCK);   //set socket to non-blocking
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sin_family = AF_INET;

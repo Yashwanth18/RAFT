@@ -19,7 +19,6 @@ public:
 	int Check_election_timeout();		//return 1 if election_timeout and 0 otherwise
 
 	void Print_elapsed_time();
-	void Print_election_timeout();
 	int Poll_timeout(); 					 //return max duration in millisecond for polling func
 };
 

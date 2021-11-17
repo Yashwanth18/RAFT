@@ -12,7 +12,7 @@ ServerTimer::ServerTimer() {
 
 void ServerTimer::Start() {
 	//allow the programmer time to run the script on multiple nodes
-	sleep(3 + rand() % 3);
+	sleep(5 + rand() % 2);
 
 	start_time = high_resolution_clock::now();
 }
@@ -27,23 +27,11 @@ int ServerTimer::Poll_timeout(){
 }
 
 int ServerTimer::Check_election_timeout() {
-	auto end_time = high_resolution_clock::now();
-	elapsed_time = (end_time - start_time);
-
-	if (elapsed_time > election_timeout){
-		return 1;
-	}
-	else{
-		return 0;
-	}
+	elapsed_time = high_resolution_clock::now() - start_time;
+	return (elapsed_time > election_timeout);
 }
 
 void ServerTimer::Print_elapsed_time() {
 	std::cout << std::fixed << std::setprecision(3);
-	std::cout << "elapsed_time: " << elapsed_time.count() << "\t" << std::endl;
-}
-
-void ServerTimer::Print_election_timeout() {
-	std::cout << std::fixed << std::setprecision(3);
-	std::cout << "elapsed_time: " << elapsed_time.count() << "\t" << std::endl;
+	std::cout << "elapsed_time: " << elapsed_time.count() << std::endl;
 }
