@@ -7,6 +7,7 @@ To Do:
 
 * Many cases to test: 
 > Case where multiple nodes are candidates at the same time. 
-
+> Case where leader fails
+> Case where follower fails
 * Log replication 
 > For ease of debuggin and development purpose, assume the client program takes the role of a follower node. 
