@@ -137,23 +137,23 @@ int ServerStub:: Connect_To(std::string ip, int port){
 
 //    int new_fd;
     ServerSocket serverSocket1;
-    socketInfo *socketInfo;
+    SocketInfo *socketInfo;
 //    struct sockaddr_in addr;
-    struct socketInfo socketInfo1;
+    struct SocketInfo socketInfo1;
     socketInfo = serverSocket1.Init(ip,port);
 //    if(socketInfo->socketStatus == 0)
 //    {
 //        return socketInfo;
 //    }
-    if(socketInfo->socketStatus == 1)
+    if(socketInfo->socket_status == 1)
     {
         socketInfo1.fd = socketInfo->fd;
-        socketInfo1.socketStatus = socketInfo->socketStatus;
+        socketInfo1.socket_status = socketInfo->socket_status;
         Add_Socket_To_Poll(socketInfo->fd);
         socket_info_vector.push_back(socketInfo1);
 
     }
-    return socketInfo->socketStatus;
+    return socketInfo->socket_status;
 //    new_fd = socket(AF_INET, SOCK_STREAM, 0);
 //    if (new_fd < 0) {
 //        perror("ERROR: failed to create a socket");

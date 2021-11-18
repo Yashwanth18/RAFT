@@ -4,16 +4,16 @@
 #include <string>
 #include "Socket.h"
 #include "Messages.h"
+#include "fcntl.h"
 
-
-struct socketInfo{
+struct SocketInfo{
     int fd;
-    int socketStatus;
+    int socket_status;
 };
 class ServerSocket: public Socket {
 public:
 	ServerSocket() {}
 	~ServerSocket() {}
-    socketInfo* Init(std::string ip, int port);
+    SocketInfo* Init(std::string ip, int port);
 };
 #endif

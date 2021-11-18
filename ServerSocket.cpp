@@ -12,20 +12,21 @@
 0 if already initialized,
 1 if success
 */
-socketInfo* ServerSocket::Init(std::string ip, int port) {
+SocketInfo* ServerSocket::Init(std::string ip, int port) {
 	int socket_status;
-    socketInfo *socket_info = malloc(sizeof (socketInfo));
+    SocketInfo *socket_info ;
+    //= malloc(sizeof (socketInfo));
 	if (is_initialized_) {
-        socketInfo->socketStatus = 0;
-		return socketInfo;
+        socket_info->socket_status = 0;
+		return socket_info;
 	}
 
 	struct sockaddr_in addr;
-	socketInfo->fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (socketInfo->fd < 0) {
+    socket_info->fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (socket_info->fd < 0) {
 		perror("ERROR: failed to create a socket");
-        socketInfo->socketStatus = -1;
-		return socketInfo;
+        socket_info->socket_status = -1;
+		return socket_info;
 	}
 
 	memset(&addr, '\0', sizeof(addr));
@@ -35,19 +36,19 @@ socketInfo* ServerSocket::Init(std::string ip, int port) {
 
 	/*BE CAREFUL: connect return 0 on success*/
 	try{
-		socketInfo->socket_status = connect(fd_, (struct sockaddr *) &addr, sizeof(addr));
-		if (socketInfo->socket_status < 0){
-			throw socketInfo->socket_status;
+        socket_info->socket_status = connect(fd_, (struct sockaddr *) &addr, sizeof(addr));
+		if (socket_info->socket_status < 0){
+			throw socket_info->socket_status;
 		}
 	}
 	catch(int stat){
-        socketInfo->socketStatus = -1;
-		return socketInfo;
+        socket_info->socket_status = -1;
+		return socket_info;
 	}
 
 	is_initialized_ = true;
-    socketInfo->socketStatus = 1;
-    fcntl(socketInfo->fd, F_SETFL, O_NONBLOCK);
-    return socketInfo;
+    socket_info->socket_status = 1;
+    fcntl(socket_info->fd, F_SETFL, O_NONBLOCK);
+    return socket_info;
 
 }

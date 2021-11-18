@@ -57,7 +57,7 @@ private:
 
     //polling to avoid blocking. Initialisation.
     std::vector<pollfd> pfds;
-    std::vector<socketInfo> socket_info_vector;
+    std::vector<SocketInfo> socket_info_vector;
     int alive_connection;
 
 public:
