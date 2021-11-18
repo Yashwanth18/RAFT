@@ -29,7 +29,8 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
   node_info -> role = FOLLOWER;
   node_info -> port = atoi(argv[1]);
   node_info -> node_id = atoi(argv[2]);
-  node_info -> num_peers = atoi(argv[3]);
+  node_info -> term= 0;
+//  node_info -> num_peers = atoi(argv[3]);
   node_info -> leader_id = -1;
 
   return 1;

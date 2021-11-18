@@ -14,19 +14,32 @@
 #include "ServerListenSocket.h"
 #include "ServerTimer.h"
 #include "Messages.h"
-
+#include "ServerSocket.h"
 struct Peer_Info{
   int unique_id;
   std::string IP;
   int port;
 
 };
+struct MapOp {
+    int opcode ;
+    int arg1 ;
+    int arg2 ;
+};
 
+struct Log{
+    MapOp command;
+    int term;
+};
 struct NodeInfo{
   int port;
-  int node_id;
+  int node_id; // candidate id
   int num_peers;
-
+  int term;
+  int last_log_index;
+  int last_log_term;
+  std::vector<Log> log_vector;
+  // we need to create a log
   int role;
   int leader_id;
 };
@@ -44,6 +57,7 @@ private:
 
     //polling to avoid blocking. Initialisation.
     std::vector<pollfd> pfds;
+    std::vector<socketInfo> socket_info_vector;
     int alive_connection;
 
 public:
@@ -54,17 +68,17 @@ public:
     int FillPeerServerInfo(int argc, char *argv[]);
 
     int Poll(int Poll_timeout);  //Poll_timeout is in millisecond
-    int CountVote();
+//    int CountVote();
 
-    void Handle_Follower_Poll(ServerTimer * timer);
+    void Handle_Poll(ServerTimer * timer);
 
-    void Broadcast_nodeID();
-    void SendNodeID(int fd);
-    void Connect_and_Send_RequestVoteRPC();
+//    void Broadcast_nodeID();
+    void SendRequestVoteRPC(int fd, RequestVote * requestVote);
+    void Connect_and_Send_RequestVoteRPC(NodeInfo * nodeInfo);
 
-    void Accept_Connection();
+//    void Accept_Connection();
     int Connect_To(std::string ip, int port);
 
     void Add_Socket_To_Poll(int new_fd);
-    void Print_PeerServerInfo();
+//    void Print_PeerServerInfo();
 };

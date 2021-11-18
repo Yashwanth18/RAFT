@@ -22,7 +22,9 @@ Socket::~Socket() {
 		Close();
 	}
 }
-
+int Socket::GetFd_() {
+    return fd_;
+}
 /*
 return 1 if success and 0 if failure
 */

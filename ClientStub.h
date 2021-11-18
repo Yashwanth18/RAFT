@@ -15,7 +15,7 @@
 
 #include "ClientListenSocket.h"
 #include "ClientTimer.h"
-
+#include "Messages.h"
 struct Peer_Info{
   int unique_id;
   std::string IP;
@@ -23,11 +23,12 @@ struct Peer_Info{
 
 };
 
+
 struct NodeInfo{
   int port;
   int node_id;
   int num_peers;
-
+  int term;
   int role;
   int leader_id;
 };
@@ -51,13 +52,13 @@ public:
     ClientStub() {};
 
     //initialization
-    int Init(NodeInfo * node_info, int argc, char *argv[]);
-    int FillPeerClientInfo(int argc, char *argv[]);
+     void Init(NodeInfo * node_info, int argc, char *argv[]);
+//    int FillPeerClientInfo(int argc, char *argv[]);
 
     int Poll(int Poll_timeout);  //Poll_timeout is in millisecond;
-    void Handle_Follower_Poll(ClientTimer * timer);
+    void Handle_Follower_Poll(ClientTimer * timer, NodeInfo *nodeInfo);
 
-    void SendNodeID(int fd);
+    void SendVoteResponse(int fd, VoteResponse* voteResponse);
     void Accept_Connection();
 
     void Add_Socket_To_Poll(int new_fd);

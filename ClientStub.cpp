@@ -1,4 +1,5 @@
 #include "ClientStub.h"
+
 // // -------- receive request vote ----//
 // int ClientStub::ReceiveRequestVote(RequestVote *requestVote) {
 //     char buffer[32];
@@ -20,11 +21,12 @@
 //     return socket_status;
 // }
 
-void ClientStub:: Handle_Follower_Poll(ClientTimer * timer){
+void ClientStub:: Handle_Follower_Poll(ClientTimer * timer, NodeInfo * nodeInfo){
   int net_node_id_receive;
   int node_id_receive;
-  char buf[4];
-
+  char buf[32];
+  RequestVote requestVote;
+  VoteResponse voteResponse;
   for(int i = 0; i < num_peers + 1; i++) {   //looping through file descriptors
       if (pfds[i].revents & POLLIN) {          //got ready-to-read from poll()
 
@@ -42,12 +44,15 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer * timer){
               }
 
               else{             //got good data
-                  memcpy(&net_node_id_receive, buf, sizeof(net_node_id_receive));
-                  node_id_receive = ntohl(net_node_id_receive);
-                  std::cout << "node_id_receive: " << node_id_receive << '\n';
+//                  memcpy(&net_node_id_receive, buf, sizeof(net_node_id_receive));
+//                  node_id_receive = ntohl(net_node_id_receive);
+//                  std::cout << "node_id_receive: " << node_id_receive << '\n';
 
+                  requestVote.Unmarshal(buf);
+                  requestVote.Print();
                   //to-do: implement a real ReplyVoteRPC
-                  SendNodeID(pfds[i].fd);
+                  voteResponse.Set_VoteResponse(nodeInfo->term,VoteGranted);
+                  SendVoteResponse(pfds[i].fd,&voteResponse);
 
               } //End got good data
           } //End events from established connection
@@ -58,15 +63,15 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer * timer){
   } // End looping through file descriptors
 }
 
-void ClientStub:: SendNodeID(int fd){
-    char buf[4];
-    int net_node_id;
+void ClientStub::SendVoteResponse(int fd, VoteResponse * voteResponse){
+    char buf[32];
+//    int net_node_id;
 
-    net_node_id = htonl(node_id);
-    memcpy(buf, &net_node_id, sizeof(net_node_id));
-
+//    net_node_id = htonl(node_id);
+//    memcpy(buf, &net_node_id, sizeof(net_node_id));
+    voteResponse->Marshal(buf);
     //to-do: do error handling error here
-    send(fd, buf, sizeof(net_node_id), 0);
+    send(fd, buf, sizeof(voteResponse), 0);
 }
 
 void ClientStub:: Accept_Connection(){
@@ -95,30 +100,30 @@ int ClientStub:: Poll(int Poll_timeout){
     return poll_count;
 }
 
-int ClientStub:: FillPeerClientInfo(int argc, char *argv[]){
-//return 0 on failure and 1 on success
-
-  for (int i = 1; i <= num_peers; i++){
-
-    if (argc <= 3*i + 3){
-			std::cout << "not enough arguments" << std::endl;
-			std::cout << "./Client [port #] [unique ID] [# peers] \
-                      (repeat [ID] [IP] [port #])	" << std::endl;
-			return 0;
-		}
-
-		else{
-			int unique_id = atoi(argv[3*i + 1]);
-			std::string IP = argv[3*i + 2];
-			int port = atoi(argv[3*i + 3]);
-
-			Peer_Info peer_Client_info {unique_id, IP, port};
-			PeerClientInfo.push_back(peer_Client_info);
-		}
-
-	} //END for loop
-	return 1;
-}
+//int ClientStub:: FillPeerClientInfo(int argc, char *argv[]){
+////return 0 on failure and 1 on success
+//
+//  for (int i = 1; i <= num_peers; i++){
+//
+//    if (argc <= 3*i + 3){
+//			std::cout << "not enough arguments" << std::endl;
+//			std::cout << "./Client [port #] [unique ID] [# peers] \
+//                      (repeat [ID] [IP] [port #])	" << std::endl;
+//			return 0;
+//		}
+//
+//		else{
+//			int unique_id = atoi(argv[3*i + 1]);
+//			std::string IP = argv[3*i + 2];
+//			int port = atoi(argv[3*i + 3]);
+//
+//			Peer_Info peer_Client_info {unique_id, IP, port};
+//			PeerClientInfo.push_back(peer_Client_info);
+//		}
+//
+//	} //END for loop
+//	return 1;
+//}
 
 void ClientStub:: Print_PeerClientInfo(){
   for (int i = 0; i < num_peers; i++){
@@ -129,7 +134,7 @@ void ClientStub:: Print_PeerClientInfo(){
   }
 }
 
-int ClientStub:: Init(NodeInfo * node_info, int argc, char *argv[]){
+void ClientStub:: Init(NodeInfo * node_info, int argc, char *argv[]){
 //return 1 on success and 0 on failure
   port = node_info -> port;
   node_id = node_info -> node_id;
@@ -138,5 +143,5 @@ int ClientStub:: Init(NodeInfo * node_info, int argc, char *argv[]){
   Add_Socket_To_Poll(ListenSocket.Init(port));
   //for (int i = 1; i < num_total_sockets; i++)   { pfds[i].fd = -1;  }
 
-  return FillPeerClientInfo(argc, argv);
+//  return FillPeerClientInfo(argc, argv);
 }

@@ -2,11 +2,23 @@
 #define __MESSAGES_H__
 
 #include <string>
-struct VoteResult{
+#define VoteGranted true
+#define VoteDenied false
+class VoteResponse{
+
+public:
+
     int term;
     bool voteGranted;
-};
+    void Set_VoteResponse(int term, bool voteGranted);
 
+    void Marshal(char *buffer);
+    void Unmarshal(char *buffer);
+
+    int Size();
+    void Print();
+    VoteResponse();
+};
 class RequestVote {
 public:
     int term;
@@ -20,7 +32,7 @@ public:
     void Unmarshal(char *buffer);
 
     int Size();
-
+    void Print();
     RequestVote();
 
 };

@@ -14,7 +14,7 @@
 #include <iomanip>
 
 #include "ServerStub.h"
-
+#include "ServerTimer.h"
 #define FOLLOWER 0
 #define CANDIDATE 1
 #define LEADER 2
@@ -29,12 +29,14 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
 
   //node_info -> role = FOLLOWER;
   /*Initialising to assume the role of the leader for debugging purpose*/
-  node_info -> role = LEADER;
+  node_info -> role = CANDIDATE;
 
   node_info -> port = atoi(argv[1]);
   node_info -> node_id = atoi(argv[2]);
   node_info -> num_peers = atoi(argv[3]);
   node_info -> leader_id = -1;
-
+  node_info -> term = 0;
+  node_info -> last_log_index = 0;
+  node_info -> last_log_term = 0;
   return 1;
 }
