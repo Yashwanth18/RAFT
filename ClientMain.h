@@ -21,7 +21,7 @@
 
 //return 0 on failure and 1 on success
 int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
-  if (argc < 4){
+  if (argc < 3){
     std::cout << "not enough arguments" << std::endl;
     return 0;
   }

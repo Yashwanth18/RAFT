@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
             int poll_count = server_stub.Poll(Poll_timeout);
             if(poll_count > 0)
             {
-
+                    server_stub.Handle_Poll(&timer);
             }
             //node_info.requestVote.Set_RequestVote(node_info.requestVote.term,node_info.node_id,node_info.requestVote.lastLogIndex,node_info.requestVote.lastLogTerm);
             //to count vote, need to keep track of which nodes has voted.
