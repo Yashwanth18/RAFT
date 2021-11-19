@@ -1,19 +1,11 @@
-#include <chrono>
 #include <iostream>
-#include <mutex>
-#include <thread>
-#include <vector>
-#include <arpa/inet.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <fcntl.h>
 #include <iomanip>
 
-#include "ServerStub.h"
+#include "Messages.h"
 
 #define FOLLOWER 0
 #define CANDIDATE 1
@@ -27,9 +19,8 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
     return 0;
   }
 
-  //node_info -> role = FOLLOWER;
   /*Initialising to assume the role of the leader for debugging purpose*/
-  node_info -> role = LEADER;
+  node_info -> role = CANDIDATE;
 
   node_info -> port = atoi(argv[1]);
   node_info -> node_id = atoi(argv[2]);

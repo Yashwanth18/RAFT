@@ -1,12 +1,13 @@
 #include "ClientListenSocket.h"
 
-
+/*
+Takes a port number and create a non-blocking listen socket
+*/
 int ClientListenSocket::Init(int port) {
 	struct sockaddr_in addr;
 
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
-
-
+	
 	if (fd_ < 0) {
 		perror("ERROR: failed to create a socket");
 		return false;

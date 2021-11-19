@@ -13,13 +13,12 @@ RequestVote::RequestVote()  {
 }
 
 
-void RequestVote:: 
-Set_RequestVote(int input_term, int input_candidateId, int input_lastLogIndex, int input_lastLogTerm){
-
-    term = input_term;
-    candidateId = input_candidateId;
-    lastLogIndex = input_lastLogIndex;
-    lastLogTerm = input_lastLogTerm;
+void RequestVote::
+Set_RequestVote(int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+    term = _term;
+    candidateId = _candidateId;
+    lastLogIndex = _lastLogIndex;
+    lastLogTerm = _lastLogTerm;
 }
 
 
@@ -38,8 +37,6 @@ void RequestVote::Unmarshal(char *buffer){
     memcpy(&net_lastLogIndex, buffer + offset, sizeof(net_lastLogIndex));
     offset += sizeof(net_lastLogIndex);
     memcpy(&net_lastLogTerm, buffer + offset, sizeof(net_lastLogTerm));
-
-
 
     term = ntohl(net_term);
     candidateId = ntohl(net_candidateId);
@@ -67,4 +64,11 @@ void RequestVote::Marshal(char *buffer){
 int RequestVote::Size() {
     return sizeof(term) + sizeof(candidateId) + sizeof(lastLogIndex)+
            sizeof(lastLogTerm);
+}
+
+void RequestVote::Print(){
+  std::cout << "term: " << term << '\n';
+  std::cout << "candidateId: " << candidateId << '\n';
+  std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
+  std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
 }

@@ -19,8 +19,6 @@ public:
 	~ServerListenSocket() {}
 
 	int Init(int port);		//return the file descriptor for listening
-
-	//std::unique_ptr<ServerListenSocket> Accept();
 };
 
 

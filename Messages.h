@@ -2,9 +2,26 @@
 #define __MESSAGES_H__
 
 #include <string>
-struct VoteResult{
-    int term;
-    bool voteGranted;
+
+struct Peer_Info{
+  int unique_id;
+  std::string IP;
+  int port;
+
+};
+
+struct NodeInfo{
+  int port;
+  int num_peers;
+
+  /* Used in RequestVote*/
+  int term;
+  int node_id;     
+  int lastLogTerm;
+  int lastLogIndex;
+
+  int role;
+  int leader_id;
 };
 
 class RequestVote {
@@ -13,16 +30,16 @@ public:
     int candidateId;
     int lastLogIndex;
     int lastLogTerm;
+    int voteGranted;
 
+    RequestVote();
     void Set_RequestVote(int term, int candidateId, int lastLogIndex, int lastLogTerm);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
 
     int Size();
-
-    RequestVote();
-
+    void Print();
 };
 
 #endif // #ifndef __MESSAGES_H__

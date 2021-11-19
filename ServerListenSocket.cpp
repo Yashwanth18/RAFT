@@ -29,17 +29,3 @@ int ServerListenSocket::Init(int port) {
 
 	return fd_;
 }
-
-// std::unique_ptr<ServerListenSocket> ServerListenSocket::Accept() {
-// 	int accepted_fd;
-// 	struct sockaddr_in addr;
-// 	unsigned int addr_size = sizeof(addr);
-// 	accepted_fd = accept(fd_, (struct sockaddr *) &addr, &addr_size);
-//
-// 	if (accepted_fd < 0) {
-// 		perror("ERROR: failed to accept connection");
-// 		return nullptr;
-// 	}
-//
-// 	return std::unique_ptr<ServerListenSocket>(new ServerListenSocket(accepted_fd, IsNagleOn()));
-// }
