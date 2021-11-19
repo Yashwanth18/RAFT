@@ -6,8 +6,8 @@
 ClientTimer::ClientTimer() {
 	srand(time(0));
 
-	//election_timeout random between 1 to 2 millisecond
-	election_timeout = std::chrono::duration<double, std::milli>(1000 + rand() % 1000);
+
+	election_timeout = std::chrono::duration<double, std::milli>(150 + rand() % 1000);
 }
 
 void ClientTimer::Start() {

@@ -5,14 +5,12 @@
 
 ServerTimer::ServerTimer() {
 	srand(time(0));
-
-	//election_timeout random between 1 to 2 millisecond
-	election_timeout = std::chrono::duration<double, std::milli>(1000 + rand() % 1000);
+    /* big randomness to decrease the probability of race condition of having multiple candidate */
+	election_timeout = std::chrono::duration<double, std::milli>(150 + rand() % 1000);
 }
 
 void ServerTimer::Start() {
-	//allow the programmer time to run the script on multiple nodes
-	sleep(2);
+	sleep(2); /* allow the programmer time to run the script on multiple nodes */
 	start_time = high_resolution_clock::now();
 }
 
@@ -21,7 +19,7 @@ void ServerTimer::Restart() {
 	start_time = high_resolution_clock::now();
 }
 
-//poll timeout small compared to election_timeout
+/* poll timeout small compared to election_timeout */
 int ServerTimer::Poll_timeout(){
 	return election_timeout.count() / 1000;
 }
