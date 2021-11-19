@@ -135,3 +135,65 @@ bool VoteResponse::Get_voteGranted() {
 int VoteResponse::Size() {
     return sizeof(term) + sizeof(voteGranted) ;
 }
+
+
+/*-------------------------------Append Entries class------------------*/
+
+AppendEntries::AppendEntries()  {
+    term = 0;
+    opcode = -1;
+    arg1 = -1;
+    arg2 = -1;
+}
+
+
+void AppendEntries::Set_AppendEntries(int _term, int _opcode, int _arg1, int _arg2) {
+    term = _term;
+    opcode = _opcode;
+    arg1 = _arg1;
+    arg2 = _arg2;
+}
+
+
+void AppendEntries::UnMarshal(char *buffer){
+    int net_term;
+    int net_opcode;
+    int net_arg1;
+    int net_arg2;
+
+    int offset = 0;
+
+    memcpy(&net_term, buffer + offset, sizeof(net_term));
+    offset += sizeof(net_term);
+    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
+
+    term = ntohl(net_term);
+    net_opcode = ntohl(net_opcode);
+    net_arg1 = ntohl(net_arg1);
+    net_arg2 = ntohl(net_arg2);
+}
+
+void AppendEntries::Marshal(char *buffer){
+    int net_term = htonl(term);
+    int net_opcode = htonl(opcode);
+    int net_arg1 = htonl(arg1);
+    int net_arg2 = htonl(arg2);
+
+    int offset = 0;
+
+    memcpy(buffer + offset, &net_term, sizeof(net_term));
+    offset += sizeof(net_term);
+    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
+}
+
+int AppendEntries::size() {
+    return sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
+}

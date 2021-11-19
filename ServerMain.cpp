@@ -3,6 +3,8 @@
 #include"ServerStub.h"
 
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo node_info;
@@ -49,10 +51,12 @@ int main(int argc, char *argv[]) {
 //          node_info.role = LEADER;
       }
 
-        // if (node_info.role == LEADER){    //send heartbeat message
-        //   //to-do: send real heartbeat message (empty log replication request)
-        //   server_stub.Broadcast_nodeID();
-        // }
+         if (role == LEADER){    //send heartbeat message
+           //to-do: send real heartbeat message (empty log replication request)
+             server_stub.Connect_Follower();
+             server_stub.Send_AppendEntriesRPC(&node_info);
+             connected = true;
+         }
 
         // if (node_info.role == FOLLOWER){
         //     if (timer.Check_election_timeout()){
@@ -67,3 +71,5 @@ int main(int argc, char *argv[]) {
 
     return 1;
 }
+
+#pragma clang diagnostic pop

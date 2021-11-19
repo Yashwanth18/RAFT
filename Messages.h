@@ -2,7 +2,8 @@
 #define __MESSAGES_H__
 
 #include <string>
-
+#define LEADER_ELECTION 1
+#define APPEND_ENTRIES 2
 struct Peer_Info{
   int unique_id;
   std::string IP;
@@ -24,6 +25,11 @@ struct NodeInfo{
 
     int port;
     int num_peers;
+
+    /* log structure */
+    int opcode;
+    int arg1;
+    int arg2;
 };
 
 /* -----------------Class for Request Vote -----------------*/
@@ -33,7 +39,7 @@ private:
     int candidateId;
     int lastLogIndex;
     int lastLogTerm;
-
+    int messageType;
 public:
     RequestVote();
     void Set(int term, int candidateId, int lastLogIndex, int lastLogTerm);
@@ -54,7 +60,7 @@ class VoteResponse{
 private:
     int term;
     bool voteGranted;
-
+    int messageType;
 public:
     VoteResponse();
     void Set(int term, bool voteGranted);
@@ -70,4 +76,19 @@ public:
 
 };
 
+/*-----------Log replication------------------*/
+class AppendEntries{
+private:
+    int term;
+    int opcode;
+    int arg1;
+    int arg2;
+    int messageType;
+public:
+    AppendEntries();
+    void Set_AppendEntries(int term, int opcode,int arg1, int arg2);
+    void Marshal(char *buffer);
+    void UnMarshal(char * buffer);
+    int size();
+};
 #endif // #ifndef __MESSAGES_H__

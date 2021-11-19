@@ -47,4 +47,9 @@ public:
     /* peer server info */
     int FillPeerServerInfo(int argc, char *argv[]);
     void Print_PeerServerInfo();
+
+
+    /*--------------Leader node (log replication) --------------------*/
+    void Send_AppendEntriesRPC(NodeInfo *nodeInfo);
+    int Send_AppendEntries(AppendEntries * appendEntries, int fd);
 };

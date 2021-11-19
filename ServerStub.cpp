@@ -187,3 +187,36 @@ void ServerStub:: Print_PeerServerInfo(){
     std::cout << "------------------"<< '\n';
   }
 }
+
+
+/* Append Entries RPC which appends the log messa*/
+void ServerStub::Send_AppendEntriesRPC(NodeInfo *node_info) {
+    AppendEntries appendEntries;
+    int term = node_info->term;
+    int opcode = node_info->opcode;
+    int arg1 = node_info->arg1;
+    int arg2 = node_info->arg2;
+    appendEntries.Set_AppendEntries(term, opcode, arg1, arg2);
+    for (int i = 1; i < pfds.size(); i++){
+        Send_AppendEntries(&appendEntries, pfds[i].fd);
+    }
+}
+
+/* Leader node placing the replication request */
+int ServerStub::Send_AppendEntries(AppendEntries *appendEntries, int fd) {
+    int remain_size = appendEntries -> size();
+    char buf[remain_size];
+    //int socket_status;
+    int offset = 0;
+    int bytes_written;
+
+    appendEntries->Marshal(buf);
+
+    while (remain_size > 0){
+        bytes_written = send(fd, buf+offset, remain_size, 0);
+        offset += bytes_written;
+        remain_size -= bytes_written;
+    }
+    std::cout << "remain_size: "<< remain_size << '\n';
+    return 1;   //to-do: fix this with socket_status
+}

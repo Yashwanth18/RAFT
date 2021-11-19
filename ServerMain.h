@@ -33,6 +33,11 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
     node_info ->  lastLogTerm = 0;
     node_info ->  lastLogIndex = 0;
 
+    /* structure of log */
+    node_info -> opcode = -1;
+    node_info -> arg1 = -1;
+    node_info -> arg2 = -1;
+
   return 1;
 }
 

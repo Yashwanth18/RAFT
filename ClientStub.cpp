@@ -78,7 +78,7 @@ bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
     }
     return result;
 }
-
+/* Yash - implement this */
 bool ClientStub::Compare_Log() {
     return true;
 }
