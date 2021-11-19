@@ -26,9 +26,10 @@ int main(int argc, char *argv[]) {
       if (node_info.role == CANDIDATE){
           if (!connected){
             server_stub.Connect_Follower();
+            server_stub.Send_RequestVoteRPC(&node_info);
             connected = true;
           }
-          server_stub.Send_RequestVoteRPC(&node_info);
+
 
           //int poll_count = server_stub.Poll(Poll_timeout);
 

@@ -6,15 +6,15 @@
 
 /*-------------------RequestVote Class------------------*/
 RequestVote::RequestVote()  {
-    int term = -1;
-    int candidateId = -1;
-    int lastLogIndex = -1;
-    int lastLogTerm = -1;
+     term = -1;
+     candidateId = -1;
+     lastLogIndex = -1;
+     lastLogTerm = -1;
 }
 
 
-void RequestVote::
-Set_RequestVote(int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+void RequestVote:: Set_RequestVote(int _term, int _candidateId,
+                                    int _lastLogIndex, int _lastLogTerm){
     term = _term;
     candidateId = _candidateId;
     lastLogIndex = _lastLogIndex;
@@ -62,11 +62,11 @@ void RequestVote::Marshal(char *buffer){
 }
 
 int RequestVote::Size() {
-    return sizeof(term) + sizeof(candidateId) + sizeof(lastLogIndex)+
-           sizeof(lastLogTerm);
+    return sizeof(term) + sizeof(candidateId) + sizeof(lastLogIndex)+ sizeof(lastLogTerm);
 }
 
 void RequestVote::Print(){
+  std::cout << "size: "<< Size()<< '\n';
   std::cout << "term: " << term << '\n';
   std::cout << "candidateId: " << candidateId << '\n';
   std::cout << "lastLogIndex: "<< lastLogIndex << '\n';

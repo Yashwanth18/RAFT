@@ -26,19 +26,19 @@ void ClientStub:: Accept_Connection(){
   non-blocking recvieve RequestVoteRPC
 */
 void ClientStub:: Handle_Follower_Poll(ClientTimer * timer){
-  RequestVote requestVote;
-  char buf[32];
-  int num_alive_sockets = pfds.size();
+    RequestVote requestVote;
+    int num_alive_sockets = pfds.size();
 
-  for(int i = 0; i < num_alive_sockets; i++) {   //looping through file descriptors
-      if (pfds[i].revents & POLLIN) {            //got ready-to-read from poll()
 
-          if (i==0){ //events at the listening socket
-            Accept_Connection();
-          }
+    for(int i = 0; i < num_alive_sockets; i++) {   //looping through file descriptors
+        if (pfds[i].revents & POLLIN) {            //got ready-to-read from poll()
 
-          else{ //events from established connection
+            if (i==0){ //events at the listening socket
+                Accept_Connection();
+            }
 
+            else{ //events from established connection
+              char buf[requestVote.Size()];
               int nbytes = recv(pfds[i].fd, buf, sizeof(requestVote), 0);
 
               if (nbytes <= 0){  //connection closed or error
@@ -47,17 +47,17 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer * timer){
               }
 
               else{             //got good data
+
                   requestVote.Unmarshal(buf);
                   requestVote.Print();
                   //to-do: implement a real ReplyVoteRPC
 
               } //End got good data
-          } //End events from established connection
+            } //End events from established connection
 
-          timer -> Restart();
-      } //End got ready-to-read from poll()
-
-  } // End looping through file descriptors
+            timer -> Restart();
+        } //End got ready-to-read from poll()
+    } // End looping through file descriptors
 }
 
 

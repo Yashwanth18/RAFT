@@ -32,26 +32,64 @@ void ServerStub::Connect_Follower(){
 
 
 void ServerStub::Send_RequestVoteRPC(NodeInfo * node_info){
-  RequestVote requestVote;
-  int term = node_info -> term;
-  int candidateId = node_info -> node_id;
-  int lastLogIndex = node_info -> lastLogIndex;
-  int lastLogTerm = node_info -> lastLogTerm;
+    RequestVote requestVote;
+    int term = node_info -> term;
+    int candidateId = node_info -> node_id;
+    int lastLogIndex = node_info -> lastLogIndex;
+    int lastLogTerm = node_info -> lastLogTerm;
 
-  requestVote.Set_RequestVote(term, candidateId, lastLogIndex, lastLogTerm);
-  for (int i = 1; i < pfds.size(); i++){
-      SendRequestVote(&requestVote, pfds[i].fd);
-  }
+    requestVote.Set_RequestVote(term, candidateId, lastLogIndex, lastLogTerm);
+    for (int i = 1; i < pfds.size(); i++){
+        SendRequestVote(&requestVote, pfds[i].fd);
+    }
 
 }
 
 int ServerStub::SendRequestVote(RequestVote *requestVote, int fd) {
-    char buf[32];
-    int socket_status;
+    int remain_size = requestVote -> Size();
+    char buf[remain_size];
+    //int socket_status;
+    int offset = 0;
+    int bytes_written;
+
     requestVote->Marshal(buf);
-    socket_status = send(fd, buf, sizeof(requestVote), 0);
-    return socket_status;
+
+    while (remain_size > 0){
+        bytes_written = send(fd, buf+offset, remain_size, 0);
+        offset += bytes_written;
+        remain_size -= bytes_written;
+    }
+    std::cout << "remain_size: "<< remain_size << '\n';
+    return 1;   //to-do: fix this with socket_status
 }
+
+
+//int Socket::Send(char *buffer, int size, int flags) {
+//    int bytes_written = 0;
+//    int offset = 0;
+//
+//    while (size > 0) {
+//        try{
+//            bytes_written = send(fd_, buffer + offset, size, flags);
+//
+//            if (bytes_written < 0) {
+//                throw bytes_written;
+//            }
+//        }
+//        catch (int stat){
+//            Close();
+//            return 0;
+//        }
+//
+//        size -= bytes_written;
+//        offset += bytes_written;
+//        assert(size >= 0);
+//    }
+//
+//    return 1;
+//}
+
+
 
 /*return the new file descriptor*/
 int ServerStub:: Connect_To(std::string ip, int port){

@@ -11,29 +11,30 @@ struct Peer_Info{
 };
 
 struct NodeInfo{
-  int port;
-  int num_peers;
+    int port;
+    int num_peers;
 
-  /* Used in RequestVote*/
-  int term;
-  int node_id;     
-  int lastLogTerm;
-  int lastLogIndex;
+    /* Used in RequestVote*/
+    int term;
+    int node_id;
+    int lastLogTerm;
+    int lastLogIndex;
 
-  int role;
-  int leader_id;
+    int role;
+    int leader_id;
 };
 
 class RequestVote {
-public:
+private:
     int term;
     int candidateId;
     int lastLogIndex;
     int lastLogTerm;
-    int voteGranted;
 
+public:
     RequestVote();
-    void Set_RequestVote(int term, int candidateId, int lastLogIndex, int lastLogTerm);
+    void Set_RequestVote(int term, int candidateId,
+                         int lastLogIndex, int lastLogTerm);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
