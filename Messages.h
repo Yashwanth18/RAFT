@@ -33,6 +33,7 @@ struct NodeInfo{
 
     int port;
     int num_peers;
+    int role;
 };
 
 /* -----------------Class for Request Vote -----------------*/

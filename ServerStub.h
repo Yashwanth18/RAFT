@@ -32,19 +32,20 @@ private:
     int port;
 public:
     ServerStub() {};
-    void Init(NodeInfo * node_info);
+    void Init(NodeInfo * nodeInfo);
 
     /* Accept Connection */
     void Accept_Connection();
     void Add_Socket_To_Poll(int new_fd);
 
     /* Connect and Send */
-    int Connect_To(std::string ip, int port);
+    int Create_Socket();
+    int Connect_To(std::string ip, int port, int fd);
     int SendRequestVote(NodeInfo *nodeInfo, int fd);
 
     void FillRequestVote(NodeInfo *nodeInfo, RequestVote *requestVote);
 
     /* Receive */
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
-    void Handle_Poll_Peer(int *num_votes);
+    void Handle_Poll_Peer(int *num_votes, NodeInfo *nodeInfo);
 };

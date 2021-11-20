@@ -7,29 +7,27 @@
 
 #include "Messages.h"
 
-
-
-
 //return 0 on failure and 1 on success
-int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
+int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     if (argc < 4){
         std::cout << "not enough arguments" << std::endl;
         return 0;
     }
 
-    node_info -> leader_id = -1;
-    node_info -> node_id = atoi(argv[2]);
+    nodeInfo -> role = FOLLOWER;
+    nodeInfo -> leader_id = -1;
+    nodeInfo -> node_id = atoi(argv[2]);
 
-    node_info -> port = atoi(argv[1]);
-    node_info -> num_peers = atoi(argv[3]);
+    nodeInfo -> port = atoi(argv[1]);
+    nodeInfo -> num_peers = atoi(argv[3]);
 
     /* Used in RequestVote*/
-    node_info -> term = 0;
-    node_info ->  votedFor = -1;
+    nodeInfo -> term = 0;
+    nodeInfo ->  votedFor = -1;
 
      /* change this to a real vector of struct log */
-    node_info ->  lastLogTerm = 0;
-    node_info ->  lastLogIndex = 0;
+    nodeInfo ->  lastLogTerm = 0;
+    nodeInfo ->  lastLogIndex = 0;
 
   return 1;
 }

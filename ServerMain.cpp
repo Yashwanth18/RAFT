@@ -5,18 +5,16 @@
 
 int main(int argc, char *argv[]) {
     ServerTimer timer;
-    NodeInfo node_info;
+    NodeInfo nodeInfo;
     ServerStub server_stub;
     ServerTimer serverTimer;
     std::vector<Peer_Info> PeerServerInfo;
 
     int Poll_timeout;
-    int poll_count;
-    int role;
+    //int poll_count;
     int num_votes;
-    int new_fd;
 
-    if (!Init_Node_Info(&node_info, argc, argv)){
+    if (!Init_NodeInfo(&nodeInfo, argc, argv)){
         return 0;
     }
 
@@ -24,48 +22,104 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    server_stub.Init(&node_info);
+    server_stub.Init(&nodeInfo);
     Poll_timeout = timer.Poll_timeout();
     num_votes = 0;
 
     /* Initialising to assume the role of the leader for debugging purpose*/
-    role = CANDIDATE;
+    nodeInfo.role = CANDIDATE;
 
-    bool request_completed = false;
-    bool is_initialized = false;   // need to have this attached to each socket. use Vector? How to sync?
-    /* Need to keep track of which peer has answered */
+    int socket[nodeInfo.num_peers];
+    bool socket_status[nodeInfo.num_peers];  /* 0: Dead, 1: Alive */
+    bool is_init[nodeInfo.num_peers];
+    bool request_completed[nodeInfo.num_peers];
 
+    for (int i = 0; i < nodeInfo.num_peers; i++) {   /* Init Socket */
+        socket[i] = server_stub.Create_Socket();
+        is_init[i] = false;
+        socket_status[i] = false;
+    }
+
+    int attempt = 0;
     timer.Start();
+
     while(true){
-        /* need */
-        if (role == CANDIDATE){
+
+        if (nodeInfo.role == CANDIDATE){
             timer.Restart(); /* (re)start a new election */
             num_votes = 0;
+            nodeInfo.term ++;
 
-            while (!timer.Check_election_timeout()){
-                if (!request_completed) {
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                request_completed[i] = false;
+            }
 
-                    /* Send to all peers in parallel */
-                    for (int i = 0; i < node_info.num_peers; i++) {
-                        if (!is_initialized) {
-                            new_fd = server_stub.Connect_To(PeerServerInfo[i].IP, PeerServerInfo[i].port);
+
+            int connect_status;
+
+            /* While (not time out and vote has not been rejected) */
+            while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
+                for (int i = 0; i < nodeInfo.num_peers; i++) {
+
+                    if (!is_init[i]) {
+                        connect_status = server_stub.Connect_To(PeerServerInfo[i].IP,
+                                                                PeerServerInfo[i].port, socket[i]);
+                        std::cout << "attempt: " << attempt;
+                        std::cout << ", connect_status: " << connect_status << '\n';
+                        attempt++;
+                        if (connect_status){
+                            is_init[i] = true;
+                            socket_status[i] = true;
+                            server_stub.Add_Socket_To_Poll(socket[i]);
+                        }else{
+                            close(socket_status[i]);
+                            socket[i] = server_stub.Create_Socket();
                         }
-
-                        if (new_fd > 0) {        // we are connected
-                            is_initialized = true;
-                            server_stub.Add_Socket_To_Poll(new_fd);
-                            server_stub.SendRequestVote(&node_info, new_fd);
-                        }
-                    } /* End: Send to all peers in parallel */
-
-                    poll_count = server_stub.Poll(Poll_timeout);
-
-                    if (poll_count > 0){
-                        server_stub.Handle_Poll_Peer( &num_votes );
-                        request_completed = true;
                     }
                 }
-            } // End: While (not time out)
+
+
+//                /* Send to all peers in parallel */
+//                for (int i = 0; i < nodeInfo.num_peers; i++) {
+//
+//                    if (!request_completed[i]){     // request_completed?
+//                        if (!is_init[i]) {
+
+//                            //code moved up there
+
+//                            close(socket[i]);
+//                            socket[i] = server_stub.Create_Socket(); // new socket
+//
+//                            if (connect_status){
+//                                is_init[i] = true;
+//                                socket_status[i] = true;
+//                                server_stub.Add_Socket_To_Poll(socket[i]);
+//                            }
+//                        }
+//
+//                        if (socket_status[i]){
+//                            std::cout << "sending to file " << socket[i] << "..." << '\n';
+//                            if (!server_stub.SendRequestVote(&nodeInfo, socket[i])){ // if send fail
+//                                is_init[i] = false;
+//                                socket_status[i] = false;
+//
+//                            }
+//                        }
+//
+//
+//                    } // End: request_completed?
+//                } /* End: Send to all peers in parallel */
+//
+//                poll_count = server_stub.Poll(Poll_timeout);
+//
+//                /* Do error handling for recv */
+//                if (poll_count > 0){
+//                    server_stub.Handle_Poll_Peer( &num_votes, &nodeInfo);
+//                    request_completed[0] = true;
+//                    nodeInfo.role = LEADER;
+//                }
+
+            } // End: While (not time out and vote has not been rejected)
         } // End: Candidate role
     } // END: while(true)
 }
@@ -73,14 +127,14 @@ int main(int argc, char *argv[]) {
 
 // /*--------------------------Code below is for future implementation-----------------------*/
 /*
- if (node_info.role == LEADER){    //send heartbeat message
+ if (nodeInfo.role == LEADER){    //send heartbeat message
       to-do: check if there is a write request from the real client
       to-do: if no, send real heartbeat message (empty log replication request)
  }
 
- if (node_info.role == FOLLOWER){
+ if (nodeInfo.role == FOLLOWER){
      if (timer.Check_election_timeout()){
-         node_info.role = CANDIDATE;
+         nodeInfo.role = CANDIDATE;
      }
      else{
          server_stub.Poll(Poll_timeout);

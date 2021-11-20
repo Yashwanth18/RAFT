@@ -4,10 +4,10 @@
 Initialize a non-blocking socket to listen for connection from peer servers and fill peer server info
 Return 1 on success and 0 on failure
 */
-void ServerStub:: Init(NodeInfo * node_info){
+void ServerStub:: Init(NodeInfo * nodeInfo){
 
-  port = node_info -> port;
-  num_peers = node_info -> num_peers;
+  port = nodeInfo -> port;
+  num_peers = nodeInfo -> num_peers;
 
   /* Listen for both the clients and the peer servers through one socket */
   Add_Socket_To_Poll(ListenSocket.Init(port));
@@ -20,7 +20,9 @@ void ServerStub:: Add_Socket_To_Poll(int new_fd){
     pfds_server.push_back(new_pfd);
 }
 
-
+/* return the new file descriptor
+ * 0 on failure and 1 on success
+ * */
 
 int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
     RequestVote requestVote;
@@ -28,13 +30,22 @@ int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
     char buf[remain_size];
     int offset = 0;
     int bytes_written;
-    //int socket_status;
 
     FillRequestVote(nodeInfo, &requestVote);
     requestVote.Marshal(buf);
 
     while (remain_size > 0){
-        bytes_written = send(fd, buf+offset, remain_size, 0);
+
+        try{
+            bytes_written = send(fd, buf+offset, remain_size, 0);
+            if (bytes_written < 0){
+                throw bytes_written;
+            }
+        }
+        catch(int stat){
+            return 0;
+        }
+
         offset += bytes_written;
         remain_size -= bytes_written;
     }
@@ -42,30 +53,33 @@ int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
     return 1;   /* to-do: fix this with socket_status */
 }
 
-void ServerStub::FillRequestVote(NodeInfo * node_info, RequestVote *requestVote) {
-    int term = node_info -> term;
-    int candidateId = node_info -> node_id;
-    int lastLogIndex = node_info -> lastLogIndex;
-    int lastLogTerm = node_info -> lastLogTerm;
-    int send_status = 0;
+void ServerStub::FillRequestVote(NodeInfo * nodeInfo, RequestVote *requestVote) {
+    int term = nodeInfo -> term;
+    int candidateId = nodeInfo -> node_id;
+    int lastLogIndex = nodeInfo -> lastLogIndex;
+    int lastLogTerm = nodeInfo -> lastLogTerm;
 
     requestVote -> Set(term, candidateId, lastLogIndex, lastLogTerm);
 }
 
-
-/* return the new file descriptor
- * -1 on failure
- * */
-int ServerStub:: Connect_To(std::string ip, int port){
+int ServerStub::Create_Socket() {
     int new_fd;
-    struct sockaddr_in addr;
-    int connect_status;
-
     new_fd = socket(AF_INET, SOCK_STREAM, 0);
+
     if (new_fd < 0) {
         perror("ERROR: failed to create a socket");
         return -1;
     }
+
+    return new_fd;
+}
+
+/* return the new file descriptor
+ * 0 on failure and 1 on success
+ * */
+int ServerStub:: Connect_To(std::string ip, int port, int new_fd){
+    struct sockaddr_in addr;
+    int connect_status;
 
     memset(&addr, '\0', sizeof(addr));
     addr.sin_family = AF_INET;
@@ -73,7 +87,6 @@ int ServerStub:: Connect_To(std::string ip, int port){
     addr.sin_port = htons(port);
 
 
-    //to-do: do error handling for connect. The same as Programming Assignment 2
     try{
         connect_status = connect(new_fd, (struct sockaddr *) &addr, sizeof(addr));
         if (connect_status < 0){
@@ -81,11 +94,11 @@ int ServerStub:: Connect_To(std::string ip, int port){
         }
     }
     catch(int stat){
-        return -1;
+        return 0;
     }
 
     fcntl(new_fd, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking */
-    return new_fd;
+    return 1;
 }
 
 
@@ -112,7 +125,7 @@ int ServerStub:: Poll(int poll_timeout){
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
-void ServerStub:: Handle_Poll_Peer(int * num_votes){
+void ServerStub:: Handle_Poll_Peer(int * num_votes, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
     char buf[voteResponse.Size()];
     int num_alive_sockets = pfds_server.size();
@@ -141,7 +154,11 @@ void ServerStub:: Handle_Poll_Peer(int * num_votes){
                     if (voteResponse.Get_voteGranted()){
                         (* num_votes) ++;
                     }
-                }                                           /* End got good data */
+                    else{  // vote got rejected, which means the node lags behind
+                        nodeInfo -> role = FOLLOWER;
+                        nodeInfo -> term = voteResponse.Get_term();
+                    }
+                }                       /* End got good data */
             }                     /* End events from established connection */
         }                    /* End got ready-to-read from poll() */
     }                    /* End looping through file descriptors */
