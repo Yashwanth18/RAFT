@@ -14,7 +14,9 @@
 #include "ServerListenSocket.h"
 #include "ServerTimer.h"
 #include "Messages.h"
-
+#define FOLLOWER 0
+#define CANDIDATE 1
+#define LEADER 2
 
 class ServerStub{
 private:
@@ -42,7 +44,7 @@ public:
     int Poll(int poll_timeout);          //Poll_timeout is in millisecond
     void Handle_Poll(int *num_votes);
     void Accept_Connection();
-
+    void Handle_Follower_Poll(ServerTimer * timer, NodeInfo *nodeInfo);
 
     /* peer server info */
     int FillPeerServerInfo(int argc, char *argv[]);

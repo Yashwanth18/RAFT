@@ -15,6 +15,7 @@ struct NodeInfo{
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     int term;
     int votedFor;
+    int role;
 
     /* change this to a real vector of struct log */
     int lastLogTerm;
@@ -80,15 +81,18 @@ public:
 class AppendEntries{
 private:
     int term;
+    int node_id;
     int opcode;
     int arg1;
     int arg2;
     int messageType;
 public:
     AppendEntries();
-    void Set_AppendEntries(int term, int opcode,int arg1, int arg2);
+    void Set_AppendEntries(int node_id,int term, int opcode,int arg1, int arg2);
     void Marshal(char *buffer);
     void UnMarshal(char * buffer);
+    int Get_term();
+    int Get_id();
     int size();
 };
 #endif // #ifndef __MESSAGES_H__

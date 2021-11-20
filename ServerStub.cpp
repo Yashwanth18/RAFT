@@ -196,7 +196,7 @@ void ServerStub::Send_AppendEntriesRPC(NodeInfo *node_info) {
     int opcode = node_info->opcode;
     int arg1 = node_info->arg1;
     int arg2 = node_info->arg2;
-    appendEntries.Set_AppendEntries(term, opcode, arg1, arg2);
+    appendEntries.Set_AppendEntries(node_info->node_id,term, opcode, arg1, arg2);
     for (int i = 1; i < pfds.size(); i++){
         Send_AppendEntries(&appendEntries, pfds[i].fd);
     }
@@ -220,3 +220,69 @@ int ServerStub::Send_AppendEntries(AppendEntries *appendEntries, int fd) {
     std::cout << "remain_size: "<< remain_size << '\n';
     return 1;   //to-do: fix this with socket_status
 }
+
+
+/* scenario when candidate receives append entries rpc, it has to verify
+   the term of the incoming request, and if it is greater than current candidate node's term
+   change the current candidate node's status to follower and end the election*/
+void ServerStub:: Handle_Follower_Poll(ServerTimer *timer, NodeInfo *nodeInfo){
+    AppendEntries appendEntries;
+    char buf[appendEntries.size()];
+    int num_alive_sockets = pfds.size();
+
+    for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
+        if (pfds[i].revents & POLLIN) {            /* got ready-to-read from poll() */
+
+            if (i==0){ /* events at the listening socket */
+                Accept_Connection();
+            }
+
+            else{ /* events from established connection */
+
+                int nbytes = recv(pfds[i].fd, buf, sizeof(appendEntries), 0);
+
+                if (nbytes <= 0){  /* connection closed or error */
+                    close(pfds[i].fd);
+                    pfds.erase(pfds.begin()+i);     /* delete */
+                }
+
+                else{             /* got good data */
+
+                    appendEntries.UnMarshal(buf);
+
+                    if(appendEntries.Get_term() > nodeInfo->term)
+                    {
+                        nodeInfo->leader_id = appendEntries.Get_id();
+                        nodeInfo->role =  FOLLOWER;
+                        // end the timer;
+                    }
+                } /* End got good data */
+            } /* End events from established connection */
+
+        } /* End got ready-to-read from poll() */
+    } /*  End looping through file descriptors */
+}
+//
+//bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
+//    bool result = false;
+//    if (requestVote -> Get_term() < nodeInfo -> term){
+//        return result;
+//    }
+//    else if (nodeInfo -> votedFor == -1 && Compare_Log(nodeInfo,requestVote)){
+//        result = true;
+//        nodeInfo -> votedFor = requestVote -> Get_candidateId();
+//        nodeInfo -> term = requestVote -> Get_term();
+//    }
+//    return result;
+//}
+///* Yash - implement this */
+//bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
+//    bool log_ok =  (requestVote->Get_term() > nodeInfo -> lastLogTerm)
+//                   || (requestVote->Get_term() == nodeInfo->lastLogTerm
+//                       && requestVote->Get_last_log_index() >= nodeInfo->lastLogIndex);
+//    if(requestVote->Get_term() == nodeInfo->term && log_ok && nodeInfo->votedFor == -1)
+//    {
+//        return true;
+//    }
+//    return false;
+//}

@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
           if (!connected){
             server_stub.Connect_Follower();
             server_stub.Send_RequestVoteRPC(&node_info);
+            server_stub.Handle_Follower_Poll(&timer,&node_info);
             connected = true;
           }
 

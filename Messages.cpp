@@ -146,10 +146,12 @@ AppendEntries::AppendEntries()  {
     opcode = -1;
     arg1 = -1;
     arg2 = -1;
+    node_id = -1;
 }
 
 
-void AppendEntries::Set_AppendEntries(int _term, int _opcode, int _arg1, int _arg2) {
+void AppendEntries::Set_AppendEntries(int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
+    node_id = _node_id;
     term = _term;
     opcode = _opcode;
     arg1 = _arg1;
@@ -198,4 +200,12 @@ void AppendEntries::Marshal(char *buffer){
 
 int AppendEntries::size() {
     return sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
+}
+
+int AppendEntries::Get_term() {
+    return term;
+}
+
+int AppendEntries::Get_id() {
+    return node_id;
 }
