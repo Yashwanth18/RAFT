@@ -95,12 +95,14 @@ VoteResponse::VoteResponse()  {
      term = -1;
      voteGranted = false;
      node_id = -1;
+     messageType = LEADER_ELECTION;
 }
 
 void VoteResponse::Set(int _term, bool _voteGranted, int _node_id){
     term = _term;
     voteGranted = _voteGranted;
     node_id = _node_id;
+
 }
 
 
@@ -109,7 +111,7 @@ void VoteResponse::Unmarshal(char *buffer){
     bool net_vote_granted;
     int net_node_id;
 
-    int offset = 0;
+    int offset = 4; // first 4 bytes are for messageType field
 
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
@@ -123,12 +125,15 @@ void VoteResponse::Unmarshal(char *buffer){
 }
 
 void VoteResponse::Marshal(char *buffer){
+    int net_message_type = htonl(messageType); // messageType field to determine if it's vote response or
+                                               // log replication
     int net_term = htonl(term);
     bool net_vote_granted = htonl(voteGranted);
     int net_node_id = htonl(node_id);
 
     int offset = 0;
-
+    memcpy(buffer + offset, &net_message_type, sizeof(net_message_type));
+    offset += sizeof(net_message_type);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_vote_granted, sizeof(net_vote_granted));
@@ -157,3 +162,81 @@ int VoteResponse::Get_term() {
     return term;
 }
 
+
+/*-------------------------------Append Entries class------------------*/
+
+AppendEntries::AppendEntries()  {
+    term = 0;
+    opcode = -1;
+    arg1 = -1;
+    arg2 = -1;
+    node_id = -1;
+    messageType = APPEND_ENTRIES;
+}
+
+
+void AppendEntries::Set_AppendEntries(int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
+    node_id = _node_id;
+    term = _term;
+    opcode = _opcode;
+    arg1 = _arg1;
+    arg2 = _arg2;
+}
+
+
+void AppendEntries::UnMarshal(char *buffer){
+    int net_term;
+    int net_opcode;
+    int net_arg1;
+    int net_arg2;
+
+    int offset = 4;
+
+    memcpy(&net_term, buffer + offset, sizeof(net_term));
+    offset += sizeof(net_term);
+    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
+
+    term = ntohl(net_term);
+    opcode = ntohl(net_opcode);
+    arg1 = ntohl(net_arg1);
+    arg2 = ntohl(net_arg2);
+}
+
+void AppendEntries::Marshal(char *buffer){
+    int net_message_type = htonl(messageType); // messageType field to determine if it's vote response or
+                                                // log replication
+    int net_term = htonl(term);
+    int net_opcode = htonl(opcode);
+    int net_arg1 = htonl(arg1);
+    int net_arg2 = htonl(arg2);
+
+    int offset = 0;
+
+    memcpy(buffer + offset, &net_message_type, sizeof(net_message_type));
+    offset += sizeof(net_message_type);
+    memcpy(buffer + offset, &net_term, sizeof(net_term));
+    offset += sizeof(net_term);
+    memcpy(buffer + offset, &net_term, sizeof(net_term));
+    offset += sizeof(net_term);
+    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
+}
+
+int AppendEntries::size() {
+    return sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
+}
+
+int AppendEntries::Get_term() {
+    return term;
+}
+
+int AppendEntries::Get_id() {
+    return node_id;
+}

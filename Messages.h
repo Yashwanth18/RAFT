@@ -11,6 +11,9 @@
 #define CLIENT_CONNECTION 1
 #define SERVER_CONNECTION 2
 
+#define LEADER_ELECTION 1
+#define APPEND_ENTRIES 2
+
 
 struct Peer_Info{
   int unique_id;
@@ -66,7 +69,7 @@ private:
     int term;
     bool voteGranted;
     int node_id;
-
+    int messageType;
 public:
     VoteResponse();
     void Set(int _term, bool _voteGranted, int _node_id);
@@ -82,6 +85,25 @@ public:
     int Get_node_id();
     int Get_term();
 
+};
+
+/*-----------Log replication------------------*/
+class AppendEntries{
+private:
+    int term;
+    int node_id;
+    int opcode;
+    int arg1;
+    int arg2;
+    int messageType;
+public:
+    AppendEntries();
+    void Set_AppendEntries(int node_id,int term, int opcode,int arg1, int arg2);
+    void Marshal(char *buffer);
+    void UnMarshal(char * buffer);
+    int Get_term();
+    int Get_id();
+    int size();
 };
 
 #endif // #ifndef __MESSAGES_H__

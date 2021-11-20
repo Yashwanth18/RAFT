@@ -122,14 +122,18 @@ int ServerStub:: Poll(int poll_timeout){
     return poll_count;
 }
 
+
+
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
 void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, int * num_votes, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
-    char buf[voteResponse.Size()];
+    AppendEntries appendEntries;
+    char buf[voteResponse.Size() + appendEntries.size() + 4];
     int num_alive_sockets = pfds_server.size();
-
+    int message_type; // message descriptor to determine if the message is append entries or vote response
+    int offset = 0;
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
         if (pfds_server[i].revents & POLLIN) {            /* got ready-to-read from poll() */
 
@@ -147,21 +151,43 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                 }
 
                 else{                                       /* got good data */
-                    voteResponse.Unmarshal(buf);
-                    voteResponse.Print();
 
-                    /* Need a mechanism to check which nodes have voted. */
+                    memcpy(&message_type, buf + offset, sizeof(message_type)); // get messageType field
+                    offset += sizeof(message_type);
 
-                    if (voteResponse.Get_voteGranted()){
-                        (* num_votes) ++;
+                    if (ntohl(message_type) == LEADER_ELECTION) {
+                        voteResponse.Unmarshal(buf);
+                        voteResponse.Print();
+
+                        /* Need a mechanism to check which nodes have voted. */
+
+                        if (voteResponse.Get_voteGranted()) {
+                            (*num_votes)++;
+                        } else {  // vote got rejected, which means the node lags behind
+                            nodeInfo->role = FOLLOWER;
+                            nodeInfo->term = voteResponse.Get_term();
+                        }
+                        int index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
+                        std::cout << "index value is : " << index << '\n';
+                        request_completed[index] = true;
                     }
-                    else{  // vote got rejected, which means the node lags behind
-                        nodeInfo -> role = FOLLOWER;
-                        nodeInfo -> term = voteResponse.Get_term();
+
+                    else if (ntohl(message_type) == APPEND_ENTRIES) { // when the candidate gets a log
+                                                                        // replication request from other
+                                                                        // node
+
+                        appendEntries.UnMarshal(buf);
+
+                        int leader_term = appendEntries.Get_term();
+                        int node_term = nodeInfo -> term;
+                        int leader_id = appendEntries.Get_id();
+
+                        if (leader_term > node_term) {
+                            nodeInfo -> leader_id = leader_id;
+                            nodeInfo->role =  FOLLOWER;
+                        }
+
                     }
-                    int index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
-                    std::cout << "index value is : " << index << '\n';
-                    request_completed[index] = true;
                 }                       /* End got good data */
             }                     /* End events from established connection */
         }                    /* End got ready-to-read from poll() */

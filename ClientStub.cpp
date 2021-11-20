@@ -117,7 +117,7 @@ bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
 }
 
 int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {
-    int remain_size = voteResponse -> Size();
+    int remain_size = voteResponse -> Size() + 4; // additional 4 bytes for the messageType field
     char buf[remain_size];
 //    int socket_status;
     int offset = 0;
