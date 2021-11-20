@@ -67,7 +67,9 @@ int RequestVote::Size() {
 int RequestVote::Get_term() {
     return term;
 }
-
+int RequestVote::Get_last_log_index() {
+    return lastLogIndex;
+}
 int RequestVote::Get_candidateId() {
     return candidateId;
 }

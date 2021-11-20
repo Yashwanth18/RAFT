@@ -50,7 +50,7 @@ public:
     /* get private variable function */
     int Get_term();
     int Get_candidateId();
-
+    int Get_last_log_index();
     int Size();
     void Print();
 };
