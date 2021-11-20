@@ -78,16 +78,23 @@ bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
     }
     return result;
 }
-/* Yash - implement this */
+/* Comparing the last_term and log length for the candidate node and the follower node */
 bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
-   bool log_ok =  (requestVote->Get_term() > nodeInfo -> lastLogTerm)
-                    || (requestVote->Get_term() == nodeInfo->lastLogTerm
-                        && requestVote->Get_last_log_index() >= nodeInfo->lastLogIndex);
-   if(requestVote->Get_term() == nodeInfo->term && log_ok && nodeInfo->votedFor == -1)
+
+   int candidate_term = requestVote -> Get_term();
+   int node_last_log_term = nodeInfo -> lastLogTerm;
+   int candidate_last_log_index = requestVote -> Get_last_log_index();
+   int node_last_log_index = nodeInfo -> lastLogIndex;
+   bool check_term = candidate_term > node_last_log_term;
+   bool chek_last_log_index = false;
+
+   if ( candidate_term == node_last_log_term )
    {
-       return true;
+       chek_last_log_index = candidate_last_log_index >= node_last_log_index;
    }
-    return false;
+
+   bool log_ok =  check_term || chek_last_log_index;
+   return log_ok;
 }
 
 int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {

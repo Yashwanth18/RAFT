@@ -249,10 +249,13 @@ void ServerStub:: Handle_Follower_Poll(ServerTimer *timer, NodeInfo *nodeInfo){
                 else{             /* got good data */
 
                     appendEntries.UnMarshal(buf);
+                    int append_entries_term = appendEntries.Get_term();
+                    int node_term = nodeInfo -> term;
+                    int append_entries_id = appendEntries.Get_id();
 
-                    if(appendEntries.Get_term() > nodeInfo->term)
+                    if ( append_entries_term > node_term )
                     {
-                        nodeInfo->leader_id = appendEntries.Get_id();
+                        nodeInfo -> leader_id = append_entries_id;
                         nodeInfo->role =  FOLLOWER;
                         // end the timer;
                     }
@@ -262,27 +265,3 @@ void ServerStub:: Handle_Follower_Poll(ServerTimer *timer, NodeInfo *nodeInfo){
         } /* End got ready-to-read from poll() */
     } /*  End looping through file descriptors */
 }
-//
-//bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
-//    bool result = false;
-//    if (requestVote -> Get_term() < nodeInfo -> term){
-//        return result;
-//    }
-//    else if (nodeInfo -> votedFor == -1 && Compare_Log(nodeInfo,requestVote)){
-//        result = true;
-//        nodeInfo -> votedFor = requestVote -> Get_candidateId();
-//        nodeInfo -> term = requestVote -> Get_term();
-//    }
-//    return result;
-//}
-///* Yash - implement this */
-//bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
-//    bool log_ok =  (requestVote->Get_term() > nodeInfo -> lastLogTerm)
-//                   || (requestVote->Get_term() == nodeInfo->lastLogTerm
-//                       && requestVote->Get_last_log_index() >= nodeInfo->lastLogIndex);
-//    if(requestVote->Get_term() == nodeInfo->term && log_ok && nodeInfo->votedFor == -1)
-//    {
-//        return true;
-//    }
-//    return false;
-//}
