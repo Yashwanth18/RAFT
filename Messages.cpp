@@ -67,9 +67,7 @@ int RequestVote::Size() {
 int RequestVote::Get_term() {
     return term;
 }
-int RequestVote::Get_last_log_index() {
-    return lastLogIndex;
-}
+
 int RequestVote::Get_candidateId() {
     return candidateId;
 }
@@ -88,124 +86,66 @@ void RequestVote::Print(){
 VoteResponse::VoteResponse()  {
      term = -1;
      voteGranted = false;
-
+     node_id = -1;
 }
 
-
-void VoteResponse::Set(int _term, bool _voteGranted){
-
+void VoteResponse::Set(int _term, bool _voteGranted, int _node_id){
     term = _term;
     voteGranted = _voteGranted;
+    node_id = _node_id;
 }
 
 
 void VoteResponse::Unmarshal(char *buffer){
     int net_term;
     bool net_vote_granted;
+    int net_node_id;
+
     int offset = 0;
 
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_vote_granted, buffer + offset, sizeof(net_vote_granted));
+    offset += sizeof(net_vote_granted);
+    memcpy(&net_node_id, buffer + offset, sizeof(net_node_id));
 
     term = ntohl(net_term);
     voteGranted = ntohl(net_vote_granted);
-
+    node_id = ntohl(net_node_id);
 }
 
 void VoteResponse::Marshal(char *buffer){
     int net_term = htonl(term);
     bool net_vote_granted = htonl(voteGranted);
+    int net_node_id = htonl(node_id);
 
     int offset = 0;
 
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_vote_granted, sizeof(net_vote_granted));
-    //offset += sizeof(net_vote_granted);
+    offset += sizeof(net_vote_granted);
+    memcpy(buffer + offset, &net_node_id, sizeof(net_node_id));
 
 }
+
+int VoteResponse::Size() {
+    return sizeof(term) + sizeof(voteGranted) + sizeof (node_id);
+}
+
 void VoteResponse::Print() {
     std::cout<<"term: "<< term <<'\n';
     std::cout<<"voteGranted: "<< voteGranted<<'\n';
+    std::cout<<"node_id: "<< node_id<<'\n';
 }
 
 bool VoteResponse::Get_voteGranted() {
     return voteGranted;
 }
-
-int VoteResponse::Size() {
-    return sizeof(term) + sizeof(voteGranted) ;
+int VoteResponse::Get_node_id() {
+    return node_id;
 }
-
-
-/*-------------------------------Append Entries class------------------*/
-
-AppendEntries::AppendEntries()  {
-    term = 0;
-    opcode = -1;
-    arg1 = -1;
-    arg2 = -1;
-    node_id = -1;
-}
-
-
-void AppendEntries::Set_AppendEntries(int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
-    node_id = _node_id;
-    term = _term;
-    opcode = _opcode;
-    arg1 = _arg1;
-    arg2 = _arg2;
-}
-
-
-void AppendEntries::UnMarshal(char *buffer){
-    int net_term;
-    int net_opcode;
-    int net_arg1;
-    int net_arg2;
-
-    int offset = 0;
-
-    memcpy(&net_term, buffer + offset, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
-    offset += sizeof(net_opcode);
-    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
-    offset += sizeof(net_arg1);
-    memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
-
-    term = ntohl(net_term);
-    net_opcode = ntohl(net_opcode);
-    net_arg1 = ntohl(net_arg1);
-    net_arg2 = ntohl(net_arg2);
-}
-
-void AppendEntries::Marshal(char *buffer){
-    int net_term = htonl(term);
-    int net_opcode = htonl(opcode);
-    int net_arg1 = htonl(arg1);
-    int net_arg2 = htonl(arg2);
-
-    int offset = 0;
-
-    memcpy(buffer + offset, &net_term, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
-    offset += sizeof(net_opcode);
-    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
-    offset += sizeof(net_arg1);
-    memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
-}
-
-int AppendEntries::size() {
-    return sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
-}
-
-int AppendEntries::Get_term() {
+int VoteResponse::Get_term() {
     return term;
 }
 
-int AppendEntries::Get_id() {
-    return node_id;
-}

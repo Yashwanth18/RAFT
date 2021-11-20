@@ -54,14 +54,17 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
                   requestVote.Unmarshal(buf);
                   requestVote.Print();
 
+                  timer -> Print_elapsed_time();
+
                   /* to-do: implement the vote granted condition logic */
-                  voteResponse.Set(nodeInfo -> term, Decide_Vote(nodeInfo, &requestVote));
+                  voteResponse.Set(nodeInfo -> term,Decide_Vote(nodeInfo, &requestVote),
+                                   nodeInfo -> node_id);
                   Send_voteResponse(&voteResponse, pfds[i].fd);
               } /* End got good data */
             } /* End events from established connection */
 
             timer -> Restart();
-            timer -> Print_elapsed_time();
+
         } /* End got ready-to-read from poll() */
     } /*  End looping through file descriptors */
 }
@@ -71,23 +74,16 @@ bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
     if (requestVote -> Get_term() < nodeInfo -> term){
         return result;
     }
-    else if (nodeInfo -> votedFor == -1 && Compare_Log(nodeInfo,requestVote)){
+    else if (nodeInfo -> votedFor == -1 && Compare_Log()){
         result = true;
         nodeInfo -> votedFor = requestVote -> Get_candidateId();
-        nodeInfo -> term = requestVote -> Get_term();
+//        nodeInfo -> term = requestVote -> Get_term();
     }
     return result;
 }
-/* Yash - implement this */
-bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
-   bool log_ok =  (requestVote->Get_term() > nodeInfo -> lastLogTerm)
-                    || (requestVote->Get_term() == nodeInfo->lastLogTerm
-                        && requestVote->Get_last_log_index() >= nodeInfo->lastLogIndex);
-   if(requestVote->Get_term() == nodeInfo->term && log_ok && nodeInfo->votedFor == -1)
-   {
-       return true;
-   }
-    return false;
+
+bool ClientStub::Compare_Log() {
+    return true;
 }
 
 int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {

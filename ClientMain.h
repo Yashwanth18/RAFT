@@ -19,11 +19,16 @@
 
 #include "Messages.h"
 
-//return 0 on failure and 1 on success
+/* usage: ./client port nodeId
+ * return 0 on failure and 1 on success
+*/
 int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
-
+    if (argc < 3){
+        std:: cout << "usage: ./client port nodeId" << '\n';
+        return 0;
+    }
     node_info -> leader_id = -1;
-    node_info -> node_id = -1;
+    node_info -> node_id = atoi(argv[2]);
 
     node_info -> port = atoi(argv[1]);
     node_info -> num_peers = -1;

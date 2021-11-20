@@ -2,9 +2,13 @@
 #define __SOCKET_H__
 
 #include <string>
-
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <assert.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
 
 #define NAGLE_ON	0
 #define NAGLE_OFF	1

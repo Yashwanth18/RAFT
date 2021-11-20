@@ -27,5 +27,5 @@ int main(int argc, char *argv[]) {
         clientstub.Handle_Follower_Poll(&timer, &node_info);
     }
 
-    return 1;
+
 }

@@ -14,44 +14,37 @@
 #include "ServerListenSocket.h"
 #include "ServerTimer.h"
 #include "Messages.h"
-#define FOLLOWER 0
-#define CANDIDATE 1
-#define LEADER 2
+
+
 
 class ServerStub{
 private:
-    std::vector<Peer_Info> PeerServerInfo;
     ServerListenSocket ListenSocket;
+
+    /* Design Modification: to-do ~ Use two ports given by the command line arguments.
+     * One port listening for the peer servers and one port listening for the clients.
+     */
+    std::vector<pollfd> pfds_server;    /* for checking sockets connected to peer server. */
+
+    /* Need a way to check if socket for talking to each peer server is already initialized */
+
     int num_peers;
-    int node_id;
     int port;
-
-    //polling to avoid blocking. Initialisation.
-    std::vector<pollfd> pfds;
-
 public:
     ServerStub() {};
+    void Init(NodeInfo * node_info);
 
-    int Init(NodeInfo * node_info, int argc, char *argv[]);
+    /* Accept Connection */
+    void Accept_Connection();
     void Add_Socket_To_Poll(int new_fd);
 
-    void Connect_Follower();
-    void Send_RequestVoteRPC(NodeInfo *node_info);
-
+    /* Connect and Send */
     int Connect_To(std::string ip, int port);
-    int SendRequestVote(RequestVote *requestVote, int fd);
+    int SendRequestVote(NodeInfo *nodeInfo, int fd);
 
-    int Poll(int poll_timeout);          //Poll_timeout is in millisecond
-    void Handle_Poll(int *num_votes);
-    void Accept_Connection();
-    void Handle_Follower_Poll(ServerTimer * timer, NodeInfo *nodeInfo);
+    void FillRequestVote(NodeInfo *nodeInfo, RequestVote *requestVote);
 
-    /* peer server info */
-    int FillPeerServerInfo(int argc, char *argv[]);
-    void Print_PeerServerInfo();
-
-
-    /*--------------Leader node (log replication) --------------------*/
-    void Send_AppendEntriesRPC(NodeInfo *nodeInfo);
-    int Send_AppendEntries(AppendEntries * appendEntries, int fd);
+    /* Receive */
+    int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
+    void Handle_Poll_Peer(int *num_votes);
 };

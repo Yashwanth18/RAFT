@@ -1,20 +1,5 @@
 #include "Socket.h"
 
-#include <iostream>
-
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/tcp.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-
 Socket::Socket() : is_initialized_(false), nagle_(NAGLE_ON) {}
 
 Socket::~Socket() {
