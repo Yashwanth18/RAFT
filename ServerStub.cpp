@@ -125,7 +125,7 @@ int ServerStub:: Poll(int poll_timeout){
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
-void ServerStub:: Handle_Poll_Peer(int * num_votes, NodeInfo *nodeInfo){
+void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, int * num_votes, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
     char buf[voteResponse.Size()];
     int num_alive_sockets = pfds_server.size();
@@ -151,6 +151,7 @@ void ServerStub:: Handle_Poll_Peer(int * num_votes, NodeInfo *nodeInfo){
                     voteResponse.Print();
 
                     /* Need a mechanism to check which nodes have voted. */
+
                     if (voteResponse.Get_voteGranted()){
                         (* num_votes) ++;
                     }
@@ -158,6 +159,9 @@ void ServerStub:: Handle_Poll_Peer(int * num_votes, NodeInfo *nodeInfo){
                         nodeInfo -> role = FOLLOWER;
                         nodeInfo -> term = voteResponse.Get_term();
                     }
+                    int index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
+                    std::cout << "index value is : " << index << '\n';
+                    request_completed[index] = true;
                 }                       /* End got good data */
             }                     /* End events from established connection */
         }                    /* End got ready-to-read from poll() */

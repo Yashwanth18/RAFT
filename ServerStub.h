@@ -14,7 +14,7 @@
 #include "ServerListenSocket.h"
 #include "ServerTimer.h"
 #include "Messages.h"
-
+#include <map>
 
 
 class ServerStub{
@@ -47,5 +47,5 @@ public:
 
     /* Receive */
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
-    void Handle_Poll_Peer(int *num_votes, NodeInfo *nodeInfo);
+    void Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap,bool* request_completed, int *num_votes, NodeInfo *nodeInfo);
 };

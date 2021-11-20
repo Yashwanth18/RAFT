@@ -2,23 +2,23 @@
 #include "ServerTimer.h"
 #include "ServerStub.h"
 
-
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo nodeInfo;
     ServerStub server_stub;
     ServerTimer serverTimer;
     std::vector<Peer_Info> PeerServerInfo;
+    std::map<int,int> PeerIdIndexMap;
 
     int Poll_timeout;
-    //int poll_count;
+    int poll_count;
     int num_votes;
 
     if (!Init_NodeInfo(&nodeInfo, argc, argv)){
         return 0;
     }
 
-    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo)){
+    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)){
         return 0;
     }
 
@@ -61,21 +61,58 @@ int main(int argc, char *argv[]) {
             while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
                 for (int i = 0; i < nodeInfo.num_peers; i++) {
 
-                    if (!is_init[i]) {
-                        connect_status = server_stub.Connect_To(PeerServerInfo[i].IP,
-                                                                PeerServerInfo[i].port, socket[i]);
-                        std::cout << "attempt: " << attempt;
-                        std::cout << ", connect_status: " << connect_status << '\n';
-                        attempt++;
-                        if (connect_status){
-                            is_init[i] = true;
-                            socket_status[i] = true;
-                            server_stub.Add_Socket_To_Poll(socket[i]);
-                        }else{
-                            close(socket_status[i]);
-                            socket[i] = server_stub.Create_Socket();
+                    if (!request_completed[i]) {
+                        if (!is_init[i]) {
+                            connect_status = server_stub.Connect_To(PeerServerInfo[i].IP,
+                                                                    PeerServerInfo[i].port, socket[i]);
+                            //                        std::cout << "attempt: " << attempt;
+                            //                        std::cout << ", connect_status: " << connect_status << '\n';
+                            attempt++;
+                            if (connect_status) {
+                                is_init[i] = true;
+                                socket_status[i] = true;
+                                server_stub.Add_Socket_To_Poll(socket[i]);
+                            } else {
+                                close(socket_status[i]);
+                                socket[i] = server_stub.Create_Socket();
+                            }
                         }
                     }
+                }
+
+                for (int i=0; i < nodeInfo.num_peers; i++) {
+
+                    if (!request_completed[i]) {
+                        if (socket_status[i]) {
+
+                            std::cout << "sending request vote" << '\n';
+                            if (!server_stub.SendRequestVote(&nodeInfo, socket[i])) { // if send fail
+
+                                is_init[i] = false;
+                                socket_status[i] = false;
+                                close(socket[i]);
+                                std::cout << "socket status is : " << socket_status[i] << '\n';
+                                socket[i] = server_stub.Create_Socket(); // new socket
+
+                            }
+                        }
+                    }
+                }
+
+                poll_count = server_stub.Poll(Poll_timeout);
+
+                /* Do error handling for recv */
+                if (poll_count > 0){
+                    server_stub.Handle_Poll_Peer(&PeerIdIndexMap, request_completed, &num_votes, &nodeInfo);
+
+                    if ( num_votes > nodeInfo.num_peers / 2 )
+                    {
+                        nodeInfo.role = LEADER;
+                    }
+
+                    std::cout << "half of the peers : " << nodeInfo.num_peers / 2 << '\n';
+                    std::cout << "the role of the node is: " << nodeInfo.role << '\n';
+
                 }
 
 

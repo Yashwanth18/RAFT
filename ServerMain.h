@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <iomanip>
-
+#include <map>
 #include "Messages.h"
 
 //return 0 on failure and 1 on success
@@ -33,7 +33,8 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
 }
 
 /* return 0 on failure and 1 on success */
-int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo){
+int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo,
+                       std::map<int,int> *PeerIdIndexMap){
 
     int num_peers = atoi(argv[3]);
 
@@ -41,8 +42,8 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
 
         if (argc <= 3*i + 3){
             std::cout << "not enough arguments" << std::endl;
-            std::cout << "./server [port #] [unique ID] [# peers] \
-                      (repeat [ID] [IP] [port #])	" << std::endl;
+            std::cout << "./server [port #] [unique ID] [# peers] "
+                         "(repeat [ID] [IP] [port #])	" << std::endl;
             return 0;
         }
 
@@ -53,6 +54,7 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
 
             Peer_Info peer_server_info {unique_id, IP, port};
             PeerServerInfo -> push_back(peer_server_info);
+            (*PeerIdIndexMap)[unique_id] = i-1;
         }
 
     } //END for loop

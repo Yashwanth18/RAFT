@@ -71,19 +71,49 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
 
 bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
     bool result = false;
-    if (requestVote -> Get_term() < nodeInfo -> term){
-        return result;
+
+    if (Compare_Log (nodeInfo, requestVote) && nodeInfo -> votedFor == -1){
+
+        result = requestVote -> Get_term() > nodeInfo -> term;
+
     }
-    else if (nodeInfo -> votedFor == -1 && Compare_Log()){
-        result = true;
+
+    if (result){
+
         nodeInfo -> votedFor = requestVote -> Get_candidateId();
-//        nodeInfo -> term = requestVote -> Get_term();
+        nodeInfo -> term = requestVote -> Get_term();
+
     }
+
     return result;
 }
 
-bool ClientStub::Compare_Log() {
-    return true;
+/* Comparing the last_term and log length for the candidate node and the follower node */
+bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
+
+    int candidate_last_log_term = requestVote -> Get_last_log_term();
+    int candidate_last_log_index = requestVote -> Get_last_log_index();
+
+    int node_last_log_term = nodeInfo -> lastLogTerm;
+    int node_last_log_index = nodeInfo -> lastLogIndex;
+
+    bool greater_last_log_term = candidate_last_log_term > node_last_log_term;
+    bool check_last_log_index = candidate_last_log_index >= node_last_log_index;
+
+    bool log_ok = false;
+
+    if (greater_last_log_term)
+    {
+        log_ok = true;
+    }
+
+    else if (candidate_last_log_term == node_last_log_term)
+    {
+        return check_last_log_index;
+    }
+
+    return log_ok;
+
 }
 
 int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {

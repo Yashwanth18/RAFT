@@ -32,7 +32,7 @@ public:
     void Accept_Connection();
 
     bool Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote);
-    bool Compare_Log(); /* to-do: to be implemented */
+    bool Compare_Log(NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
 
     int Send_voteResponse(VoteResponse *voteResponse, int fd);
 };
