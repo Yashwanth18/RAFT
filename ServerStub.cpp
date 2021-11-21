@@ -54,12 +54,13 @@ int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
 }
 
 void ServerStub::FillRequestVote(NodeInfo * nodeInfo, RequestVote *requestVote) {
+    int messageType = VOTE_REQUEST;
     int term = nodeInfo -> term;
     int candidateId = nodeInfo -> node_id;
     int lastLogIndex = nodeInfo -> lastLogIndex;
     int lastLogTerm = nodeInfo -> lastLogTerm;
 
-    requestVote -> Set(LEADER_ELECTION, term, candidateId, lastLogIndex, lastLogTerm);
+    requestVote -> Set(messageType, term, candidateId, lastLogIndex, lastLogTerm);
 }
 
 int ServerStub::Create_Socket() {
@@ -130,12 +131,14 @@ int ServerStub:: Poll(int poll_timeout){
 void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, int * num_votes, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
     AppendEntries appendEntries;
-    char buf[voteResponse.Size() + appendEntries.size() + 4];
+
+    char buf[voteResponse.Size() + appendEntries.Size() + 4];
     int num_alive_sockets = pfds_server.size();
     int message_type; // message descriptor to determine if the message is append entries or vote response
-    int offset = 0;
+    int peer_index;
+
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
-        if (pfds_server[i].revents & POLLIN) {            /* got ready-to-read from poll() */
+        if (pfds_server[i].revents & POLLIN) {     /* got ready-to-read from poll() */
 
             if (i==0){                             /* events at the listening socket */
                 Accept_Connection();
@@ -144,36 +147,33 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
             else{                                   /* events from established connection */
                 int nbytes = recv(pfds_server[i].fd, buf, sizeof(voteResponse), 0);
 
-                if (nbytes <= 0){         /* error handling for recv: remote connection closed or error */
+                if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
                     close(pfds_server[i].fd);
                     pfds_server[i].fd = -1;
                 }
 
-                else{                                       /* got good data */
-                    memcpy(&message_type, buf + offset, sizeof(message_type)); // get messageType field
-                    offset += sizeof(message_type);
+                else{    /* got good data */
+                    memcpy(&message_type, buf, sizeof(message_type)); // get messageType
 
-                    if (ntohl(message_type) == LEADER_ELECTION) {
+                    if (ntohl(message_type) == VOTE_REQUEST) {
 
                         voteResponse.Unmarshal(buf);
                         voteResponse.Print();
 
-                        /* Need a mechanism to check which nodes have voted. */
-
                         if (voteResponse.Get_voteGranted()) {
                             (*num_votes)++;
-                        } else {  // vote got rejected, which means the node lags behind
+                        }
+                        else {  // vote got rejected, which means the node lags behind
                             nodeInfo->role = FOLLOWER;
                             nodeInfo->term = voteResponse.Get_term();
                         }
-                        int index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
-                        std::cout << "index value is : " << index << '\n';
-                        request_completed[index] = true;
+
+                        peer_index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
+                        request_completed[peer_index] = true;
                     }
 
-                    else if (ntohl(message_type) == APPEND_ENTRIES) { // when the candidate gets a log
-                                                                        // replication request from other
-                                                                        // node
+                    /*  when the candidate gets a log replication request from other node*/
+                    else if (ntohl(message_type) == APPEND_ENTRIES_REQUEST) {
 
                         appendEntries.UnMarshal(buf);
 

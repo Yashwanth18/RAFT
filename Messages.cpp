@@ -14,7 +14,8 @@ RequestVote::RequestVote()  {
 }
 
 
-void RequestVote:: Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+void RequestVote:: 
+Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
     
     messageType = _messageType;
     term = _term;
@@ -109,13 +110,13 @@ void RequestVote::Print(){
 
 
 VoteResponse::VoteResponse()  {
-    messageType = LEADER_ELECTION;
+    messageType = -1;
     term = -1;
     voteGranted = false;
     node_id = -1;
 }
 
-void VoteResponse::Set(int _term, bool _voteGranted, int _node_id, int _messageType){
+void VoteResponse::Set(int _messageType, int _term, bool _voteGranted, int _node_id){
     messageType = _messageType;
     term = _term;
     voteGranted = _voteGranted;
@@ -153,7 +154,6 @@ void VoteResponse::Marshal(char *buffer){
     int net_node_id = htonl(node_id);
 
     int offset = 0;
-
 
     memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
     offset += sizeof(net_messageType);
@@ -194,17 +194,18 @@ int VoteResponse::Get_term() {
 /*-------------------------------Append Entries class------------------*/
 // please do the same for append entries class
 AppendEntries::AppendEntries()  {
-    term = 0;
+    messageType = -1;
+    term = -1;
     opcode = -1;
     arg1 = -1;
     arg2 = -1;
     node_id = -1;
-    messageType = APPEND_ENTRIES;
 }
 
 
-void AppendEntries::Set_AppendEntries(int message_type, int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
-    messageType = message_type;
+void AppendEntries::Set_AppendEntries(int _messageType, int _node_id,int _term,
+                                      int _opcode, int _arg1, int _arg2) {
+    messageType = _messageType;
     node_id = _node_id;
     term = _term;
     opcode = _opcode;
@@ -214,7 +215,7 @@ void AppendEntries::Set_AppendEntries(int message_type, int _node_id,int _term, 
 
 
 void AppendEntries::UnMarshal(char *buffer){
-    int net_message_type;
+    int net_messageType;
     int net_term;
     int net_opcode;
     int net_arg1;
@@ -222,8 +223,8 @@ void AppendEntries::UnMarshal(char *buffer){
 
     int offset = 0;
 
-    memcpy(&net_message_type, buffer + offset, sizeof(net_message_type));
-    offset += sizeof(net_message_type);
+    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
@@ -232,7 +233,7 @@ void AppendEntries::UnMarshal(char *buffer){
     offset += sizeof(net_arg1);
     memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
 
-    messageType = ntohl(net_message_type);
+    messageType = ntohl(net_messageType);
     term = ntohl(net_term);
     opcode = ntohl(net_opcode);
     arg1 = ntohl(net_arg1);
@@ -240,8 +241,7 @@ void AppendEntries::UnMarshal(char *buffer){
 }
 
 void AppendEntries::Marshal(char *buffer){
-    int net_messageType = htonl(messageType); // messageType field to determine if it's vote response or
-                                                // log replication
+    int net_messageType = htonl(messageType);
     int net_term = htonl(term);
     int net_opcode = htonl(opcode);
     int net_arg1 = htonl(arg1);
@@ -262,14 +262,27 @@ void AppendEntries::Marshal(char *buffer){
     memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
 }
 
-int AppendEntries::size() {
-    return sizeof(messageType) + sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
+int AppendEntries::Size() {
+    return sizeof(messageType) + sizeof(term) + sizeof(opcode)
+            + sizeof(arg1)+ sizeof(arg2);
 }
 
+/* Get private variables */
 int AppendEntries::Get_term() {
     return term;
 }
-
 int AppendEntries::Get_id() {
     return node_id;
+}
+int AppendEntries::Get_opcode(){
+    return opcode;
+}
+int AppendEntries::Get_arg1(){
+    return arg1;
+}
+int AppendEntries::Get_arg2(){
+    return arg2;
+}
+int AppendEntries::Get_messageType(){
+    return messageType;
 }

@@ -11,8 +11,10 @@
 #define CLIENT_CONNECTION 1
 #define SERVER_CONNECTION 2
 
-#define LEADER_ELECTION 1
-#define APPEND_ENTRIES 2
+#define VOTE_REQUEST 1
+#define VOTE_RESPONSE 2
+#define APPEND_ENTRIES_REQUEST 3
+#define APPEND_ENTRIES_RESPONSE 4
 
 
 struct Peer_Info{
@@ -50,7 +52,8 @@ private:
 
 public:
     RequestVote();
-    void Set(int messageType, int term, int candidateId, int lastLogIndex, int lastLogTerm);
+    void Set(int _messageType, int _term, int _candidateId,
+             int _lastLogIndex, int _lastLogTerm);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -76,7 +79,7 @@ private:
     int node_id;
 public:
     VoteResponse();
-    void Set( int _term, bool _voteGranted, int _node_id, int _message_type);
+    void Set(int _messageType, int _term, bool _voteGranted, int _node_id);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -95,20 +98,30 @@ public:
 /*-----------Log replication------------------*/
 class AppendEntries{
 private:
+    int messageType;
     int term;
     int node_id;
     int opcode;
     int arg1;
     int arg2;
-    int messageType;
 public:
     AppendEntries();
-    void Set_AppendEntries(int message_type, int node_id,int term, int opcode,int arg1, int arg2);
+    void Set_AppendEntries(int _messageType, int _node_id, int _term,
+                           int _opcode,int _arg1, int _arg2);
+
     void Marshal(char *buffer);
     void UnMarshal(char * buffer);
+
+    int Size();
+
+    /* Get private variables */
     int Get_term();
     int Get_id();
-    int size();
+    int Get_opcode();
+    int Get_arg1();
+    int Get_arg2();
+    int Get_messageType();
+
 };
 
 #endif // #ifndef __MESSAGES_H__

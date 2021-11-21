@@ -32,6 +32,7 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
     char buf[requestVote.Size()];
     int num_alive_sockets = pfds.size();
+    int messageType;
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
         if (pfds[i].revents & POLLIN) {            /* got ready-to-read from poll() */
@@ -56,9 +57,11 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
 
                   timer -> Print_elapsed_time();
 
-                  /* to-do: implement the vote granted condition logic */
-                  voteResponse.Set(nodeInfo -> term,Decide_Vote(nodeInfo, m&requestVote),
-                                   nodeInfo -> node_id, LEADER_ELECTION);
+                  messageType = VOTE_RESPONSE;
+                  voteResponse.Set(messageType, nodeInfo -> term,
+                                   Decide_Vote(nodeInfo, &requestVote),
+                                   nodeInfo -> node_id);
+
                   Send_voteResponse(&voteResponse, pfds[i].fd);
               } /* End got good data */
             } /* End events from established connection */
