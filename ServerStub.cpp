@@ -59,7 +59,7 @@ void ServerStub::FillRequestVote(NodeInfo * nodeInfo, RequestVote *requestVote) 
     int lastLogIndex = nodeInfo -> lastLogIndex;
     int lastLogTerm = nodeInfo -> lastLogTerm;
 
-    requestVote -> Set(term, candidateId, lastLogIndex, lastLogTerm);
+    requestVote -> Set(LEADER_ELECTION, term, candidateId, lastLogIndex, lastLogTerm);
 }
 
 int ServerStub::Create_Socket() {

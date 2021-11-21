@@ -14,8 +14,7 @@ RequestVote::RequestVote()  {
 }
 
 
-void RequestVote:: 
-Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+void RequestVote:: Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
     
     messageType = _messageType;
     term = _term;
@@ -52,7 +51,7 @@ void RequestVote::Unmarshal(char *buffer){
 }
 
 void RequestVote::Marshal(char *buffer){
-    int net_messageType = htonl(_messageType);
+    int net_messageType = htonl(messageType);
     int net_term = htonl(term);
     int net_candidateId = htonl(candidateId);
     int net_lastLogIndex = htonl(lastLogIndex);
@@ -116,7 +115,7 @@ VoteResponse::VoteResponse()  {
     node_id = -1;
 }
 
-void VoteResponse::Set(int _messageType, int int _term, bool _voteGranted, int _node_id){
+void VoteResponse::Set(int _term, bool _voteGranted, int _node_id, int _messageType){
     messageType = _messageType;
     term = _term;
     voteGranted = _voteGranted;
@@ -204,7 +203,8 @@ AppendEntries::AppendEntries()  {
 }
 
 
-void AppendEntries::Set_AppendEntries(int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
+void AppendEntries::Set_AppendEntries(int message_type, int _node_id,int _term, int _opcode, int _arg1, int _arg2) {
+    messageType = message_type;
     node_id = _node_id;
     term = _term;
     opcode = _opcode;
@@ -214,13 +214,16 @@ void AppendEntries::Set_AppendEntries(int _node_id,int _term, int _opcode, int _
 
 
 void AppendEntries::UnMarshal(char *buffer){
+    int net_message_type;
     int net_term;
     int net_opcode;
     int net_arg1;
     int net_arg2;
 
-    int offset = 4;
+    int offset = 0;
 
+    memcpy(&net_message_type, buffer + offset, sizeof(net_message_type));
+    offset += sizeof(net_message_type);
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
@@ -229,6 +232,7 @@ void AppendEntries::UnMarshal(char *buffer){
     offset += sizeof(net_arg1);
     memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
 
+    messageType = ntohl(net_message_type);
     term = ntohl(net_term);
     opcode = ntohl(net_opcode);
     arg1 = ntohl(net_arg1);
@@ -259,7 +263,7 @@ void AppendEntries::Marshal(char *buffer){
 }
 
 int AppendEntries::size() {
-    return sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
+    return sizeof(messageType) + sizeof(term) + sizeof(opcode) + sizeof(arg1)+ sizeof(arg2);
 }
 
 int AppendEntries::Get_term() {

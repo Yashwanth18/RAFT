@@ -50,7 +50,7 @@ private:
 
 public:
     RequestVote();
-    void Set(int term, int candidateId, int lastLogIndex, int lastLogTerm);
+    void Set(int messageType, int term, int candidateId, int lastLogIndex, int lastLogTerm);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -74,10 +74,9 @@ private:
     int term;
     bool voteGranted;
     int node_id;
-    int messageType;
 public:
     VoteResponse();
-    void Set(int _term, bool _voteGranted, int _node_id, int _message_type);
+    void Set( int _term, bool _voteGranted, int _node_id, int _message_type);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -104,7 +103,7 @@ private:
     int messageType;
 public:
     AppendEntries();
-    void Set_AppendEntries(int node_id,int term, int opcode,int arg1, int arg2);
+    void Set_AppendEntries(int message_type, int node_id,int term, int opcode,int arg1, int arg2);
     void Marshal(char *buffer);
     void UnMarshal(char * buffer);
     int Get_term();

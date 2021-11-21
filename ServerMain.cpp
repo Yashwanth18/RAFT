@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     bool Request_Completed[nodeInfo.num_peers];
 
     serverStub.Init(&nodeInfo);
-    Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status)
+    Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
     /* Initialising to assume the role of the leader for debugging purpose*/
     nodeInfo.role = CANDIDATE;

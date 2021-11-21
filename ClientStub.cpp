@@ -57,8 +57,8 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
                   timer -> Print_elapsed_time();
 
                   /* to-do: implement the vote granted condition logic */
-                  voteResponse.Set(nodeInfo -> term,Decide_Vote(nodeInfo, &requestVote),
-                                   nodeInfo -> node_id);
+                  voteResponse.Set(nodeInfo -> term,Decide_Vote(nodeInfo, m&requestVote),
+                                   nodeInfo -> node_id, LEADER_ELECTION);
                   Send_voteResponse(&voteResponse, pfds[i].fd);
               } /* End got good data */
             } /* End events from established connection */
