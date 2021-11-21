@@ -13,7 +13,6 @@ RequestVote::RequestVote()  {
     lastLogTerm = -1;
 }
 
-
 void RequestVote:: 
 Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
     
@@ -23,7 +22,6 @@ Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastL
     lastLogIndex = _lastLogIndex;
     lastLogTerm = _lastLogTerm;
 }
-
 
 void RequestVote::Unmarshal(char *buffer){
     int net_messageType;
@@ -76,26 +74,22 @@ int RequestVote::Size() {
             sizeof(lastLogIndex)+ sizeof(lastLogTerm);
 }
 
+/* ----------------------Get private variables --------------------*/
 int RequestVote::Get_term() {
     return term;
 }
-
 int RequestVote::Get_last_log_index() {
     return lastLogIndex;
 }
-
 int RequestVote::Get_last_log_term() {
     return lastLogTerm;
 }
-
 int RequestVote::Get_candidateId() {
     return candidateId;
 }
-
 int RequestVote::Get_message_type() {
     return messageType;
 }
-
 
 void RequestVote::Print(){
     std::cout << "message type: " << messageType << '\n';  
@@ -107,8 +101,6 @@ void RequestVote::Print(){
 
 
 /* ----------------------------------voteResponse----------------------------------- */
-
-
 VoteResponse::VoteResponse()  {
     messageType = -1;
     term = -1;
@@ -123,7 +115,6 @@ void VoteResponse::Set(int _messageType, int _term, bool _voteGranted, int _node
     node_id = _node_id;
 
 }
-
 
 void VoteResponse::Unmarshal(char *buffer){
     int net_messageType;
@@ -176,10 +167,10 @@ void VoteResponse::Print() {
     std::cout<<"node_id: "<< node_id<<'\n';
 }
 
+/* ----------------------Get private variables --------------------*/
 int VoteResponse::Get_messageType() {
     return messageType;
 }
-
 bool VoteResponse::Get_voteGranted() {
     return voteGranted;
 }
@@ -189,7 +180,6 @@ int VoteResponse::Get_node_id() {
 int VoteResponse::Get_term() {
     return term;
 }
-
 
 /*-------------------------------Append Entries class------------------*/
 // please do the same for append entries class
@@ -267,7 +257,7 @@ int AppendEntries::Size() {
             + sizeof(arg1)+ sizeof(arg2);
 }
 
-/* Get private variables */
+/* ----------------------Get private variables --------------------*/
 int AppendEntries::Get_term() {
     return term;
 }

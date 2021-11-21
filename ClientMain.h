@@ -30,7 +30,7 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
     node_info -> leader_id = -1;
     node_info -> node_id = atoi(argv[2]);
 
-    node_info -> port = atoi(argv[1]);
+    node_info -> server_port = atoi(argv[1]);
     node_info -> num_peers = -1;
 
     /* Used in RequestVote*/

@@ -10,7 +10,11 @@
 #include "ServerTimer.h"
 #include "ServerStub.h"
 
-//return 0 on failure and 1 on success
+/* Command line argument format:
+    ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server)
+*/
+
+/* return 0 on failure and 1 on success */
 int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     if (argc < 4){
         std::cout << "not enough arguments" << std::endl;
@@ -19,14 +23,15 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
 
     nodeInfo -> role = FOLLOWER;
     nodeInfo -> leader_id = -1;
-    nodeInfo -> node_id = atoi(argv[2]);
 
-    nodeInfo -> port = atoi(argv[1]);
-    nodeInfo -> num_peers = atoi(argv[3]);
+    nodeInfo -> server_port = atoi(argv[1]);
+    nodeInfo -> client_port = atoi(argv[2]);
+    nodeInfo -> node_id = atoi(argv[3]);
+    nodeInfo -> num_peers = atoi(argv[4]);
 
     /* Used in RequestVote*/
     nodeInfo -> term = 0;
-    nodeInfo ->  votedFor = -1;
+    nodeInfo -> votedFor = -1;
 
      /* change this to a real vector of struct log */
     nodeInfo ->  lastLogTerm = 0;
@@ -39,28 +44,33 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
 int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo,
                        std::map<int,int> *PeerIdIndexMap){
 
-    int num_peers = atoi(argv[3]);
+    int num_peers = atoi(argv[4]);
 
     for (int i = 1; i <= num_peers; i++){
 
-        if (argc <= 3*i + 3){
+        if (argc <= 3*i + 4){
             std::cout << "not enough arguments" << std::endl;
-            std::cout << "./server [port #] [unique ID] [# peers] "
+            std::cout << "./server [port_server #] [port_client #] [unique ID] [# peers] "
                          "(repeat [ID] [IP] [port #])	" << std::endl;
             return 0;
         }
 
         else{
-            int unique_id = atoi(argv[3*i + 1]);
-            std::string IP = argv[3*i + 2];
-            int port = atoi(argv[3*i + 3]);
 
-            Peer_Info peer_server_info {unique_id, IP, port};
+            int unique_id = atoi(argv[3*i + 2]);
+            std::string IP = argv[3*i + 3];
+            int server_port = atoi(argv[3*i + 4]);
+
+            std::cout << "Peer_id: " << unique_id << '\n';
+            std::cout << "Ip: " << IP << '\n';
+            std::cout << "server_port: " << server_port << '\n';
+
+            Peer_Info peer_server_info {unique_id, IP, server_port};
             PeerServerInfo -> push_back(peer_server_info);
             (*PeerIdIndexMap)[unique_id] = i-1;
         }
 
-    } //END for loop
+    } // END: for loop
     return 1;
 }
 
@@ -133,7 +143,7 @@ void Get_Vote(ServerTimer * timer, NodeInfo * nodeInfo, ServerStub * serverStub,
         if ( (*num_votes) > nodeInfo -> num_peers / 2 ){
             nodeInfo -> role = LEADER;
         }
-
+        std::cout << "num_votes: " << *num_votes << '\n';
         std::cout << "the role of the node is: " << nodeInfo -> role << '\n';
     }
 }

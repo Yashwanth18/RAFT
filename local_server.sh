@@ -1,25 +1,65 @@
 #!/bin/sh
+# usage: ./local_server.sh ID (repeat ID_peer)
+# command line format: ./server port_server port_client ID num_peers (repeat ID Ip port_server)
+# server role initialization: 0 = follower, 1 = candidate, 2 = leader
 
-# argv[1]: num_peers
-# argv[2]: node id of self
-# argv [3, 4, 5, 6]: node ids of peer server nodes
-# argv[7]: port option (to deal with port in use problem): 1 or 2
+#------------user's configuration  before run---------
+num_peers=1
+#------------End: user's configuration------------------
 
-if [ $1 -eq 4 ]; then
-	if [ $7 -eq 1 ]; then
-		echo Creating server with node id $2 with peer node ids: $3 $4 $5 $6
-		./server "10100$2" $2 $1 \
-							$3 "10.200.125.$3" "10100$3" \
-							$4 "10.200.125.$4" "10100$4" \
-							$5 "10.200.125.$5" "10100$5" \
-							$6 "10.200.125.$6" "10100$6"
+port_server_root=2020
+port_client=101080
+run_location=0
+Ip_root="10.200.125."
+Ip_peer1
 
-	elif [ $7 -eq 2 ]; then
-		./server "10101$2" $2 $1 \
-							$3 "10.200.125.$3" "10101$3" \
-							$4 "10.200.125.$4" "10101$4" \
-							$5 "10.200.125.$5" "10101$5" \
-							$6 "10.200.125.$6" "10101$6"
-	fi
+Set_Peer_Ip(){
+    if [ $run_location -eq 0 ]; then    # run on VDI cluster
+      Ip_Peer1="127.0.0.1"
+      echo Running on local machines
 
+    elif [ $run_location -eq 1 ]; then   # run on local machines
+        Ip_root="10.200.125."
+        Ip_Peer1=${Ip_root}${node_ID}
+        echo Running on VDI machines
+    else
+      echo Undefined run_location
+    fi
+}
+
+# parameter for the function Print_Program_Info():
+  # argv[1] = node_ID
+  # argv[2] = ID_Peer1
+  # argv[3] = server_role
+
+Print_Program_Info(){
+  if [ $3 -eq 0 ]; then
+    echo Creating a follower server with ID: $1 and ID_peers: $2
+
+  elif [ $3 -eq 1  ]; then
+    echo Creating a candidate server with ID: $1 and ID_peers: $2
+
+  elif [ $3 -eq 2 ]; then
+    echo Creating a leader server with ID: $1 and ID_peers: $2
+
+  else
+    echo Undefined server role initialization
+  fi
+}
+
+###-------------- main function--------------------###
+node_ID=$1
+port_server=${port_server_root}${node_ID}
+
+if [ $num_peers -eq 1 ]; then
+  ID_Peer1=$2
+  server_role=$3
+
+  Set_Peer_Ip
+  Print_Program_Info $node_ID $ID_Peer1 $server_role
+
+  ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
+              $ID_Peer1 $Ip_Peer1 "${port_server_root}${ID_Peer1}" \
+              $server_role
 fi
+

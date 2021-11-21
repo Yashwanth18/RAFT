@@ -6,7 +6,7 @@ Return 1 on success and 0 on failure
 */
 void ServerStub:: Init(NodeInfo * nodeInfo){
 
-  port = nodeInfo -> port;
+  port = nodeInfo -> server_port;
   num_peers = nodeInfo -> num_peers;
 
   /* Listen for both the clients and the peer servers through one socket */
@@ -155,7 +155,7 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                 else{    /* got good data */
                     memcpy(&message_type, buf, sizeof(message_type)); // get messageType
 
-                    if (ntohl(message_type) == VOTE_REQUEST) {
+                    if (ntohl(message_type) == VOTE_RESPONSE) {
 
                         voteResponse.Unmarshal(buf);
                         voteResponse.Print();
@@ -172,7 +172,7 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                         request_completed[peer_index] = true;
                     }
 
-                    /*  when the candidate gets a log replication request from other node*/
+                    /*  when the candidate gets a log replication request from other node */
                     else if (ntohl(message_type) == APPEND_ENTRIES_REQUEST) {
 
                         appendEntries.UnMarshal(buf);

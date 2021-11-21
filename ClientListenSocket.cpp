@@ -3,7 +3,7 @@
 
 int ClientListenSocket::Init(int port) {
 	struct sockaddr_in addr;
-    int reuse_socket;
+//    int reuse_socket;
 
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -25,10 +25,10 @@ int ClientListenSocket::Init(int port) {
 		return false;
 	}
 
-    if (setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &reuse_socket, sizeof(reuse_socket)) == -1){
-        perror("setsockopt");
-        exit(1);
-    }
+//    if (setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &reuse_socket, sizeof(reuse_socket)) == -1){
+//        perror("setsockopt");
+//        exit(1);
+//    }
 
 	listen(fd_, 8);
 

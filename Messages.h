@@ -36,7 +36,8 @@ struct NodeInfo{
     int node_id;
     int leader_id;
 
-    int port;
+    int server_port;
+    int client_port;
     int num_peers;
     int role;
 };
