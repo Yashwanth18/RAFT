@@ -144,14 +144,12 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
             else{                                   /* events from established connection */
                 int nbytes = recv(pfds_server[i].fd, buf, sizeof(voteResponse), 0);
 
-                if (nbytes <= 0){                           /* connection closed or error */
+                if (nbytes <= 0){         /* error handling for recv: remote connection closed or error */
                     close(pfds_server[i].fd);
                     pfds_server[i].fd = -1;
-                    //pfds_server.erase(pfds_server.begin()+i);     /* delete */
                 }
 
                 else{                                       /* got good data */
-
                     memcpy(&message_type, buf + offset, sizeof(message_type)); // get messageType field
                     offset += sizeof(message_type);
 

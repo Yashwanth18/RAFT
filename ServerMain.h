@@ -5,7 +5,10 @@
 #include <sys/ioctl.h>
 #include <iomanip>
 #include <map>
+
 #include "Messages.h"
+#include "ServerTimer.h"
+#include "ServerStub.h"
 
 //return 0 on failure and 1 on success
 int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
@@ -61,13 +64,77 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
     return 1;
 }
 
-// * For debugging */
-//void Print_PeerServerInfo(){
-//    for (int i = 0; i < num_peers; i++){
-//        std::cout << "id: "<< PeerServerInfo[i].unique_id  << '\n';
-//        std::cout << "IP: "<< PeerServerInfo[i].IP  << '\n';
-//        std::cout << "Port: "<< PeerServerInfo[i].port  << '\n';
-//        std::cout << "------------------"<< '\n';
-//    }
-//}
+void BroadCast_Request_Vote(NodeInfo * nodeInfo, ServerStub * serverStub, int * Socket,
+                            bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
+
+    for (int i = 0; i < nodeInfo->num_peers; i++) { /* Send to all peers in parallel */
+
+        /*  if we have not heard back from ith peer and socket for ith peer is still alive */
+        if (!Request_Completed[i] && Socket_Status[i] ) {
+
+            if (!serverStub -> SendRequestVote(nodeInfo, Socket[i])) { // if send fail
+                Is_Init[i] = false;
+                Socket_Status[i] = false;
+                close(Socket[i]);
+                Socket[i] = serverStub->Create_Socket(); // new socket
+            }   // End: if send fail
+
+        } /*  End: if we have not heard back from ith peer and socket for ith peer is still alive */
+    }  /* End: Send to all peers in parallel */
+}
+
+void Setup_New_Election(ServerTimer * timer, int * num_votes,
+                        NodeInfo *nodeInfo, bool * Request_Completed){
+
+    timer -> Restart(); /* (re)start a new election */
+    (*num_votes) = 0;
+    nodeInfo -> term ++;
+
+    for (int i = 0; i < nodeInfo -> num_peers; i++){
+        Request_Completed[i] = false;
+    }
+}
+
+void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
+                 int * Socket, bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
+
+    int connect_status;
+    for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
+
+        /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
+        if (!Request_Completed[i] && !Is_Init[i]) {
+
+            connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
+                                                    (*PeerServerInfo) [i].port, Socket[i]);
+
+            if (connect_status) {   /* connection successful */
+                Is_Init[i] = true;
+                Socket_Status[i] = true;
+                serverStub -> Add_Socket_To_Poll(Socket[i]);
+            }
+            else {                  /* fail connect */
+                close(Socket_Status[i]);
+                Socket[i] = serverStub -> Create_Socket();
+            }
+
+        } /* End: if we have not heard back from ith peer and socket for ith peer is not initialized */
+    }  /* End: iterator through all peers */
+}
+
+void Get_Vote(ServerTimer * timer, NodeInfo * nodeInfo, ServerStub * serverStub,
+              int * num_votes, bool *Request_Completed, std::map<int,int> *PeerIdIndexMap){
+
+    int Poll_timeout = timer -> Poll_timeout();
+    int poll_count = serverStub -> Poll(Poll_timeout);
+
+    if (poll_count > 0){
+        serverStub -> Handle_Poll_Peer(PeerIdIndexMap, Request_Completed, num_votes, nodeInfo);
+
+        if ( (*num_votes) > nodeInfo -> num_peers / 2 ){
+            nodeInfo -> role = LEADER;
+        }
+
+        std::cout << "the role of the node is: " << nodeInfo -> role << '\n';
+    }
+}
 
