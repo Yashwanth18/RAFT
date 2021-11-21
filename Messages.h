@@ -42,6 +42,7 @@ struct NodeInfo{
 /* -----------------Class for Request Vote -----------------*/
 class RequestVote {
 private:
+    int messageType;
     int term;
     int candidateId;
     int lastLogIndex;
@@ -55,10 +56,13 @@ public:
     void Unmarshal(char *buffer);
 
     /* get private variable function */
+    int Get_message_type();
     int Get_term();
     int Get_candidateId();
     int Get_last_log_index();
     int Get_last_log_term();
+
+
     int Size();
     void Print();
 };
@@ -66,13 +70,14 @@ public:
 /* -----------------Class for Response Vote -----------------*/
 class VoteResponse{
 private:
+    int messageType;
     int term;
     bool voteGranted;
     int node_id;
     int messageType;
 public:
     VoteResponse();
-    void Set(int _term, bool _voteGranted, int _node_id);
+    void Set(int _term, bool _voteGranted, int _node_id, int _message_type);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -81,10 +86,11 @@ public:
     void Print();
 
     /* get private variable function */
+    int Get_messageType();
     bool Get_voteGranted();
     int Get_node_id();
     int Get_term();
-
+    
 };
 
 /*-----------Log replication------------------*/

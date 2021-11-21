@@ -6,14 +6,18 @@
 
 /*------------------------------RequestVote Class-------------------------------*/
 RequestVote::RequestVote()  {
-     term = -1;
-     candidateId = -1;
-     lastLogIndex = -1;
-     lastLogTerm = -1;
+    messageType = -1;
+    term = -1;
+    candidateId = -1;
+    lastLogIndex = -1;
+    lastLogTerm = -1;
 }
 
 
-void RequestVote:: Set(int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+void RequestVote:: 
+Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
+    
+    messageType = _messageType;
     term = _term;
     candidateId = _candidateId;
     lastLogIndex = _lastLogIndex;
@@ -22,6 +26,7 @@ void RequestVote:: Set(int _term, int _candidateId, int _lastLogIndex, int _last
 
 
 void RequestVote::Unmarshal(char *buffer){
+    int net_messageType;
     int net_term;
     int net_candidateId;
     int net_lastLogIndex;
@@ -29,6 +34,8 @@ void RequestVote::Unmarshal(char *buffer){
 
     int offset = 0;
 
+    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_candidateId, buffer + offset, sizeof(net_candidateId));
@@ -37,6 +44,7 @@ void RequestVote::Unmarshal(char *buffer){
     offset += sizeof(net_lastLogIndex);
     memcpy(&net_lastLogTerm, buffer + offset, sizeof(net_lastLogTerm));
 
+    messageType = ntohl(net_messageType);
     term = ntohl(net_term);
     candidateId = ntohl(net_candidateId);
     lastLogIndex = ntohl(net_lastLogIndex);
@@ -44,6 +52,7 @@ void RequestVote::Unmarshal(char *buffer){
 }
 
 void RequestVote::Marshal(char *buffer){
+    int net_messageType = htonl(_messageType);
     int net_term = htonl(term);
     int net_candidateId = htonl(candidateId);
     int net_lastLogIndex = htonl(lastLogIndex);
@@ -51,6 +60,8 @@ void RequestVote::Marshal(char *buffer){
 
     int offset = 0;
 
+    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+    offset += sizeof(net_term);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_candidateId, sizeof(net_candidateId));
@@ -61,7 +72,8 @@ void RequestVote::Marshal(char *buffer){
 }
 
 int RequestVote::Size() {
-    return sizeof(term) + sizeof(candidateId) + sizeof(lastLogIndex)+ sizeof(lastLogTerm);
+    return sizeof (messageType) + sizeof(term) + sizeof(candidateId) +
+            sizeof(lastLogIndex)+ sizeof(lastLogTerm);
 }
 
 int RequestVote::Get_term() {
@@ -80,11 +92,17 @@ int RequestVote::Get_candidateId() {
     return candidateId;
 }
 
+int RequestVote::Get_message_type() {
+    return messageType;
+}
+
+
 void RequestVote::Print(){
-  std::cout << "term: " << term << '\n';
-  std::cout << "candidateId: " << candidateId << '\n';
-  std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
-  std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
+    std::cout << "message type: " << messageType << '\n';  
+    std::cout << "term: " << term << '\n';
+    std::cout << "candidateId: " << candidateId << '\n';
+    std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
+    std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
 }
 
 
@@ -92,13 +110,14 @@ void RequestVote::Print(){
 
 
 VoteResponse::VoteResponse()  {
-     term = -1;
-     voteGranted = false;
-     node_id = -1;
-     messageType = LEADER_ELECTION;
+    messageType = LEADER_ELECTION;
+    term = -1;
+    voteGranted = false;
+    node_id = -1;
 }
 
-void VoteResponse::Set(int _term, bool _voteGranted, int _node_id){
+void VoteResponse::Set(int _messageType, int int _term, bool _voteGranted, int _node_id){
+    messageType = _messageType;
     term = _term;
     voteGranted = _voteGranted;
     node_id = _node_id;
@@ -107,33 +126,38 @@ void VoteResponse::Set(int _term, bool _voteGranted, int _node_id){
 
 
 void VoteResponse::Unmarshal(char *buffer){
+    int net_messageType;
     int net_term;
     bool net_vote_granted;
     int net_node_id;
 
-    int offset = 4; // first 4 bytes are for messageType field
+    int offset = 0; // first 4 bytes are for messageType field
 
+    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_vote_granted, buffer + offset, sizeof(net_vote_granted));
     offset += sizeof(net_vote_granted);
     memcpy(&net_node_id, buffer + offset, sizeof(net_node_id));
 
+    messageType = ntohl(net_messageType);
     term = ntohl(net_term);
     voteGranted = ntohl(net_vote_granted);
     node_id = ntohl(net_node_id);
 }
 
 void VoteResponse::Marshal(char *buffer){
-    int net_message_type = htonl(messageType); // messageType field to determine if it's vote response or
-                                               // log replication
+    int net_messageType = htonl(messageType);
     int net_term = htonl(term);
     bool net_vote_granted = htonl(voteGranted);
     int net_node_id = htonl(node_id);
 
     int offset = 0;
-    memcpy(buffer + offset, &net_message_type, sizeof(net_message_type));
-    offset += sizeof(net_message_type);
+
+
+    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_vote_granted, sizeof(net_vote_granted));
@@ -143,13 +167,18 @@ void VoteResponse::Marshal(char *buffer){
 }
 
 int VoteResponse::Size() {
-    return sizeof(term) + sizeof(voteGranted) + sizeof (node_id);
+    return sizeof(messageType) + sizeof(term) + sizeof(voteGranted) + sizeof (node_id);
 }
 
 void VoteResponse::Print() {
+    std::cout<<"messageType: " << messageType << '\n';
     std::cout<<"term: "<< term <<'\n';
     std::cout<<"voteGranted: "<< voteGranted<<'\n';
     std::cout<<"node_id: "<< node_id<<'\n';
+}
+
+int VoteResponse::Get_messageType() {
+    return messageType;
 }
 
 bool VoteResponse::Get_voteGranted() {
@@ -164,7 +193,7 @@ int VoteResponse::Get_term() {
 
 
 /*-------------------------------Append Entries class------------------*/
-
+// please do the same for append entries class
 AppendEntries::AppendEntries()  {
     term = 0;
     opcode = -1;
@@ -207,7 +236,7 @@ void AppendEntries::UnMarshal(char *buffer){
 }
 
 void AppendEntries::Marshal(char *buffer){
-    int net_message_type = htonl(messageType); // messageType field to determine if it's vote response or
+    int net_messageType = htonl(messageType); // messageType field to determine if it's vote response or
                                                 // log replication
     int net_term = htonl(term);
     int net_opcode = htonl(opcode);
@@ -216,8 +245,8 @@ void AppendEntries::Marshal(char *buffer){
 
     int offset = 0;
 
-    memcpy(buffer + offset, &net_message_type, sizeof(net_message_type));
-    offset += sizeof(net_message_type);
+    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
