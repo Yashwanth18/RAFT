@@ -23,13 +23,7 @@ int main(int argc, char *argv[]) {
     bool Request_Completed[nodeInfo.num_peers];
 
     serverStub.Init(&nodeInfo);
-    int num_votes = 0;
-
-    for (int i = 0; i < nodeInfo.num_peers; i++) {   /* Init Socket */
-        Socket[i] = serverStub.Create_Socket();
-        Is_Init[i] = false;
-        Socket_Status[i] = false;
-    }
+    Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status)
 
     /* Initialising to assume the role of the leader for debugging purpose*/
     nodeInfo.role = CANDIDATE;
@@ -38,6 +32,7 @@ int main(int argc, char *argv[]) {
     while(true){
 
         if (nodeInfo.role == CANDIDATE){
+            int num_votes = 0;
             Setup_New_Election(&timer, &num_votes, &nodeInfo, Request_Completed);
 
             /* While (not time out and vote has not been rejected) */
@@ -52,8 +47,9 @@ int main(int argc, char *argv[]) {
                 Get_Vote(&timer, &nodeInfo, &serverStub, &num_votes, Request_Completed,
                          &PeerIdIndexMap);
 
-            } // End: While (not time out and vote has not been rejected)
+            } /* End: While (not time out and vote has not been rejected) */
         } // End: Candidate role
+
     } // END: while(true)
 }
 

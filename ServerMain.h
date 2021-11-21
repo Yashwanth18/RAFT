@@ -138,3 +138,13 @@ void Get_Vote(ServerTimer * timer, NodeInfo * nodeInfo, ServerStub * serverStub,
     }
 }
 
+void Init_Socket(ServerStub * serverStub, int num_peers, int *Socket, bool *Is_Init,
+                 bool *Socket_Status){
+
+    for (int i = 0; i < num_peers; i++) {   /* Init Socket */
+        Socket[i] = serverStub -> Create_Socket();
+        Is_Init[i] = false;
+        Socket_Status[i] = false;
+    }
+}
+
