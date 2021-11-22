@@ -4,212 +4,223 @@
 #include <arpa/inet.h>
 #include "Messages.h"
 
-/*------------------------------RequestVote Class-------------------------------*/
-RequestVote::RequestVote()  {
+/*-------------------------------AppendEntryRequest class------------------*/
+AppendEntryRequest::AppendEntryRequest()  {
     messageType = -1;
-    term = -1;
-    candidateId = -1;
-    lastLogIndex = -1;
-    lastLogTerm = -1;
-}
-
-void RequestVote:: 
-Set(int _messageType, int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm){
-    
-    messageType = _messageType;
-    term = _term;
-    candidateId = _candidateId;
-    lastLogIndex = _lastLogIndex;
-    lastLogTerm = _lastLogTerm;
-}
-
-void RequestVote::Unmarshal(char *buffer){
-    int net_messageType;
-    int net_term;
-    int net_candidateId;
-    int net_lastLogIndex;
-    int net_lastLogTerm;
-
-    int offset = 0;
-
-    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
-    offset += sizeof(net_messageType);
-    memcpy(&net_term, buffer + offset, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(&net_candidateId, buffer + offset, sizeof(net_candidateId));
-    offset += sizeof(net_candidateId);
-    memcpy(&net_lastLogIndex, buffer + offset, sizeof(net_lastLogIndex));
-    offset += sizeof(net_lastLogIndex);
-    memcpy(&net_lastLogTerm, buffer + offset, sizeof(net_lastLogTerm));
-
-    messageType = ntohl(net_messageType);
-    term = ntohl(net_term);
-    candidateId = ntohl(net_candidateId);
-    lastLogIndex = ntohl(net_lastLogIndex);
-    lastLogTerm = ntohl(net_lastLogTerm);
-}
-
-void RequestVote::Marshal(char *buffer){
-    int net_messageType = htonl(messageType);
-    int net_term = htonl(term);
-    int net_candidateId = htonl(candidateId);
-    int net_lastLogIndex = htonl(lastLogIndex);
-    int net_lastLogTerm = htonl(lastLogTerm);
-
-    int offset = 0;
-
-    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
-    offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_term, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_candidateId, sizeof(net_candidateId));
-    offset += sizeof(net_candidateId);
-    memcpy(buffer + offset, &net_lastLogIndex, sizeof(net_lastLogIndex));
-    offset += sizeof(net_lastLogIndex);
-    memcpy(buffer + offset, &net_lastLogTerm, sizeof(net_lastLogTerm));
-}
-
-int RequestVote::Size() {
-    return sizeof (messageType) + sizeof(term) + sizeof(candidateId) +
-            sizeof(lastLogIndex)+ sizeof(lastLogTerm);
-}
-
-/* ----------------------Get private variables --------------------*/
-int RequestVote::Get_term() {
-    return term;
-}
-int RequestVote::Get_last_log_index() {
-    return lastLogIndex;
-}
-int RequestVote::Get_last_log_term() {
-    return lastLogTerm;
-}
-int RequestVote::Get_candidateId() {
-    return candidateId;
-}
-int RequestVote::Get_message_type() {
-    return messageType;
-}
-
-void RequestVote::Print(){
-    std::cout << "message type: " << messageType << '\n';  
-    std::cout << "term: " << term << '\n';
-    std::cout << "candidateId: " << candidateId << '\n';
-    std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
-    std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
-}
-
-
-/* ----------------------------------voteResponse----------------------------------- */
-VoteResponse::VoteResponse()  {
-    messageType = -1;
-    term = -1;
-    voteGranted = false;
-    node_id = -1;
-}
-
-void VoteResponse::Set(int _messageType, int _term, bool _voteGranted, int _node_id){
-    messageType = _messageType;
-    term = _term;
-    voteGranted = _voteGranted;
-    node_id = _node_id;
-
-}
-
-void VoteResponse::Unmarshal(char *buffer){
-    int net_messageType;
-    int net_term;
-    bool net_vote_granted;
-    int net_node_id;
-
-    int offset = 0; // first 4 bytes are for messageType field
-
-    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
-    offset += sizeof(net_messageType);
-    memcpy(&net_term, buffer + offset, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(&net_vote_granted, buffer + offset, sizeof(net_vote_granted));
-    offset += sizeof(net_vote_granted);
-    memcpy(&net_node_id, buffer + offset, sizeof(net_node_id));
-
-    messageType = ntohl(net_messageType);
-    term = ntohl(net_term);
-    voteGranted = ntohl(net_vote_granted);
-    node_id = ntohl(net_node_id);
-}
-
-void VoteResponse::Marshal(char *buffer){
-    int net_messageType = htonl(messageType);
-    int net_term = htonl(term);
-    bool net_vote_granted = htonl(voteGranted);
-    int net_node_id = htonl(node_id);
-
-    int offset = 0;
-
-    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
-    offset += sizeof(net_messageType);
-    memcpy(buffer + offset, &net_term, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_vote_granted, sizeof(net_vote_granted));
-    offset += sizeof(net_vote_granted);
-    memcpy(buffer + offset, &net_node_id, sizeof(net_node_id));
-
-}
-
-int VoteResponse::Size() {
-    return sizeof(messageType) + sizeof(term) + sizeof(voteGranted) + sizeof (node_id);
-}
-
-void VoteResponse::Print() {
-    std::cout<<"messageType: " << messageType << '\n';
-    std::cout<<"term: "<< term <<'\n';
-    std::cout<<"voteGranted: "<< voteGranted<<'\n';
-    std::cout<<"node_id: "<< node_id<<'\n';
-}
-
-/* ----------------------Get private variables --------------------*/
-int VoteResponse::Get_messageType() {
-    return messageType;
-}
-bool VoteResponse::Get_voteGranted() {
-    return voteGranted;
-}
-int VoteResponse::Get_node_id() {
-    return node_id;
-}
-int VoteResponse::Get_term() {
-    return term;
-}
-
-/*-------------------------------Append Entries class------------------*/
-// please do the same for append entries class
-AppendEntries::AppendEntries()  {
-    messageType = -1;
-    term = -1;
+    sender_term = -1;
+    leaderId = -1;
+    prevLogTerm = -1;
+    prevLogIndex = -1;
+    logTerm = -1;
     opcode = -1;
     arg1 = -1;
     arg2 = -1;
-    node_id = -1;
+    leaderCommit = -1;
 }
 
 
-void AppendEntries::Set_AppendEntries(int _messageType, int _node_id,int _term,
-                                      int _opcode, int _arg1, int _arg2) {
+void AppendEntryRequest:: Set(int _messageType, int _sender_term, int _leaderId,
+                              int _prevLogTerm, int _prevLogIndex,
+                              int _logTerm, int _opcode, int _arg1,
+                              int _arg2, int _leaderCommit){
+
     messageType = _messageType;
-    node_id = _node_id;
-    term = _term;
+    sender_term = _sender_term;
+    leaderId = _leaderId;
+    prevLogTerm = _prevLogTerm;
+    prevLogIndex = _prevLogIndex;
+    logTerm = _logTerm;
     opcode = _opcode;
     arg1 = _arg1;
     arg2 = _arg2;
+    leaderCommit = _leaderCommit;
 }
 
 
-void AppendEntries::UnMarshal(char *buffer){
+void AppendEntryRequest::UnMarshal(char *buffer){
     int net_messageType;
-    int net_term;
+    int net_sender_term;
+    int net_leaderId;
+    int net_prevLogTerm;
+    int net_prevLogIndex;
+    int net_logTerm;
     int net_opcode;
     int net_arg1;
     int net_arg2;
+    int net_leaderCommit;
+    
+    int offset = 0;
+
+    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
+    
+    memcpy(&net_sender_term, buffer + offset, sizeof(net_sender_term));
+    offset += sizeof(net_sender_term);
+    
+    memcpy(&net_leaderId, buffer + offset, sizeof(net_leaderId));
+    offset += sizeof(net_leaderId);
+
+    memcpy(&net_prevLogTerm, buffer + offset, sizeof(net_prevLogTerm));
+    offset += sizeof(net_prevLogTerm);
+    
+    memcpy(&net_prevLogIndex, buffer + offset, sizeof(net_prevLogIndex));
+    offset += sizeof(net_prevLogIndex);
+    
+    memcpy(&net_logTerm, buffer + offset, sizeof(net_logTerm));
+    offset += sizeof(net_logTerm);
+    
+    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    
+    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    
+    memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
+    offset += sizeof(net_arg2);
+    
+    memcpy(&net_leaderCommit, buffer + offset, sizeof(net_leaderCommit));
+
+
+    messageType = ntohl(net_messageType);
+    sender_term = ntohl(net_sender_term);
+    leaderId = ntohl(net_leaderId);
+    prevLogTerm = ntohl(net_prevLogTerm);
+    prevLogIndex = ntohl(net_prevLogIndex);
+    logTerm = ntohl(net_logTerm);
+    opcode = ntohl(net_opcode);
+    arg1 = ntohl(net_arg1);
+    arg2 = ntohl(net_arg2);
+    leaderCommit = ntohl(net_leaderCommit);
+
+}
+
+void AppendEntryRequest::Marshal(char *buffer){
+    int net_messageType = htonl(messageType);
+    
+    int net_sender_term = htonl(sender_term);
+    int net_leaderId = htonl(leaderId);
+    int net_prevLogTerm = htonl(prevLogTerm);
+    int net_prevLogIndex = htonl(prevLogIndex);
+    
+    int net_logTerm = htonl(logTerm);
+
+    int net_opcode = htonl(opcode);
+    int net_arg1 = htonl(arg1);
+
+    int net_arg2 = htonl(arg2);
+    int net_leaderCommit = htonl(leaderCommit);
+
+    int offset = 0;
+
+    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
+
+    memcpy(buffer + offset, &net_sender_term, sizeof(net_sender_term));
+    offset += sizeof(net_sender_term);
+
+    memcpy(buffer + offset, &net_leaderId, sizeof(net_leaderId));
+    offset += sizeof(net_leaderId);
+
+    memcpy(buffer + offset, &net_prevLogTerm, sizeof(net_prevLogTerm));
+    offset += sizeof(net_prevLogTerm);
+
+    memcpy(buffer + offset, &net_prevLogIndex, sizeof(net_prevLogIndex));
+    offset += sizeof(net_prevLogIndex);
+
+    memcpy(buffer + offset, &net_logTerm, sizeof(net_logTerm));
+    offset += sizeof(net_logTerm);
+
+    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+
+    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+
+    memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
+    offset += sizeof(net_arg2);
+
+    memcpy(buffer + offset, &net_leaderCommit, sizeof(net_leaderCommit));
+}
+
+int AppendEntryRequest::Size() {
+    return sizeof(messageType) + sizeof(sender_term) + sizeof(leaderId) +
+            sizeof(prevLogTerm) + sizeof(prevLogIndex) +
+            sizeof(logTerm) + sizeof(opcode) + sizeof(arg1) + sizeof(arg2) + 
+            sizeof (leaderCommit);
+}
+
+void AppendEntryRequest::Print(){
+    std::cout << "--------------------------------" << '\n';
+    std::cout << "messageType: " << messageType << '\n';
+    std::cout << "sender_term : " << sender_term << '\n';
+    std::cout << "leaderId : " << leaderId << '\n';
+    std::cout << "prevLogTerm : " << prevLogTerm << '\n';
+    std::cout << "prevLogIndex : " << prevLogIndex << '\n';
+    std::cout << "logTerm : "<< logTerm << '\n';
+    std::cout << "opcode : "<< opcode << '\n';
+    std::cout << "arg1 : " << arg1 << '\n';
+    std::cout << "arg2 : " << arg2 << '\n';
+    std::cout << "leaderCommit : " << leaderCommit << '\n';
+    std::cout << "--------------------------------" << '\n';
+
+}
+
+/* ----------------------Get private variables --------------------*/
+int AppendEntryRequest::Get_messageType(){
+    return messageType;
+}
+int AppendEntryRequest::Get_sender_term(){
+    return sender_term;
+}
+int AppendEntryRequest::Get_leaderId(){
+    return leaderId;
+}
+int AppendEntryRequest::Get_prevLogTerm(){
+    return prevLogTerm;
+}
+int AppendEntryRequest:: Get_prevLogIndex(){
+    return prevLogIndex;
+}
+int AppendEntryRequest::Get_logTerm(){
+    return logTerm;
+}
+int AppendEntryRequest::Get_opcode(){
+    return opcode;
+}
+int AppendEntryRequest::  Get_arg1(){
+    return arg1;
+}
+int AppendEntryRequest:: Get_arg2(){
+    return arg2;
+}
+int AppendEntryRequest:: Get_leaderCommit(){
+    return leaderCommit;
+}
+
+
+/*-------------------------------AppendEntryResponse class------------------*/
+AppendEntryResponse::AppendEntryResponse()  {
+    messageType = -1;
+    term = -1;
+    success = -1;
+    nodeID = -1;
+}
+
+
+void AppendEntryResponse::
+Set(int _messageType, int _term, int _success, int _nodeID){
+    messageType = _messageType;
+    term = _term;
+    success = _success;
+    nodeID = _nodeID;
+}
+
+
+void AppendEntryResponse::UnMarshal(char *buffer){
+    int net_messageType;
+    int net_term;
+    int net_success;
+    int net_nodeID;
 
     int offset = 0;
 
@@ -217,62 +228,54 @@ void AppendEntries::UnMarshal(char *buffer){
     offset += sizeof(net_messageType);
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
-    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
-    offset += sizeof(net_opcode);
-    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
-    offset += sizeof(net_arg1);
-    memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
+    memcpy(&net_success, buffer + offset, sizeof(net_success));
+    offset += sizeof(net_success);
+    memcpy(&net_nodeID, buffer + offset, sizeof(net_nodeID));
 
     messageType = ntohl(net_messageType);
     term = ntohl(net_term);
-    opcode = ntohl(net_opcode);
-    arg1 = ntohl(net_arg1);
-    arg2 = ntohl(net_arg2);
+    success = ntohl(net_success);
+    nodeID = ntohl(net_nodeID);
+
 }
 
-void AppendEntries::Marshal(char *buffer){
+void AppendEntryResponse::Marshal(char *buffer){
     int net_messageType = htonl(messageType);
     int net_term = htonl(term);
-    int net_opcode = htonl(opcode);
-    int net_arg1 = htonl(arg1);
-    int net_arg2 = htonl(arg2);
-
+    int net_success = htonl(success);
+    int net_nodeID = htonl(nodeID);
     int offset = 0;
 
     memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
     offset += sizeof(net_messageType);
     memcpy(buffer + offset, &net_term, sizeof(net_term));
     offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_term, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
-    offset += sizeof(net_opcode);
-    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
-    offset += sizeof(net_arg1);
-    memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
+    memcpy(buffer + offset, &net_success, sizeof(net_success));
+    offset += sizeof(net_success);
+    memcpy(buffer + offset, &net_nodeID, sizeof(net_nodeID));
 }
 
-int AppendEntries::Size() {
-    return sizeof(messageType) + sizeof(term) + sizeof(opcode)
-            + sizeof(arg1)+ sizeof(arg2);
+int AppendEntryResponse::Size() {
+    return sizeof(messageType) + sizeof(term) + sizeof(success) + sizeof(nodeID);
 }
 
 /* ----------------------Get private variables --------------------*/
-int AppendEntries::Get_term() {
+int AppendEntryResponse::Get_messageType(){
+    return messageType;
+}
+int AppendEntryResponse::Get_term(){
     return term;
 }
-int AppendEntries::Get_id() {
-    return node_id;
+int AppendEntryResponse::Get_success(){
+    return success;
 }
-int AppendEntries::Get_opcode(){
-    return opcode;
+int AppendEntryResponse::Get_nodeID() {
+    return nodeID;
 }
-int AppendEntries::Get_arg1(){
-    return arg1;
-}
-int AppendEntries::Get_arg2(){
-    return arg2;
-}
-int AppendEntries::Get_messageType(){
-    return messageType;
+
+void AppendEntryResponse::Print(){
+    std::cout << "messageType: " << messageType << '\n';
+    std::cout << "term : " << term << '\n';
+    std::cout << "success : " << success << '\n';
+    std::cout << "nodeID : " << nodeID << '\n';
 }

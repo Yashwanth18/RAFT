@@ -1,20 +1,24 @@
 #include "ServerMain.h"
 
 int main(int argc, char *argv[]) {
-    ServerTimer timer;
     NodeInfo nodeInfo;
+    ServerState serverState;
     ServerStub serverStub;
-    ServerTimer serverTimer;
+    ServerTimer timer;
+
     std::vector<Peer_Info> PeerServerInfo;
     std::map<int,int> PeerIdIndexMap;
+
+    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)){
+        return 0;
+    }
 
     if (!Init_NodeInfo(&nodeInfo, argc, argv)){
         return 0;
     }
 
-    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)){
-        return 0;
-    }
+    Init_ServerState(&serverState, nodeInfo.num_peers);
+    serverStub.Init(&nodeInfo);
 
     /* variables for error handling related to Socket*/
     int Socket[nodeInfo.num_peers];
@@ -22,55 +26,46 @@ int main(int argc, char *argv[]) {
     bool Is_Init[nodeInfo.num_peers];
     bool Request_Completed[nodeInfo.num_peers];
 
-    serverStub.Init(&nodeInfo);
     Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
-    /* Initialising to assume the role of the leader for debugging purpose*/
-    nodeInfo.role = CANDIDATE;
+    /* Initialising to assume the role of the leader for debugging purpose */
+    nodeInfo.role = LEADER;
+    serverState.currentTerm++;
 
-    timer.Start();
-    while(true){
+    /* Debug purpose only!: make believe for now that this comes from the customer */
+    LogEntry logEntry1 {serverState.currentTerm, 1, 11, 111};
+    serverState.nextIndex[0]++;
+    LogEntry logEntry2 {serverState.currentTerm, 2, 22, 222};
 
-        if (nodeInfo.role == CANDIDATE){
-            int num_votes = 0;
-            Setup_New_Election(&timer, &num_votes, &nodeInfo, Request_Completed);
+    serverState.smr_log.push_back(logEntry1);
+    serverState.smr_log.push_back(logEntry2);
+    /* ------------------------------------------------------------------------*/
 
-            /* While (not time out and vote has not been rejected) */
-            while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
+    Init_Request_Completed_Bool(Request_Completed, nodeInfo.num_peers);
+    bool all_replicated = false;
+    int num_ack = 0;
 
-                Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
-                            Socket, Is_Init, Socket_Status, Request_Completed);
+    if (nodeInfo.role == LEADER){
 
-                BroadCast_Request_Vote(&nodeInfo, &serverStub, Socket, Is_Init,
-                                       Socket_Status, Request_Completed);
+        while(!all_replicated){
+            Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
+                        Socket, Is_Init, Socket_Status, Request_Completed);
 
-                Get_Vote(&timer, &nodeInfo, &serverStub, &num_votes, Request_Completed,
-                         &PeerIdIndexMap);
+            BroadCast_AppendEntryRequest(&serverState, &nodeInfo, &serverStub, Socket,
+                                         Is_Init, Socket_Status, Request_Completed);
 
-            } /* End: While (not time out and vote has not been rejected) */
-        } // End: Candidate role
+            Get_Acknowledgement(&serverState, &timer, &nodeInfo, &serverStub, &num_ack,
+                                Request_Completed, &PeerIdIndexMap);
 
-    } // END: while(true)
+            all_replicated = Check_Request_All_Completed(Request_Completed, nodeInfo.num_peers);
+        }
+    } // End: Leader role
+
+
 }
 
 
-// /*--------------------------Code below is for future implementation-----------------------*/
-/*
- if (nodeInfo.role == LEADER){    //send heartbeat message
-      to-do: check if there is a write request from the real client
-      to-do: if no, send real heartbeat message (empty log replication request)
- }
 
- if (nodeInfo.role == FOLLOWER){
-     if (timer.Check_election_timeout()){
-         nodeInfo.role = CANDIDATE;
-     }
-     else{
-         serverStub.Poll(Poll_timeout);
-         serverStub.Handle_Follower_Poll(&timer);
-     }
- }
-*/
 
 
 

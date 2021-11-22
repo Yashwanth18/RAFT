@@ -28,18 +28,21 @@ int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
         return 0;
     }
     node_info -> leader_id = -1;
+    node_info -> server_port = atoi(argv[1]);
     node_info -> node_id = atoi(argv[2]);
 
-    node_info -> server_port = atoi(argv[1]);
-    node_info -> num_peers = -1;
-
-    /* Used in RequestVote*/
-    node_info -> term = 0;
-    node_info ->  votedFor = -1;
-
-    /* change this to a real vector of struct log */
-    node_info ->  lastLogTerm = 0;
-    node_info ->  lastLogIndex = 0;
 
     return 1;
+}
+
+void Init_ServerState(ServerState * serverState){
+    /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
+    serverState -> currentTerm = 0;
+    serverState -> votedFor = -1;
+    // std::vector<LogEntry> smr_log;
+
+
+    /* volatile state on all servers */
+    serverState -> commitIndex = 0;
+    serverState -> last_applied = 0;
 }

@@ -20,47 +20,10 @@ void ServerStub:: Add_Socket_To_Poll(int new_fd){
     pfds_server.push_back(new_pfd);
 }
 
-/* return the new file descriptor
- * 0 on failure and 1 on success
- * */
-
-int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
-    RequestVote requestVote;
-    int remain_size = requestVote.Size();
-    char buf[remain_size];
-    int offset = 0;
-    int bytes_written;
-
-    FillRequestVote(nodeInfo, &requestVote);
-    requestVote.Marshal(buf);
-
-    while (remain_size > 0){
-
-        try{
-            bytes_written = send(fd, buf+offset, remain_size, 0);
-            if (bytes_written < 0){
-                throw bytes_written;
-            }
-        }
-        catch(int stat){
-            return 0;
-        }
-
-        offset += bytes_written;
-        remain_size -= bytes_written;
-    }
-
-    return 1;   /* to-do: fix this with socket_status */
-}
-
-void ServerStub::FillRequestVote(NodeInfo * nodeInfo, RequestVote *requestVote) {
-    int messageType = VOTE_REQUEST;
-    int term = nodeInfo -> term;
-    int candidateId = nodeInfo -> node_id;
-    int lastLogIndex = nodeInfo -> lastLogIndex;
-    int lastLogTerm = nodeInfo -> lastLogTerm;
-
-    requestVote -> Set(messageType, term, candidateId, lastLogIndex, lastLogTerm);
+int ServerStub:: Poll(int poll_timeout){
+    int poll_count = poll(pfds_server.data(), pfds_server.size(), poll_timeout);
+    if( poll_count < 0 )   perror("poll");
+    return poll_count;
 }
 
 int ServerStub::Create_Socket() {
@@ -74,7 +37,6 @@ int ServerStub::Create_Socket() {
 
     return new_fd;
 }
-
 /* return the new file descriptor
  * 0 on failure and 1 on success
  * */
@@ -104,37 +66,86 @@ int ServerStub:: Connect_To(std::string ip, int port, int new_fd){
 
 
 void ServerStub:: Accept_Connection(){
-  int new_fd;
-  struct sockaddr_in addr;
-  unsigned int addr_size = sizeof(addr);
+    int new_fd;
+    struct sockaddr_in addr;
+    unsigned int addr_size = sizeof(addr);
 
-  //the listening socket is pfds_server[0].fd
-  new_fd = accept(pfds_server[0].fd, (struct sockaddr *) &addr, &addr_size);
-  if (new_fd < 0) perror ("accept");
+    //the listening socket is pfds_server[0].fd
+    new_fd = accept(pfds_server[0].fd, (struct sockaddr *) &addr, &addr_size);
+    if (new_fd < 0) perror ("accept");
 
-  Add_Socket_To_Poll(new_fd);
+    Add_Socket_To_Poll(new_fd);
+}
+
+int ServerStub::
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index) {
+    AppendEntryRequest appendEntryRequest;
+    int remain_size = appendEntryRequest.Size();
+    char buf[remain_size];
+    int offset = 0;
+    int bytes_written;
+
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index);
+    appendEntryRequest.Marshal(buf);
+
+    while (remain_size > 0){
+        try{
+            bytes_written = send(fd, buf+offset, remain_size, 0);
+            if (bytes_written < 0){
+                throw bytes_written;
+            }
+        }
+        catch(int stat){
+            return 0;
+        }
+
+        offset += bytes_written;
+        remain_size -= bytes_written;
+    }
+
+    return 1;   /* to-do: fix this with socket_status */
 }
 
 
+void ServerStub::
+FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
+                       AppendEntryRequest *appendEntryRequest,  int peer_index) {
 
-int ServerStub:: Poll(int poll_timeout){
-    int poll_count = poll(pfds_server.data(), pfds_server.size(), poll_timeout);
-    if( poll_count < 0 )   perror("poll");
-    return poll_count;
+    int _messageType = APPEND_ENTRY_REQUEST;
+    int _sender_term = serverState -> currentTerm;
+    int _leaderId = nodeInfo -> node_id;
+    int _leaderCommit = serverState -> commitIndex;
+
+    LogEntry logEntry = serverState -> smr_log.back();
+
+    int _logTerm = logEntry.logTerm;
+    int _opcode = logEntry.opcode;
+    int _arg1 = logEntry.arg1;
+    int _arg2 = logEntry.arg2;
+
+    int _prevLogIndex = serverState -> nextIndex[peer_index] - 1;
+    int _prevLogTerm = -1;
+
+    if (_prevLogIndex >= 0){
+        _prevLogTerm = serverState -> smr_log.at(_prevLogIndex).logTerm;
+    }
+
+    appendEntryRequest -> Set(_messageType, _sender_term, _leaderId,
+                              _prevLogTerm, _prevLogIndex,
+                              _logTerm, _opcode, _arg1, _arg2 , _leaderCommit);
 }
-
-
 
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
-void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, int * num_votes, NodeInfo *nodeInfo){
-    VoteResponse voteResponse;
-    AppendEntries appendEntries;
+void ServerStub::
+Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
+                 bool *Request_Completed, int * num_ack, NodeInfo *nodeInfo){
 
-    char buf[voteResponse.Size() + appendEntries.Size() + 4];
+    AppendEntryResponse appendEntryResponse;
+
+    char buf[appendEntryResponse.Size()];
     int num_alive_sockets = pfds_server.size();
-    int message_type; // message descriptor to determine if the message is append entries or vote response
     int peer_index;
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
@@ -145,7 +156,7 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
             }
 
             else{                                   /* events from established connection */
-                int nbytes = recv(pfds_server[i].fd, buf, sizeof(voteResponse), 0);
+                int nbytes = recv(pfds_server[i].fd, buf, sizeof(appendEntryResponse), 0);
 
                 if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
                     close(pfds_server[i].fd);
@@ -153,44 +164,22 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                 }
 
                 else{    /* got good data */
-                    memcpy(&message_type, buf, sizeof(message_type)); // get messageType
+                    appendEntryResponse.UnMarshal(buf);
+                    appendEntryResponse.Print();
 
-                    if (ntohl(message_type) == VOTE_RESPONSE) {
-
-                        voteResponse.Unmarshal(buf);
-                        voteResponse.Print();
-
-                        if (voteResponse.Get_voteGranted()) {
-                            (*num_votes)++;
-                        }
-                        else {  // vote got rejected, which means the node lags behind
-                            nodeInfo->role = FOLLOWER;
-                            nodeInfo->term = voteResponse.Get_term();
-                        }
-
-                        peer_index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
-                        request_completed[peer_index] = true;
+                    if (appendEntryResponse.Get_success()) {
+                        (*num_ack)++;
+                        peer_index = (*PeerIdIndexMap)[appendEntryResponse.Get_nodeID()];
+                        Request_Completed[peer_index] = true;
+                    }
+                    else {  // vote got rejected, which means the follower node lags behind
+                        /* to-do */
                     }
 
-                    /*  when the candidate gets a log replication request from other node */
-                    else if (ntohl(message_type) == APPEND_ENTRIES_REQUEST) {
-
-                        appendEntries.UnMarshal(buf);
-
-                        int leader_term = appendEntries.Get_term();
-                        int node_term = nodeInfo -> term;
-                        int leader_id = appendEntries.Get_id();
-
-                        if (leader_term > node_term) {
-                            nodeInfo -> leader_id = leader_id;
-                            nodeInfo->role =  FOLLOWER;
-                        }
-
-                    }
-                }                       /* End got good data */
-            }                     /* End events from established connection */
-        }                    /* End got ready-to-read from poll() */
-    }                    /* End looping through file descriptors */
+                } /* End got good data */
+            } /* End events from established connection */
+        } /* End got ready-to-read from poll() */
+    } /* End looping through file descriptors */
 }
 
 

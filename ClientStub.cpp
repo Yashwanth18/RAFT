@@ -23,16 +23,25 @@ void ClientStub:: Accept_Connection(){
   if (new_fd < 0) perror ("accept");
 
   Add_Socket_To_Poll(new_fd);
+  std::cout << "Accepted Connection" << '\n';
 }
+
+int ClientStub:: Poll(int Poll_timeout){
+    int poll_count = poll(pfds.data(), pfds.size(), Poll_timeout);
+    if( poll_count < 0 )   perror("poll");
+    return poll_count;
+}
+
 /* functionalities include:
   ~ non-blocking receive RequestVoteRPC
 */
-void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
-    RequestVote requestVote;
-    VoteResponse voteResponse;
-    char buf[requestVote.Size()];
+void ClientStub::
+Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nodeInfo){
+    AppendEntryRequest appendEntryRequest;
+    AppendEntryResponse appendEntryResponse;
+    char buf[appendEntryRequest.Size()];
+
     int num_alive_sockets = pfds.size();
-    int messageType;
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
         if (pfds[i].revents & POLLIN) {            /* got ready-to-read from poll() */
@@ -41,9 +50,9 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
                 Accept_Connection();
             }
 
-            else{ /* events from established connection */
+            else { /* events from established connection */
 
-              int nbytes = recv(pfds[i].fd, buf, sizeof(requestVote), 0);
+                int nbytes = recv(pfds[i].fd, buf, sizeof(appendEntryRequest), 0);
 
               if (nbytes <= 0){  /* connection closed or error */
                   close(pfds[i].fd);
@@ -52,95 +61,91 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
 
               else{             /* got good data */
 
-                  requestVote.Unmarshal(buf);
-                  requestVote.Print();
+                  appendEntryRequest.UnMarshal(buf);
+                  appendEntryRequest.Print();
 
                   timer -> Print_elapsed_time();
 
-                  messageType = VOTE_RESPONSE;
-                  voteResponse.Set(messageType, nodeInfo -> term,
-                                   Decide_Vote(nodeInfo, &requestVote),
-                                   nodeInfo -> node_id);
+                  int success = 1;  // to-do: use Decide()
+                  appendEntryResponse.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
+                                          success, nodeInfo -> node_id);
 
-                  Send_voteResponse(&voteResponse, pfds[i].fd);
+                  Send_AppendEntryResponse(&appendEntryResponse, pfds[i].fd);
+
               } /* End got good data */
             } /* End events from established connection */
-
             timer -> Restart();
 
-        } /* End got ready-to-read from poll() */
-    } /*  End looping through file descriptors */
+        } /* End: got ready-to-read from poll() */
+    } /*  End: looping through file descriptors */
 }
 
-bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
-    bool result = false;
-
-    if (Compare_Log (nodeInfo, requestVote) && nodeInfo -> votedFor == -1){
-
-        result = requestVote -> Get_term() > nodeInfo -> term;
-
-    }
-
-    if (result){
-
-        nodeInfo -> votedFor = requestVote -> Get_candidateId();
-        nodeInfo -> term = requestVote -> Get_term();
-
-    }
-
-    return result;
-}
-
-/* Comparing the last_term and log length for the candidate node and the follower node */
-bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
-
-    int candidate_last_log_term = requestVote -> Get_last_log_term();
-    int candidate_last_log_index = requestVote -> Get_last_log_index();
-
-    int node_last_log_term = nodeInfo -> lastLogTerm;
-    int node_last_log_index = nodeInfo -> lastLogIndex;
-
-    bool greater_last_log_term = candidate_last_log_term > node_last_log_term;
-    bool check_last_log_index = candidate_last_log_index >= node_last_log_index;
-
-    bool log_ok = false;
-
-    if (greater_last_log_term)
-    {
-        log_ok = true;
-    }
-
-    else if (candidate_last_log_term == node_last_log_term)
-    {
-        return check_last_log_index;
-    }
-
-    return log_ok;
-
-}
-
-int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {
-    int remain_size = voteResponse -> Size() + 4; // additional 4 bytes for the messageType field
+int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd){
+    int remain_size = appendEntryResponse -> Size();
     char buf[remain_size];
-//    int socket_status;
     int offset = 0;
     int bytes_written;
 
-    voteResponse->Marshal(buf);
+    appendEntryResponse -> Marshal(buf);
 
     while (remain_size > 0){
+        /* to-do: error handling for send */
         bytes_written = send(fd, buf+offset, remain_size, 0);
         offset += bytes_written;
         remain_size -= bytes_written;
     }
 
-
-    return 1;   /* to-do: fix this with socket_status */
+    return 1;
 }
 
+//bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
+//    bool result = false;
+//
+//    if (Compare_Log (nodeInfo, requestVote) && nodeInfo -> votedFor == -1){
+//
+//        result = requestVote -> Get_term() > nodeInfo -> term;
+//
+//    }
+//
+//    if (result){
+//
+//        nodeInfo -> votedFor = requestVote -> Get_candidateId();
+//        nodeInfo -> term = requestVote -> Get_term();
+//
+//    }
+//
+//    return result;
+//}
+//
+///* Comparing the last_term and log length for the candidate node and the follower node */
+//bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
+//
+//    int candidate_last_log_term = requestVote -> Get_last_log_term();
+//    int candidate_last_log_index = requestVote -> Get_last_log_index();
+//
+//    int node_last_log_term = nodeInfo -> lastLogTerm;
+//    int node_last_log_index = nodeInfo -> lastLogIndex;
+//
+//    bool greater_last_log_term = candidate_last_log_term > node_last_log_term;
+//    bool check_last_log_index = candidate_last_log_index >= node_last_log_index;
+//
+//    bool log_ok = false;
+//
+//    if (greater_last_log_term)
+//    {
+//        log_ok = true;
+//    }
+//
+//    else if (candidate_last_log_term == node_last_log_term)
+//    {
+//        return check_last_log_index;
+//    }
+//
+//    return log_ok;
+//
+//}
+//
 
-int ClientStub:: Poll(int Poll_timeout){
-    int poll_count = poll(pfds.data(), pfds.size(), Poll_timeout);
-    if( poll_count < 0 )   perror("poll");
-    return poll_count;
-}
+
+
+

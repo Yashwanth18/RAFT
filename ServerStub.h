@@ -34,18 +34,26 @@ public:
     ServerStub() {};
     void Init(NodeInfo * nodeInfo);
 
-    /* Accept Connection */
+    /* Accept Connection and Recv*/
     void Accept_Connection();
     void Add_Socket_To_Poll(int new_fd);
+    int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
 
     /* Connect and Send */
     int Create_Socket();
     int Connect_To(std::string ip, int port, int fd);
-    int SendRequestVote(NodeInfo *nodeInfo, int fd);
 
-    void FillRequestVote(NodeInfo *nodeInfo, RequestVote *requestVote);
 
-    /* Receive */
-    int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
-    void Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap,bool* request_completed, int *num_votes, NodeInfo *nodeInfo);
+    int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
+                               int fd, int peer_index);
+
+    void FillAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
+                         AppendEntryRequest *appendEntryRequest,  int peer_index);
+
+    void Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
+                          bool* request_completed, int *num_ack, NodeInfo *nodeInfo);
+
+
+
+
 };
