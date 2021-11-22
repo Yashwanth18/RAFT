@@ -80,6 +80,35 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
     } /*  End: looping through file descriptors */
 }
 
+
+
+bool ClientStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
+    bool result = false;
+
+    int current_term =  serverState -> currentTerm;
+    int log_length = serverState -> smr_log.size();
+
+    int remote_term = appendEntryRequest -> Get_sender_term();
+    int prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
+
+    if (remote_term < current_term){
+        return false;
+    }
+
+    if (log_length < prevLogIndex){
+        return false;
+    }
+//    else if()
+//
+//    }
+
+    return result;
+}
+
+
+
+
+
 int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd){
     int remain_size = appendEntryResponse -> Size();
     char buf[remain_size];
@@ -98,25 +127,6 @@ int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryRespons
     return 1;
 }
 
-//bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
-//    bool result = false;
-//
-//    if (Compare_Log (nodeInfo, requestVote) && nodeInfo -> votedFor == -1){
-//
-//        result = requestVote -> Get_term() > nodeInfo -> term;
-//
-//    }
-//
-//    if (result){
-//
-//        nodeInfo -> votedFor = requestVote -> Get_candidateId();
-//        nodeInfo -> term = requestVote -> Get_term();
-//
-//    }
-//
-//    return result;
-//}
-//
 ///* Comparing the last_term and log length for the candidate node and the follower node */
 //bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
 //

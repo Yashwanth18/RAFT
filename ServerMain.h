@@ -62,12 +62,6 @@ void Init_Socket(ServerStub * serverStub, int num_peers, int *Socket, bool *Is_I
     }
 }
 
-void Init_Request_Completed_Bool(bool *Request_Completed, int num_peers){
-    for (int i = 0; i < num_peers; i++){
-        Request_Completed[i] = false;
-    }
-}
-
 /* return 0 on failure and 1 on success */
 int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo,
                        std::map<int,int> *PeerIdIndexMap){
@@ -103,13 +97,13 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
 }
 
 void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
-                 int * Socket, bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
+                 int * Socket, bool * Is_Init, bool * Socket_Status){
 
     int connect_status;
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
         /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
-        if (!Request_Completed[i] && !Is_Init[i]) {
+        if (!Is_Init[i]) {
 
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
@@ -130,12 +124,12 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 
 void BroadCast_AppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                   ServerStub * serverStub, int * Socket, bool * Is_Init,
-                                  bool * Socket_Status, bool * Request_Completed){
+                                  bool * Socket_Status){
 
     for (int i = 0; i < nodeInfo->num_peers; i++) { /* Send to all peers in parallel */
 
         /*  if we have not heard back from ith peer and socket for ith peer is still alive */
-        if (!Request_Completed[i] && Socket_Status[i] ) {
+        if (!Socket_Status[i]) {
 
             if (!serverStub -> SendAppendEntryRequest(serverState, nodeInfo, Socket[i], i)) {
                 // if send fail
@@ -150,8 +144,7 @@ void BroadCast_AppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo
 }
 
 void Get_Acknowledgement(ServerState *serverState, ServerTimer * timer, NodeInfo * nodeInfo,
-                         ServerStub * serverStub, int * num_ack, bool *Request_Completed,
-                         std::map<int,int> *PeerIdIndexMap){
+                         ServerStub * serverStub, int * num_ack, std::map<int,int> *PeerIdIndexMap){
 
     int Poll_timeout = timer -> Poll_timeout();
     int poll_count = serverStub -> Poll(Poll_timeout);
@@ -159,7 +152,7 @@ void Get_Acknowledgement(ServerState *serverState, ServerTimer * timer, NodeInfo
 
     if (poll_count > 0){
         serverStub -> Handle_Poll_Peer(serverState, PeerIdIndexMap,
-                                       Request_Completed, num_ack, nodeInfo);
+                                       num_ack);
 
         if ( *num_ack > half_num_peers ){
             std::cout << "Log reached majority " << '\n';
@@ -167,14 +160,6 @@ void Get_Acknowledgement(ServerState *serverState, ServerTimer * timer, NodeInfo
     }
 }
 
-bool Check_Request_All_Completed(bool *Request_Completed, int num_peers){
-    for (int i = 0; i < num_peers; i++){
-        if (!Request_Completed[i]){
-            return false;
-        }
-    }
-    return true;
-}
 
 
 

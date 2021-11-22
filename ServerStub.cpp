@@ -70,7 +70,7 @@ void ServerStub:: Accept_Connection(){
     struct sockaddr_in addr;
     unsigned int addr_size = sizeof(addr);
 
-    //the listening socket is pfds_server[0].fd
+    // the listening socket is pfds_server[0].fd
     new_fd = accept(pfds_server[0].fd, (struct sockaddr *) &addr, &addr_size);
     if (new_fd < 0) perror ("accept");
 
@@ -139,8 +139,7 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
   ~ non-blocking receive VoteResponse
 */
 void ServerStub::
-Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
-                 bool *Request_Completed, int * num_ack, NodeInfo *nodeInfo){
+Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * num_ack){
 
     AppendEntryResponse appendEntryResponse;
 
@@ -170,7 +169,7 @@ Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
                     if (appendEntryResponse.Get_success()) {
                         (*num_ack)++;
                         peer_index = (*PeerIdIndexMap)[appendEntryResponse.Get_nodeID()];
-                        Request_Completed[peer_index] = true;
+                        serverState -> nextIndex[peer_index] ++;
                     }
                     else {  // vote got rejected, which means the follower node lags behind
                         /* to-do */

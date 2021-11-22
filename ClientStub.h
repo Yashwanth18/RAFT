@@ -32,7 +32,7 @@ public:
     void Handle_Follower_Poll(ServerState * serverState, ClientTimer * timer, NodeInfo *nodeInfo);
     int Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd);
 
-//    bool Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote);
+    bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
 //    bool Compare_Log(NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
 
 };

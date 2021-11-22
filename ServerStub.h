@@ -51,9 +51,6 @@ public:
                          AppendEntryRequest *appendEntryRequest,  int peer_index);
 
     void Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
-                          bool* request_completed, int *num_ack, NodeInfo *nodeInfo);
-
-
-
+                          int *num_ack);
 
 };

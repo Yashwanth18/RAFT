@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     int Socket[nodeInfo.num_peers];
     bool Socket_Status[nodeInfo.num_peers];  /* 0: Dead, 1: Alive */
     bool Is_Init[nodeInfo.num_peers];
-    bool Request_Completed[nodeInfo.num_peers];
+
 
     Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
@@ -41,24 +41,19 @@ int main(int argc, char *argv[]) {
     serverState.smr_log.push_back(logEntry2);
     /* ------------------------------------------------------------------------*/
 
-    Init_Request_Completed_Bool(Request_Completed, nodeInfo.num_peers);
-    bool all_replicated = false;
     int num_ack = 0;
 
     if (nodeInfo.role == LEADER){
 
-        while(!all_replicated){
-            Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
-                        Socket, Is_Init, Socket_Status, Request_Completed);
+        Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
+                    Socket, Is_Init, Socket_Status);
 
-            BroadCast_AppendEntryRequest(&serverState, &nodeInfo, &serverStub, Socket,
-                                         Is_Init, Socket_Status, Request_Completed);
+        BroadCast_AppendEntryRequest(&serverState, &nodeInfo, &serverStub,
+                                     Socket, Is_Init, Socket_Status);
 
-            Get_Acknowledgement(&serverState, &timer, &nodeInfo, &serverStub, &num_ack,
-                                Request_Completed, &PeerIdIndexMap);
+        Get_Acknowledgement(&serverState, &timer, &nodeInfo, &serverStub,
+                            &num_ack, &PeerIdIndexMap);
 
-            all_replicated = Check_Request_All_Completed(Request_Completed, nodeInfo.num_peers);
-        }
     } // End: Leader role
 
 
