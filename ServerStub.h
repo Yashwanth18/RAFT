@@ -45,12 +45,12 @@ public:
 
 
     int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                               int fd, int peer_index);
+                               int fd, int peer_index, int * RequestID);
 
     void FillAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                         AppendEntryRequest *appendEntryRequest,  int peer_index);
+                         AppendEntryRequest *appendEntryRequest,  int peer_index, int * RequestID);
 
-    void Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
-                          int *num_ack);
+    void Handle_Poll_Peer(ServerState *serverState,
+                          std::map<int,int> *PeerIdIndexMap, int * RequestID);
 
 };

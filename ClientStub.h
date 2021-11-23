@@ -33,6 +33,7 @@ public:
     int Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd);
 
     bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
-//    bool Compare_Log(NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
+    void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
 
+    void Print_Log(ServerState * serverState);
 };

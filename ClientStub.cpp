@@ -40,7 +40,7 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
     AppendEntryRequest appendEntryRequest;
     AppendEntryResponse appendEntryResponse;
     char buf[appendEntryRequest.Size()];
-
+    int success_appendEntry;
     int num_alive_sockets = pfds.size();
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
@@ -54,23 +54,36 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
 
                 int nbytes = recv(pfds[i].fd, buf, sizeof(appendEntryRequest), 0);
 
-              if (nbytes <= 0){  /* connection closed or error */
+                if (nbytes <= 0){  /* connection closed or error */
                   close(pfds[i].fd);
                   pfds.erase(pfds.begin()+i);     /* delete */
-              }
+                }
+                else{             /* got good data */
+                    appendEntryRequest.UnMarshal(buf);
+                    appendEntryRequest.Print();
 
-              else{             /* got good data */
+                    timer -> Print_elapsed_time();
 
-                  appendEntryRequest.UnMarshal(buf);
-                  appendEntryRequest.Print();
+//                    std::cout << "\n###### Before func: " << '\n';
+//                    std::cout << "committed index: " << serverState -> commitIndex << '\n';
+                    Set_CommitIndex(&appendEntryRequest, serverState);
+//                    std::cout << "\n###### After func: " << '\n';
+//                    std::cout << "committed index: " << serverState -> commitIndex << '\n';
 
-                  timer -> Print_elapsed_time();
 
-                  int success = 1;  // to-do: use Decide()
-                  appendEntryResponse.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
-                                          success, nodeInfo -> node_id);
+                    std::cout << "\n###### Before: " << '\n';
+                    Print_Log(serverState);
 
-                  Send_AppendEntryResponse(&appendEntryResponse, pfds[i].fd);
+                    success_appendEntry = Set_Result(serverState, &appendEntryRequest);
+
+                    std::cout << "\n###### After: " << '\n';
+                    Print_Log(serverState);
+
+                    int ResponseID = appendEntryRequest.Get_RequestID() + 1;
+                    appendEntryResponse.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
+                                          success_appendEntry, nodeInfo -> node_id, ResponseID);
+
+                    Send_AppendEntryResponse(&appendEntryResponse, pfds[i].fd);
 
               } /* End got good data */
             } /* End events from established connection */
@@ -81,28 +94,90 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
 }
 
 
+/* If leaderCommit > commitIndex,
+ * Set commitIndex = min(leaderCommit, index of last new entry) */
+void ClientStub::
+Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState) {
 
+    /* local state */
+    int local_commitIndex = serverState -> commitIndex;
+    int local_log_length = serverState -> smr_log.size();
+
+    /* from the remote side */
+    int leaderCommit = appendEntryRequest -> Get_leaderCommit();
+
+    if (leaderCommit > local_commitIndex){
+        if (leaderCommit > local_log_length){
+            serverState -> commitIndex = local_log_length;
+        }
+        else{
+            serverState -> commitIndex = leaderCommit;
+        }
+    }
+}
+
+/* to-do: Ideally, should return false to the leader first before modifying local log to
+ * optimize latency */
 bool ClientStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
-    bool result = false;
+    /* local state */
+    int local_term = serverState -> currentTerm;
+    int local_log_length = serverState -> smr_log.size();
+    int local_prevLogTerm;
+    std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
 
-    int current_term =  serverState -> currentTerm;
-    int log_length = serverState -> smr_log.size();
-
+    /* from the remote side */
     int remote_term = appendEntryRequest -> Get_sender_term();
-    int prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
+    int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
+    int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
+    LogEntry remote_logEntry = appendEntryRequest -> Get_LogEntry();
 
-    if (remote_term < current_term){
+
+    /* Reply false the remote node is stale */
+    if (remote_term < local_term){
         return false;
     }
 
-    if (log_length < prevLogIndex){
-        return false;
+    /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
+    if (local_log_length - 1 < remote_prevLogIndex){
+        return false; // no element in local smr_log
     }
-//    else if()
-//
-//    }
 
-    return result;
+    else{   // if there is an entry in the local log at remote_prevLogIndex
+        local_prevLogTerm = serverState -> smr_log.at(remote_prevLogIndex).logTerm;
+
+        if (local_prevLogTerm != remote_prevLogTerm){ // check if conflicting prev log entry
+
+            if (local_log_length > 1){  // keep first log to prevent index out of bound error
+                /* erase conflicting log */
+                serverState -> smr_log.erase(iter + remote_prevLogIndex, iter + local_log_length);
+            }
+            return false;
+        }
+
+        else{
+            // check for conflicting entry at the last index of local smr_log
+            if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm){
+                return true;     // Already in the smr_log !
+            }
+
+            serverState -> smr_log.push_back(remote_logEntry);
+            return true;
+        }
+    }
+
+
+
+    // serverState -> smr_log.erase(iter + local_log_length - 1);
+}
+
+void ClientStub::Print_Log(ServerState *serverState){
+    LogEntry logEntry;
+    for (int i = 0; i < serverState -> smr_log.size(); i++){
+        logEntry = serverState -> smr_log.at(i);
+
+        std::cout << "-----Log entry number: "<< i << "-----" << '\n';
+        std::cout << "logTerm : "<< logEntry.logTerm << '\n';
+    }
 }
 
 
@@ -127,34 +202,6 @@ int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryRespons
     return 1;
 }
 
-///* Comparing the last_term and log length for the candidate node and the follower node */
-//bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
-//
-//    int candidate_last_log_term = requestVote -> Get_last_log_term();
-//    int candidate_last_log_index = requestVote -> Get_last_log_index();
-//
-//    int node_last_log_term = nodeInfo -> lastLogTerm;
-//    int node_last_log_index = nodeInfo -> lastLogIndex;
-//
-//    bool greater_last_log_term = candidate_last_log_term > node_last_log_term;
-//    bool check_last_log_index = candidate_last_log_index >= node_last_log_index;
-//
-//    bool log_ok = false;
-//
-//    if (greater_last_log_term)
-//    {
-//        log_ok = true;
-//    }
-//
-//    else if (candidate_last_log_term == node_last_log_term)
-//    {
-//        return check_last_log_index;
-//    }
-//
-//    return log_ok;
-//
-//}
-//
 
 
 

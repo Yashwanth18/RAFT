@@ -15,13 +15,14 @@ void ServerTimer::Start() {
 }
 
 void ServerTimer::Restart() {
-	//Print_elapsed_time();
+	// Print_elapsed_time();
 	start_time = high_resolution_clock::now();
 }
 
 /* poll timeout small compared to election_timeout */
 int ServerTimer::Poll_timeout(){
-	return election_timeout.count() / 100;
+    // std:: cout << "election_timeout.count(): "<< election_timeout.count() << '\n';
+	return election_timeout.count() / 10; // Balance between jamming the receiver and preventing election timeout
 }
 
 int ServerTimer::Check_election_timeout() {

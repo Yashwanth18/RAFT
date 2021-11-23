@@ -60,28 +60,22 @@ struct NodeInfo{
 class AppendEntryRequest{
 private:
     int messageType;
-
     int sender_term;     // term of the server that sent the request
     int leaderId;        // so follower can redirect clients
+    int leaderCommit;    // leader’s commitIndex
 
     /* prevLog info */
     int prevLogTerm;     // term of prevLogIndex entry
     int prevLogIndex;    // index of log entry immediately preceding new ones
 
-    /* LogEntry */
-    int logTerm;
-    int opcode;
-    int arg1;
-    int arg2;
-    /*-------------*/
-
-    int leaderCommit;    // leader’s commitIndex
+    LogEntry logEntry;
+    int RequestID;
 
 public:
     AppendEntryRequest();
     void Set(int _messageType, int _sender_term, int _leaderId,
              int _prevLogTerm, int _prevLogIndex,
-             int _logTerm, int _opcode, int _arg1, int _arg2, int _leaderCommit);
+             LogEntry * _logEntry, int _leaderCommit, int _RequestID);
 
     void Marshal(char *buffer);
     void UnMarshal(char * buffer);
@@ -94,11 +88,9 @@ public:
     int Get_leaderId();
     int Get_prevLogTerm();
     int  Get_prevLogIndex();
-    int  Get_logTerm();
-    int  Get_opcode();
-    int  Get_arg1();
-    int  Get_arg2();
+    LogEntry Get_LogEntry();
     int  Get_leaderCommit();
+    int Get_RequestID();
 
     void Print();
 };
@@ -109,9 +101,11 @@ private:
     int term;     // currentTerm of the follower, for leader to update itself
     int success;  // true if follower contained entry matching prevLogIndex and prevLogTerm
     int nodeID;   // for the leader to keep track of which follower node has replicated the log
+    int ResponseID;
+
 public:
     AppendEntryResponse();
-    void Set(int _messageType, int _term, int _success, int _nodeID);
+    void Set(int _messageType, int _term, int _success, int _nodeID, int _RequestID);
 
     void Marshal(char *buffer);
     void UnMarshal(char * buffer);
@@ -123,6 +117,8 @@ public:
     int Get_term();
     int Get_success();
     int Get_nodeID();
+    int Get_ResponseID();
+
 
     void Print();
 };

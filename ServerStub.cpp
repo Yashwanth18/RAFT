@@ -78,14 +78,16 @@ void ServerStub:: Accept_Connection(){
 }
 
 int ServerStub::
-SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index) {
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
+                       int fd, int peer_index, int * RequestID) {
+
     AppendEntryRequest appendEntryRequest;
     int remain_size = appendEntryRequest.Size();
     char buf[remain_size];
     int offset = 0;
     int bytes_written;
 
-    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index);
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, RequestID);
     appendEntryRequest.Marshal(buf);
 
     while (remain_size > 0){
@@ -109,22 +111,20 @@ SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, in
 
 void ServerStub::
 FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                       AppendEntryRequest *appendEntryRequest,  int peer_index) {
+                       AppendEntryRequest *appendEntryRequest,  int peer_index, int * RequestID) {
 
     int _messageType = APPEND_ENTRY_REQUEST;
     int _sender_term = serverState -> currentTerm;
     int _leaderId = nodeInfo -> node_id;
     int _leaderCommit = serverState -> commitIndex;
+    int nextIndexPeer = serverState->nextIndex[peer_index];
 
-    LogEntry logEntry = serverState -> smr_log.back();
+    LogEntry logEntry = serverState -> smr_log.at( nextIndexPeer );
 
-    int _logTerm = logEntry.logTerm;
-    int _opcode = logEntry.opcode;
-    int _arg1 = logEntry.arg1;
-    int _arg2 = logEntry.arg2;
-
+    std::cout << "nextIndex in fill request: " << serverState -> nextIndex[peer_index] << '\n';
     int _prevLogIndex = serverState -> nextIndex[peer_index] - 1;
     int _prevLogTerm = -1;
+
 
     if (_prevLogIndex >= 0){
         _prevLogTerm = serverState -> smr_log.at(_prevLogIndex).logTerm;
@@ -132,14 +132,14 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
 
     appendEntryRequest -> Set(_messageType, _sender_term, _leaderId,
                               _prevLogTerm, _prevLogIndex,
-                              _logTerm, _opcode, _arg1, _arg2 , _leaderCommit);
+                              &logEntry, _leaderCommit, *RequestID);
 }
 
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
 void ServerStub::
-Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * num_ack){
+Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * RequestID){
 
     AppendEntryResponse appendEntryResponse;
 
@@ -166,13 +166,16 @@ Handle_Poll_Peer(ServerState *serverState, std::map<int,int> *PeerIdIndexMap, in
                     appendEntryResponse.UnMarshal(buf);
                     appendEntryResponse.Print();
 
+                    peer_index = (*PeerIdIndexMap)[appendEntryResponse.Get_nodeID()];
+
                     if (appendEntryResponse.Get_success()) {
-                        (*num_ack)++;
-                        peer_index = (*PeerIdIndexMap)[appendEntryResponse.Get_nodeID()];
                         serverState -> nextIndex[peer_index] ++;
                     }
-                    else {  // vote got rejected, which means the follower node lags behind
-                        /* to-do */
+                    else {  // rejected: the follower node lags behind /* to-do */
+                        if (appendEntryResponse.Get_ResponseID() > *RequestID){
+                            serverState -> nextIndex[peer_index] --;
+                            (*RequestID)++;
+                        }
                     }
 
                 } /* End got good data */

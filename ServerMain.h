@@ -10,8 +10,8 @@
 #include "ServerTimer.h"
 #include "ServerStub.h"
 
-/* Command line argument format:
-    ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server)
+/* Usage (Command line argument format):
+        ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server)
 */
 
 /* return 0 on failure and 1 on success */
@@ -37,7 +37,8 @@ void Init_ServerState(ServerState * serverState, int num_peers){
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     serverState -> currentTerm = 0;
     serverState -> votedFor = -1;
-    /* std::vector<LogEntry> smr_log; */
+    LogEntry logEntry {-1, -1, -1, -1};
+    serverState -> smr_log.push_back(logEntry);
 
 
     /* volatile state on all servers */
@@ -48,7 +49,7 @@ void Init_ServerState(ServerState * serverState, int num_peers){
 
     for (int i = 0; i < num_peers; i++){
         serverState -> matchIndex.push_back(0);
-        serverState -> nextIndex.push_back(0);
+        serverState -> nextIndex.push_back(1);
     }
 }
 
@@ -96,18 +97,23 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
     return 1;
 }
 
-void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
+void Try_Connect(ServerState * serverState, NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
                  int * Socket, bool * Is_Init, bool * Socket_Status){
 
     int connect_status;
+    bool follower_UpToDate;
+    int last_log_index = serverState -> smr_log.size() - 1;
+
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
+        follower_UpToDate = (serverState -> nextIndex[i] > last_log_index);
+
         /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
-        if (!Is_Init[i]) {
+        if (!Is_Init[i] && !follower_UpToDate) {
+            std::cout << "Still trying to connect "<< '\n';
 
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
-
             if (connect_status) {   /* connection successful */
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
@@ -122,16 +128,27 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
     }  /* End: iterator through all peers */
 }
 
-void BroadCast_AppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                                  ServerStub * serverStub, int * Socket, bool * Is_Init,
-                                  bool * Socket_Status){
 
-    for (int i = 0; i < nodeInfo->num_peers; i++) { /* Send to all peers in parallel */
+
+void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
+                                  ServerStub *serverStub, int *Socket, bool *Is_Init,
+                                  bool *Socket_Status, int *RequestID){
+
+    bool follower_UpToDate;
+    int last_log_index = serverState -> smr_log.size() - 1;
+
+
+    for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
+
+        follower_UpToDate = (serverState -> nextIndex[i] > last_log_index);
 
         /*  if we have not heard back from ith peer and socket for ith peer is still alive */
-        if (!Socket_Status[i]) {
+        if (Socket_Status[i] && !follower_UpToDate) {
 
-            if (!serverStub -> SendAppendEntryRequest(serverState, nodeInfo, Socket[i], i)) {
+            std::cout << "Still trying to send "<< '\n';
+
+            if (!serverStub -> SendAppendEntryRequest(serverState, nodeInfo, Socket[i],
+                                                      i, RequestID)) {
                 // if send fail
                 Is_Init[i] = false;
                 Socket_Status[i] = false;
@@ -143,20 +160,14 @@ void BroadCast_AppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo
     }  /* End: Send to all peers in parallel */
 }
 
-void Get_Acknowledgement(ServerState *serverState, ServerTimer * timer, NodeInfo * nodeInfo,
-                         ServerStub * serverStub, int * num_ack, std::map<int,int> *PeerIdIndexMap){
+void Get_Ack(ServerState *serverState, ServerTimer * timer,
+             ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap, int *RequestID){
 
     int Poll_timeout = timer -> Poll_timeout();
     int poll_count = serverStub -> Poll(Poll_timeout);
-    int half_num_peers = nodeInfo -> num_peers / 2;
 
     if (poll_count > 0){
-        serverStub -> Handle_Poll_Peer(serverState, PeerIdIndexMap,
-                                       num_ack);
-
-        if ( *num_ack > half_num_peers ){
-            std::cout << "Log reached majority " << '\n';
-        }
+        serverStub -> Handle_Poll_Peer(serverState, PeerIdIndexMap, RequestID);
     }
 }
 

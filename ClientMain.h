@@ -39,8 +39,8 @@ void Init_ServerState(ServerState * serverState){
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     serverState -> currentTerm = 0;
     serverState -> votedFor = -1;
-    // std::vector<LogEntry> smr_log;
-
+    LogEntry logEntry {-1, -1, -1, -1};
+    serverState -> smr_log.push_back(logEntry);
 
     /* volatile state on all servers */
     serverState -> commitIndex = 0;

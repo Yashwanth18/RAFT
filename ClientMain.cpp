@@ -2,8 +2,8 @@
 #include "ClientTimer.h"
 #include "ClientListenSocket.h"
 #include "ClientStub.h"
-
-
+#include <chrono>
+#include <thread>
 /*
 argv[1] is the port
 */
@@ -26,9 +26,23 @@ int main(int argc, char *argv[]) {
 
     Poll_timeout = timer.Poll_timeout();
 
+    /* Debug purpose only! */
+    LogEntry logEntry1 {1, 0, 0, 0};
+    serverState.smr_log.push_back(logEntry1);
+
+    LogEntry logEntry2 {1, 0, 0, 0};
+    serverState.smr_log.push_back(logEntry2);
+    serverState.smr_log.push_back(logEntry2);
+    serverState.smr_log.push_back(logEntry2);
+    serverState.smr_log.push_back(logEntry2);
+
+
+    /*---------------------*/
+
     timer.Start();
     while(true){
         clientstub.Poll(Poll_timeout);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         clientstub.Handle_Follower_Poll(&serverState, &timer, &node_info);
     }
 

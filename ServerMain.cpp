@@ -30,32 +30,45 @@ int main(int argc, char *argv[]) {
 
     /* Initialising to assume the role of the leader for debugging purpose */
     nodeInfo.role = LEADER;
-    serverState.currentTerm++;
 
     /* Debug purpose only!: make believe for now that this comes from the customer */
-    LogEntry logEntry1 {serverState.currentTerm, 1, 11, 111};
-    serverState.nextIndex[0]++;
-    LogEntry logEntry2 {serverState.currentTerm, 2, 22, 222};
+    serverState.currentTerm ++;
 
+    LogEntry logEntry1 {1, 0, 0, 0};
     serverState.smr_log.push_back(logEntry1);
+    serverState.nextIndex[0]++;
+
+    LogEntry logEntry2 {2, 0, 0, 0};
     serverState.smr_log.push_back(logEntry2);
+    serverState.nextIndex[0]++;
+
+    LogEntry logEntry3 {3, 0, 0, 0};
+    serverState.smr_log.push_back(logEntry3);
     /* ------------------------------------------------------------------------*/
 
-    int num_ack = 0;
+
+    int RequestID = 0;
 
     if (nodeInfo.role == LEADER){
+//        int num_run = 100;
+//        while (num_run > 0){
+        while (true){
 
-        Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
-                    Socket, Is_Init, Socket_Status);
 
-        BroadCast_AppendEntryRequest(&serverState, &nodeInfo, &serverStub,
-                                     Socket, Is_Init, Socket_Status);
+            Try_Connect(&serverState, &nodeInfo, &serverStub, &PeerServerInfo,
+                        Socket, Is_Init, Socket_Status);
 
-        Get_Acknowledgement(&serverState, &timer, &nodeInfo, &serverStub,
-                            &num_ack, &PeerIdIndexMap);
+            BroadCast_AppendEntryRequest(&serverState, &nodeInfo, &serverStub,
+                                         Socket, Is_Init, Socket_Status, &RequestID);
+
+            Get_Ack(&serverState, &timer, &serverStub,
+                    &PeerIdIndexMap, &RequestID);
+
+//            std::cout << "num_run: " << num_run << '\n';
+//            num_run --;
+        }
 
     } // End: Leader role
-
 
 }
 
