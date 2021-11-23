@@ -279,3 +279,128 @@ void AppendEntryResponse::Print(){
     std::cout << "success : " << success << '\n';
     std::cout << "nodeID : " << nodeID << '\n';
 }
+
+
+/*---------------------Customer Request Class ------------*/
+
+CustomerRequest::CustomerRequest() {
+    messageType = CUSTOMER_REQUEST;
+    logTerm = 0;
+    opcode = -1;
+    arg1 = -1;
+    arg2 = -1;
+}
+
+void CustomerRequest::Set(int _messageType, int _log_term, int _opcode, int _arg1, int _arg2) {
+    messageType = _messageType;
+    logTerm = _log_term;
+    opcode = _opcode;
+    arg1 = _arg1;
+    arg2 = _arg2;
+}
+
+int CustomerRequest::Size() {
+    return sizeof (messageType) + sizeof (logTerm) + sizeof (opcode)
+            + sizeof (arg1) + sizeof (arg2);
+}
+
+void CustomerRequest::Marshal(char *buffer) {
+    int net_messageType = htonl(messageType);
+    int net_log_term = htonl(logTerm);
+    int net_opcode = htonl(opcode);
+    int net_arg1 = htonl(arg1);
+    int net_arg2 = htonl(arg2);
+    int offset = 0;
+
+    memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
+    memcpy(buffer + offset, &net_log_term, sizeof(net_log_term));
+    offset += sizeof(net_log_term);
+    memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
+    offset += sizeof(net_arg1);
+    memcpy(buffer+offset, &net_arg2, sizeof(net_arg2));
+}
+
+void CustomerRequest::UnMarshal(char *buffer) {
+    int net_messageType;
+    int net_log_term;
+    int net_opcode;
+    int net_arg1;
+    int net_arg2;
+
+    int offset = 0;
+
+    memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+    offset += sizeof(net_messageType);
+    memcpy(&net_log_term, buffer + offset, sizeof(net_log_term));
+    offset += sizeof(net_log_term);
+    memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
+    offset += sizeof(net_opcode);
+    memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
+    offset += sizeof (net_arg1);
+    memcpy(&net_arg2, buffer+offset, sizeof(net_arg2));
+
+    messageType = ntohl(net_messageType);
+    logTerm = ntohl(net_log_term);
+    opcode = ntohl(net_opcode);
+    arg1 = ntohl(net_arg1);
+    arg2 = ntohl(net_arg2);
+}
+
+void CustomerRequest::Print() {
+    std::cout << "messageType: " << messageType << '\n';
+    std::cout << "logTerm: " << logTerm << '\n';
+    std::cout << "opcode: " << opcode << '\n';
+    std::cout << "arg1: " << arg1 << '\n';
+    std::cout << "arg2: " << arg2 << '\n';
+}
+
+/* -----------------Response to Customer Class-------------------- */
+
+ResponseToCustomer::ResponseToCustomer() {
+    nodeRole = -1;
+    leaderID = -1;
+}
+
+void ResponseToCustomer::Set(int _node_role, int _leader_id) {
+    nodeRole = _node_role;
+    leaderID = _leader_id;
+}
+
+void ResponseToCustomer::Marshal(char *buffer) {
+    int net_node_role = htonl(nodeRole);
+    int net_leader_id = htonl(leaderID);
+    int offset = 0;
+
+    memcpy(buffer+offset, &net_node_role, sizeof (net_node_role));
+    offset += sizeof(net_node_role);
+    memcpy(buffer+offset, &net_leader_id, sizeof(net_leader_id));
+
+}
+
+void ResponseToCustomer::UnMarshal(char *buffer) {
+    int net_node_role;
+    int net_leader_id;
+    int offset = 0;
+
+    memcpy(&net_node_role, buffer + offset, sizeof(net_node_role));
+    offset += sizeof(net_node_role);
+    memcpy(&net_leader_id, buffer + offset, sizeof(net_leader_id));
+
+    nodeRole = ntohl(net_node_role);
+    leaderID = ntohl(net_leader_id);
+}
+
+int ResponseToCustomer::Size() {
+    return sizeof (nodeRole) + sizeof (leaderID);
+}
+
+int ResponseToCustomer::Get_leader_id() {
+    return leaderID;
+}
+
+int ResponseToCustomer::Get_node_role() {
+    return nodeRole;
+}

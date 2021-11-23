@@ -37,10 +37,11 @@ int ClientStub:: Poll(int Poll_timeout){
 */
 void ClientStub::
 Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nodeInfo){
-    AppendEntryRequest appendEntryRequest;
-    AppendEntryResponse appendEntryResponse;
-    char buf[appendEntryRequest.Size()];
 
+    CustomerRequest customerRequest;
+    ResponseToCustomer responseToCustomer;
+    char buf[customerRequest.Size()];
+    int messageType;
     int num_alive_sockets = pfds.size();
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
@@ -52,7 +53,7 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
 
             else { /* events from established connection */
 
-                int nbytes = recv(pfds[i].fd, buf, sizeof(appendEntryRequest), 0);
+                int nbytes = recv(pfds[i].fd, buf, sizeof(customerRequest), 0);
 
               if (nbytes <= 0){  /* connection closed or error */
                   close(pfds[i].fd);
@@ -61,16 +62,19 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
 
               else{             /* got good data */
 
-                  appendEntryRequest.UnMarshal(buf);
-                  appendEntryRequest.Print();
+                  memcpy(&messageType,buf,sizeof (messageType));
 
-                  timer -> Print_elapsed_time();
+                   if (ntohl(messageType) == CUSTOMER_REQUEST) {
 
-                  int success = 1;  // to-do: use Decide()
-                  appendEntryResponse.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
-                                          success, nodeInfo -> node_id);
+                      int leader_id = nodeInfo -> node_id;
+                      customerRequest.UnMarshal(buf);
+                      customerRequest.Print();
 
-                  Send_AppendEntryResponse(&appendEntryResponse, pfds[i].fd);
+                      responseToCustomer.Set(FOLLOWER, leader_id);
+
+                      Send_Response_To_Customer(&responseToCustomer, pfds[i].fd);
+
+                  }
 
               } /* End got good data */
             } /* End events from established connection */
@@ -80,13 +84,13 @@ Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nod
     } /*  End: looping through file descriptors */
 }
 
-int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd){
-    int remain_size = appendEntryResponse -> Size();
+int ClientStub::Send_Response_To_Customer(ResponseToCustomer *responseToCustomer, int fd) {
+    int remain_size = responseToCustomer -> Size();
     char buf[remain_size];
     int offset = 0;
     int bytes_written;
 
-    appendEntryResponse -> Marshal(buf);
+    responseToCustomer -> Marshal(buf);
 
     while (remain_size > 0){
         /* to-do: error handling for send */
@@ -97,6 +101,27 @@ int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryRespons
 
     return 1;
 }
+
+//int ClientStub::Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd){
+//    int remain_size = appendEntryResponse -> Size();
+//    char buf[remain_size];
+//    int offset = 0;
+//    int bytes_written;
+//
+//    appendEntryResponse -> Marshal(buf);
+//
+//    while (remain_size > 0){
+//        /* to-do: error handling for send */
+//        bytes_written = send(fd, buf+offset, remain_size, 0);
+//        offset += bytes_written;
+//        remain_size -= bytes_written;
+//    }
+//
+//    return 1;
+//}
+
+
+
 
 //bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
 //    bool result = false;

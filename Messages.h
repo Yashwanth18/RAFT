@@ -15,7 +15,7 @@
 #define VOTE_RESPONSE 2
 #define APPEND_ENTRY_REQUEST 3
 #define APPEND_ENTRY_RESPONSE 4
-
+#define CUSTOMER_REQUEST 5
 
 struct Peer_Info{
   int unique_id;
@@ -126,5 +126,54 @@ public:
 
     void Print();
 };
+
+/*-----------Customer Request------------------*/
+
+class CustomerRequest{
+private:
+    int messageType;
+    int logTerm;
+    int opcode;
+    int arg1;
+    int arg2;
+public:
+    CustomerRequest();
+    void Set(int _messageType, int _log_term, int _opcode, int _arg1, int _arg2);
+
+    void Marshal(char *buffer);
+    void UnMarshal(char * buffer);
+
+    int Size();
+
+    /* Get private variables */
+    int Get_messageType();
+    int Get_log_term();
+    int Get_opcode();
+    int Get_arg1();
+    int Get_arg2();
+
+    void Print();
+};
+
+
+/*---------------Response to customer-------------*/
+
+class ResponseToCustomer{
+private:
+    int nodeRole;
+    int leaderID;
+public:
+    ResponseToCustomer();
+    void Set(int _node_role, int _leader_id);
+    void Marshal(char *buffer);
+    void UnMarshal(char *buffer);
+    int Size();
+
+    /* Get Private Variables*/
+    int Get_node_role();
+    int Get_leader_id();
+};
+
+
 
 #endif // #ifndef __MESSAGES_H__

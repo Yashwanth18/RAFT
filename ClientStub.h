@@ -30,8 +30,8 @@ public:
     int Poll(int Poll_timeout);  /* Poll_timeout is in millisecond; */
 
     void Handle_Follower_Poll(ServerState * serverState, ClientTimer * timer, NodeInfo *nodeInfo);
-    int Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd);
-
+    //int Send_AppendEntryResponse(AppendEntryResponse *appendEntryResponse, int fd);
+    int Send_Response_To_Customer(ResponseToCustomer *responseToCustomer, int fd);
 //    bool Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote);
 //    bool Compare_Log(NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
 
