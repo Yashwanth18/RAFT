@@ -20,16 +20,15 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
         std::cout << "not enough arguments" << std::endl;
         return 0;
     }
-
-//    nodeInfo -> role = FOLLOWER;
-    nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
-
-    nodeInfo -> leader_id = -1;
-
     nodeInfo -> server_port = atoi(argv[1]);
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
     nodeInfo -> num_peers = atoi(argv[4]);
+
+    nodeInfo -> leader_id = -1;
+//    nodeInfo -> role = FOLLOWER;
+    nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
+
     return 1;
 }
 
@@ -53,9 +52,18 @@ void Init_ServerState(ServerState * serverState, int num_peers){
     }
 }
 
+void Init_Socket(ServerStub * serverStub, int num_peers, int *Socket, bool *Is_Init, bool *Socket_Status)
+{
+
+    for (int i = 0; i < num_peers; i++) {   /* Init Socket */
+        Socket[i] = serverStub -> Create_Socket();
+        Is_Init[i] = false;
+        Socket_Status[i] = false;
+    }
+}
+
 /* return 0 on failure and 1 on success */
-int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo,
-                       std::map<int,int> *PeerIdIndexMap){
+int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo, std::map<int,int> *PeerIdIndexMap){
 
     int num_peers = atoi(argv[4]);
 
@@ -89,7 +97,8 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
     return 1;
 }
 
-void BroadCast_Request_Vote(ServerState *serverState, NodeInfo * nodeInfo, ServerStub * serverStub, int * Socket,
+/* ----------------------------------------Candidate helper functions -----------------------------------------------*/
+void BroadCast_RequestVote(ServerState *serverState, NodeInfo * nodeInfo, ServerStub * serverStub, int * Socket,
                             bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
 
     for (int i = 0; i < nodeInfo->num_peers; i++) { /* Send to all peers in parallel */
@@ -108,8 +117,7 @@ void BroadCast_Request_Vote(ServerState *serverState, NodeInfo * nodeInfo, Serve
     }  /* End: Send to all peers in parallel */
 }
 
-void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
-                        NodeInfo *nodeInfo, bool * Request_Completed){
+void Setup_New_Election(ServerState * serverState, ServerTimer * timer, NodeInfo *nodeInfo, bool * Request_Completed){
 
     timer -> Restart(); /* (re)start a new election */
     serverState -> currentTerm ++;
@@ -120,7 +128,7 @@ void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
     }
 }
 
-void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
+void Try_Connect_Election(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_Info> *PeerServerInfo,
                  int * Socket, bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
 
     int connect_status;
@@ -146,17 +154,17 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
     }  /* End: iterator through all peers */
 }
 
-void Get_Vote(ServerState * serverState, ServerTimer * timer,
+void Get_Vote(ServerState * serverState, int poll_timeout,
               NodeInfo * nodeInfo, ServerStub * serverStub,
               bool *Request_Completed, std::map<int,int> *PeerIdIndexMap){
 
-    int Poll_timeout = timer -> Poll_timeout();
-    int poll_count = serverStub -> Poll(Poll_timeout);
+
+    int poll_count = serverStub -> Poll(poll_timeout);
     int num_votes;
     int majority = nodeInfo -> num_peers / 2;
 
     if (poll_count > 0){
-        serverStub -> Handle_Poll_Peer(serverState, PeerIdIndexMap, Request_Completed,
+        serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap, Request_Completed,
                                        nodeInfo);
 
         num_votes = nodeInfo -> num_votes;
@@ -169,13 +177,4 @@ void Get_Vote(ServerState * serverState, ServerTimer * timer,
     }
 }
 
-void Init_Socket(ServerStub * serverStub, int num_peers, int *Socket, bool *Is_Init,
-                 bool *Socket_Status){
-
-    for (int i = 0; i < num_peers; i++) {   /* Init Socket */
-        Socket[i] = serverStub -> Create_Socket();
-        Is_Init[i] = false;
-        Socket_Status[i] = false;
-    }
-}
-
+/* ----------------------------------------Leader helper functions -----------------------------------------------*/
