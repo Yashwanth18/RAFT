@@ -5,6 +5,7 @@ int main(int argc, char *argv[]) {
     NodeInfo nodeInfo;
     ServerStub serverStub;
     ServerTimer serverTimer;
+    ServerState serverState;
     std::vector<Peer_Info> PeerServerInfo;
     std::map<int,int> PeerIdIndexMap;
 
@@ -15,6 +16,8 @@ int main(int argc, char *argv[]) {
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)){
         return 0;
     }
+
+    Init_ServerState(&serverState, nodeInfo.num_peers);
 
     /* variables for error handling related to Socket*/
     int Socket[nodeInfo.num_peers];
@@ -32,7 +35,7 @@ int main(int argc, char *argv[]) {
     while(true){
 
         if (nodeInfo.role == CANDIDATE){
-            Setup_New_Election(&timer, &nodeInfo, Request_Completed);
+            Setup_New_Election(&serverState, &timer, &nodeInfo, Request_Completed);
 
             /* While (not time out and vote has not been rejected) */
             while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
@@ -40,10 +43,10 @@ int main(int argc, char *argv[]) {
                 Try_Connect(&nodeInfo, &serverStub, &PeerServerInfo,
                             Socket, Is_Init, Socket_Status, Request_Completed);
 
-                BroadCast_Request_Vote(&nodeInfo, &serverStub, Socket, Is_Init,
+                BroadCast_Request_Vote(&serverState, &nodeInfo, &serverStub, Socket, Is_Init,
                                        Socket_Status, Request_Completed);
 
-                Get_Vote(&timer, &nodeInfo, &serverStub, Request_Completed,
+                Get_Vote(&serverState, &timer, &nodeInfo, &serverStub, Request_Completed,
                          &PeerIdIndexMap);
 
             } /* End: While (not time out and vote has not been rejected) */

@@ -24,14 +24,14 @@ void ServerStub:: Add_Socket_To_Poll(int new_fd){
  * 0 on failure and 1 on success
  * */
 
-int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
+int ServerStub::SendRequestVote(ServerState *serverState, NodeInfo *nodeInfo, int fd) {
     RequestVote requestVote;
     int remain_size = requestVote.Size();
     char buf[remain_size];
     int offset = 0;
     int bytes_written;
 
-    FillRequestVote(nodeInfo, &requestVote);
+    FillRequestVote(serverState, nodeInfo, &requestVote);
     requestVote.Marshal(buf);
 
     while (remain_size > 0){
@@ -53,12 +53,12 @@ int ServerStub::SendRequestVote(NodeInfo *nodeInfo, int fd) {
     return 1;   /* to-do: fix this with socket_status */
 }
 
-void ServerStub::FillRequestVote(NodeInfo * nodeInfo, RequestVote *requestVote) {
+void ServerStub::FillRequestVote(ServerState * serverState, NodeInfo * nodeInfo, RequestVote *requestVote) {
     int messageType = VOTE_REQUEST;
-    int term = nodeInfo -> term;
+    int term = serverState -> currentTerm;
     int candidateId = nodeInfo -> node_id;
-    int lastLogIndex = nodeInfo -> lastLogIndex;
-    int lastLogTerm = nodeInfo -> lastLogTerm;
+    int lastLogIndex = serverState -> smr_log.size() - 1;
+    int lastLogTerm = serverState -> smr_log.back().logTerm;
 
     requestVote -> Set(messageType, term, candidateId, lastLogIndex, lastLogTerm);
 }
@@ -128,11 +128,13 @@ int ServerStub:: Poll(int poll_timeout){
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
-void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, NodeInfo *nodeInfo){
+void ServerStub:: Handle_Poll_Peer(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
+                                   bool *request_completed,
+                                   NodeInfo *nodeInfo){
     VoteResponse voteResponse;
-    AppendEntries appendEntries;
+    AppendEntryRequest appendEntryRequest;
 
-    char buf[voteResponse.Size() + appendEntries.Size() + 4];
+    char buf[voteResponse.Size() + appendEntryRequest.Size()];
     int num_alive_sockets = pfds_server.size();
     int message_type; // message descriptor to determine if the message is append entries or vote response
     int peer_index;
@@ -169,8 +171,8 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
 
                             }
                             else {  // vote got rejected, which means the node lags behind
-                                nodeInfo->role = FOLLOWER;
-                                nodeInfo->term = voteResponse.Get_term();
+                                nodeInfo -> role = FOLLOWER;
+                                serverState -> currentTerm = voteResponse.Get_term();
                             }
                             request_completed[peer_index] = true;
                         }
@@ -179,11 +181,11 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                     /*  when the candidate gets a log replication request from other node */
                     else if (ntohl(message_type) == APPEND_ENTRIES_REQUEST) {
 
-                        appendEntries.UnMarshal(buf);
+                        appendEntryRequest.UnMarshal(buf);
 
-                        int leader_term = appendEntries.Get_term();
-                        int node_term = nodeInfo -> term;
-                        int leader_id = appendEntries.Get_id();
+                        int leader_term = appendEntryRequest.Get_sender_term();
+                        int node_term = serverState -> currentTerm;
+                        int leader_id = appendEntryRequest.Get_leaderId();
 
                         if (leader_term > node_term) {
                             nodeInfo -> leader_id = leader_id;

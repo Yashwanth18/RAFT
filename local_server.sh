@@ -14,12 +14,12 @@ IP_root="10.200.125."
 IP_local="127.0.0.1"
 
 Print_inti_server_role(){
-  if [ $1 -eq 0 ]; then
+  if [ $server_role -eq 0 ]; then
     echo Initialize server role to be a Follower
-  elif [ $1 -eq 0 ]; then
-    echo Initialize server role to be a Follower
-  elif [ $1 -eq 0 ]; then
-    echo Initialize server role to be a Follower
+  elif [ $server_role -eq 1 ]; then
+    echo Initialize server role to be a Candidate
+  elif [ $server_role -eq 2 ]; then
+    echo Initialize server role to be a Leader
   else
     echo Undefined server role initialization
   fi
@@ -32,7 +32,7 @@ port_server=${port_server_root}${node_ID}
 if [ $num_peers -eq 1 ]; then
   ID_Peer1=$2
   server_role=$3
-  Print_inti_server_role server_role
+  Print_inti_server_role
 
   ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
               $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
@@ -46,8 +46,7 @@ elif [ $num_peers -eq 4 ]; then
     server_role=$6
 
     echo Number of peer servers equal to $num_peers
-    Print_inti_server_role server_role
-
+    Print_inti_server_role
     ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
               $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
               $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \

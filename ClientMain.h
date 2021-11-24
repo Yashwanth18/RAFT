@@ -19,27 +19,40 @@
 
 #include "Messages.h"
 
-/* usage: ./client port nodeId
- * return 0 on failure and 1 on success
-*/
-int Init_Node_Info(NodeInfo * node_info, int argc, char *argv[]){
-    if (argc < 3){
-        std:: cout << "usage: ./client port nodeId" << '\n';
+/* return 0 on failure and 1 on success */
+int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
+    if (argc < 4){
+        std::cout << "not enough arguments" << std::endl;
         return 0;
     }
-    node_info -> leader_id = -1;
-    node_info -> node_id = atoi(argv[2]);
 
-    node_info -> server_port = atoi(argv[1]);
-    node_info -> num_peers = -1;
+    nodeInfo -> role = FOLLOWER;
 
-    /* Used in RequestVote*/
-    node_info -> term = 0;
-    node_info ->  votedFor = -1;
+    nodeInfo -> leader_id = -1;
 
-    /* change this to a real vector of struct log */
-    node_info ->  lastLogTerm = 0;
-    node_info ->  lastLogIndex = 0;
-
+    nodeInfo -> server_port = atoi(argv[1]);
+    nodeInfo -> client_port = atoi(argv[2]);
+    nodeInfo -> node_id = atoi(argv[3]);
+    nodeInfo -> num_peers = atoi(argv[4]);
     return 1;
+}
+
+void Init_ServerState(ServerState * serverState, int num_peers){
+    /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
+    serverState -> currentTerm = 0;
+    serverState -> votedFor = -1;
+    LogEntry logEntry {-1, -1, -1, -1};
+    serverState -> smr_log.push_back(logEntry);
+
+
+    /* volatile state on all servers */
+    serverState -> commitIndex = 0;
+    serverState -> last_applied = 0;
+
+    /* volatile state on leaders (Reinitialized after election) */
+
+    for (int i = 0; i < num_peers; i++){
+        serverState -> matchIndex.push_back(0);
+        serverState -> nextIndex.push_back(1);
+    }
 }

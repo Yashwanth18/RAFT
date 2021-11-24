@@ -23,7 +23,7 @@ void ClientTimer::Restart() {
 
 //poll timeout small compared to election_timeout
 int ClientTimer::Poll_timeout(){
-	return election_timeout.count() / 1000;
+	return election_timeout.count() / 10;
 }
 
 int ClientTimer::Check_election_timeout() {

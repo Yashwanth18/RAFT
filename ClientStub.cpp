@@ -27,7 +27,7 @@ void ClientStub:: Accept_Connection(){
 /* functionalities include:
   ~ non-blocking receive RequestVoteRPC
 */
-void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
+void ClientStub:: Handle_Follower_Poll(ServerState *serverState, ClientTimer *timer, NodeInfo *nodeInfo){
     RequestVote requestVote;
     VoteResponse voteResponse;
     char buf[requestVote.Size()];
@@ -58,8 +58,8 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
                   timer -> Print_elapsed_time();
 
                   messageType = VOTE_RESPONSE;
-                  voteResponse.Set(messageType, nodeInfo -> term,
-                                   Decide_Vote(nodeInfo, &requestVote),
+                  voteResponse.Set(messageType, serverState -> currentTerm,
+                                   Decide_Vote(serverState, nodeInfo, &requestVote),
                                    nodeInfo -> node_id);
 
                   Send_voteResponse(&voteResponse, pfds[i].fd);
@@ -72,36 +72,34 @@ void ClientStub:: Handle_Follower_Poll(ClientTimer *timer, NodeInfo *nodeInfo){
     } /*  End looping through file descriptors */
 }
 
-bool ClientStub::Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote) {
+bool ClientStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote) {
     bool result = false;
+    int local_term = serverState -> currentTerm;
+    int remote_term = requestVote -> Get_term();
 
-    if (Compare_Log (nodeInfo, requestVote) && nodeInfo -> votedFor == -1){
-
-        result = requestVote -> Get_term() > nodeInfo -> term;
-
+    if (Compare_Log (serverState, nodeInfo, requestVote) && serverState -> votedFor == -1){
+        result = (remote_term > local_term);
     }
 
     if (result){
-
-        nodeInfo -> votedFor = requestVote -> Get_candidateId();
-        nodeInfo -> term = requestVote -> Get_term();
-
+        serverState -> votedFor = requestVote -> Get_candidateId();
+        serverState -> currentTerm = requestVote -> Get_term();
     }
 
     return result;
 }
 
 /* Comparing the last_term and log length for the candidate node and the follower node */
-bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
+bool ClientStub::Compare_Log(ServerState *serverState, NodeInfo * nodeInfo,RequestVote * requestVote) {
 
     int candidate_last_log_term = requestVote -> Get_last_log_term();
     int candidate_last_log_index = requestVote -> Get_last_log_index();
 
-    int node_last_log_term = nodeInfo -> lastLogTerm;
-    int node_last_log_index = nodeInfo -> lastLogIndex;
+    int local_last_log_term = serverState -> smr_log.back().logTerm;
+    int local_last_log_index = serverState -> smr_log.size() -1;
 
-    bool greater_last_log_term = candidate_last_log_term > node_last_log_term;
-    bool check_last_log_index = candidate_last_log_index >= node_last_log_index;
+    bool greater_last_log_term = candidate_last_log_term > local_last_log_term;
+    bool check_last_log_index = candidate_last_log_index >= local_last_log_index;
 
     bool log_ok = false;
 
@@ -110,7 +108,7 @@ bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
         log_ok = true;
     }
 
-    else if (candidate_last_log_term == node_last_log_term)
+    else if (candidate_last_log_term == local_last_log_term)
     {
         return check_last_log_index;
     }
@@ -120,7 +118,7 @@ bool ClientStub::Compare_Log(NodeInfo * nodeInfo,RequestVote * requestVote) {
 }
 
 int ClientStub::Send_voteResponse(VoteResponse *voteResponse, int fd) {
-    int remain_size = voteResponse -> Size() + 4; // additional 4 bytes for the messageType field
+    int remain_size = voteResponse -> Size();
     char buf[remain_size];
 //    int socket_status;
     int offset = 0;

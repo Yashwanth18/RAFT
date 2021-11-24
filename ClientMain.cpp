@@ -11,12 +11,14 @@ int main(int argc, char *argv[]) {
     ClientTimer timer;
     ClientStub clientstub;
     int Poll_timeout;
-    NodeInfo node_info;
+    NodeInfo nodeInfo;
+    ServerState serverState;
 
-    if (!Init_Node_Info(&node_info, argc, argv)){
+    if (!Init_NodeInfo(&nodeInfo, argc, argv)){
         return 0;
     }
 
+    Init_ServerState(&serverState, nodeInfo.num_peers);
     clientstub.Init(atoi(argv[1])); //initialize the non-blocking listening port
 
     timer.Start();
@@ -24,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     while(true){
         clientstub.Poll(Poll_timeout);
-        clientstub.Handle_Follower_Poll(&timer, &node_info);
+        clientstub.Handle_Follower_Poll(&serverState, &timer, &nodeInfo);
     }
 
 

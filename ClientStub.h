@@ -28,11 +28,11 @@ public:
     void Add_Socket_To_Poll(int new_fd);
 
     int Poll(int Poll_timeout);  /* Poll_timeout is in millisecond; */
-    void Handle_Follower_Poll(ClientTimer * timer, NodeInfo *nodeInfo);
+    void Handle_Follower_Poll(ServerState *serverState, ClientTimer * timer, NodeInfo *nodeInfo);
     void Accept_Connection();
 
-    bool Decide_Vote(NodeInfo *nodeInfo, RequestVote *requestVote);
-    bool Compare_Log(NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
+    bool Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
+    bool Compare_Log(ServerState *serverState, NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
 
     int Send_voteResponse(VoteResponse *voteResponse, int fd);
 };

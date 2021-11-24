@@ -41,11 +41,12 @@ public:
     /* Connect and Send */
     int Create_Socket();
     int Connect_To(std::string ip, int port, int fd);
-    int SendRequestVote(NodeInfo *nodeInfo, int fd);
+    int SendRequestVote(ServerState *serverState, NodeInfo *nodeInfo, int fd);
 
-    void FillRequestVote(NodeInfo *nodeInfo, RequestVote *requestVote);
+    void FillRequestVote(ServerState * serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
 
     /* Receive */
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
-    void Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap,bool* request_completed, NodeInfo *nodeInfo);
+    void Handle_Poll_Peer(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
+                          bool* request_completed, NodeInfo *nodeInfo);
 };
