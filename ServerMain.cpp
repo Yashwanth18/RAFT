@@ -54,7 +54,9 @@ int main(int argc, char *argv[]) {
         // /*--------------------------Code below is for future implementation-----------------------*/
 
          else if (nodeInfo.role == LEADER){    //send heartbeat message
-//              to-do: if no, send real heartbeat message (empty log replication request)
+            /* Instead of sleep, should do a wait for request like Admin in programming assignment 2 */
+            std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 10));
+
          }
 
          else if (nodeInfo.role == FOLLOWER){

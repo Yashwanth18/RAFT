@@ -45,4 +45,8 @@ public:
     bool Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
     bool Compare_Log(ServerState *serverState, NodeInfo * nodeInfo,RequestVote * requestVote);
     int SendVoteResponse(VoteResponse *voteResponse, int fd);
+
+    /* Leader helper functions */
+
+
 };
