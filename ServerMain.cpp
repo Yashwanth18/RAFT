@@ -32,8 +32,7 @@ int main(int argc, char *argv[]) {
     while(true){
 
         if (nodeInfo.role == CANDIDATE){
-            int num_votes = 0;
-            Setup_New_Election(&timer, &num_votes, &nodeInfo, Request_Completed);
+            Setup_New_Election(&timer, &nodeInfo, Request_Completed);
 
             /* While (not time out and vote has not been rejected) */
             while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
                 BroadCast_Request_Vote(&nodeInfo, &serverStub, Socket, Is_Init,
                                        Socket_Status, Request_Completed);
 
-                Get_Vote(&timer, &nodeInfo, &serverStub, &num_votes, Request_Completed,
+                Get_Vote(&timer, &nodeInfo, &serverStub, Request_Completed,
                          &PeerIdIndexMap);
 
             } /* End: While (not time out and vote has not been rejected) */

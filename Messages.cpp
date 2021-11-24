@@ -92,11 +92,12 @@ int RequestVote::Get_message_type() {
 }
 
 void RequestVote::Print(){
-    std::cout << "message type: " << messageType << '\n';  
+    // std::cout << "message type: " << messageType << '\n';
     std::cout << "term: " << term << '\n';
     std::cout << "candidateId: " << candidateId << '\n';
     std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
     std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
+    std::cout<<"--------------------------" <<'\n';
 }
 
 
@@ -161,10 +162,11 @@ int VoteResponse::Size() {
 }
 
 void VoteResponse::Print() {
-    std::cout<<"messageType: " << messageType << '\n';
-    std::cout<<"term: "<< term <<'\n';
+    // std::cout<<"messageType: " << messageType << '\n';
+    std::cout<<"\nterm: "<< term <<'\n';
     std::cout<<"voteGranted: "<< voteGranted<<'\n';
     std::cout<<"node_id: "<< node_id<<'\n';
+    std::cout<<"--------------------------" <<'\n';
 }
 
 /* ----------------------Get private variables --------------------*/

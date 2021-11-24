@@ -40,6 +40,9 @@ struct NodeInfo{
     int client_port;
     int num_peers;
     int role;
+
+    /* for leader election */
+    int num_votes;
 };
 
 /* -----------------Class for Request Vote -----------------*/

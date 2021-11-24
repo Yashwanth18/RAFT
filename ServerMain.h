@@ -93,12 +93,11 @@ void BroadCast_Request_Vote(NodeInfo * nodeInfo, ServerStub * serverStub, int * 
     }  /* End: Send to all peers in parallel */
 }
 
-void Setup_New_Election(ServerTimer * timer, int * num_votes,
-                        NodeInfo *nodeInfo, bool * Request_Completed){
+void Setup_New_Election(ServerTimer * timer, NodeInfo *nodeInfo, bool * Request_Completed){
 
     timer -> Restart(); /* (re)start a new election */
-    (*num_votes) = 0;
     nodeInfo -> term ++;
+    nodeInfo -> num_votes = 1; // vote for itself
 
     for (int i = 0; i < nodeInfo -> num_peers; i++){
         Request_Completed[i] = false;
@@ -132,19 +131,21 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 }
 
 void Get_Vote(ServerTimer * timer, NodeInfo * nodeInfo, ServerStub * serverStub,
-              int * num_votes, bool *Request_Completed, std::map<int,int> *PeerIdIndexMap){
+              bool *Request_Completed, std::map<int,int> *PeerIdIndexMap){
 
     int Poll_timeout = timer -> Poll_timeout();
     int poll_count = serverStub -> Poll(Poll_timeout);
+    int num_votes;
+    int majority = nodeInfo -> num_peers / 2;
 
     if (poll_count > 0){
-        serverStub -> Handle_Poll_Peer(PeerIdIndexMap, Request_Completed, num_votes, nodeInfo);
+        serverStub -> Handle_Poll_Peer(PeerIdIndexMap, Request_Completed, nodeInfo);
 
-        if ( (*num_votes) > nodeInfo -> num_peers / 2 ){
+        num_votes = nodeInfo -> num_votes;
+        if ( num_votes > majority ){
             nodeInfo -> role = LEADER;
+            std::cout << "I'm the leader!" << '\n';
         }
-        std::cout << "num_votes: " << *num_votes << '\n';
-        std::cout << "the role of the node is: " << nodeInfo -> role << '\n';
     }
 }
 

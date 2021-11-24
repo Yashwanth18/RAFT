@@ -128,7 +128,7 @@ int ServerStub:: Poll(int poll_timeout){
 /* functionalities include:
   ~ non-blocking receive VoteResponse
 */
-void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, int * num_votes, NodeInfo *nodeInfo){
+void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *request_completed, NodeInfo *nodeInfo){
     VoteResponse voteResponse;
     AppendEntries appendEntries;
 
@@ -160,16 +160,20 @@ void ServerStub:: Handle_Poll_Peer(std::map<int,int> *PeerIdIndexMap, bool *requ
                         voteResponse.Unmarshal(buf);
                         voteResponse.Print();
 
-                        if (voteResponse.Get_voteGranted()) {
-                            (*num_votes)++;
-                        }
-                        else {  // vote got rejected, which means the node lags behind
-                            nodeInfo->role = FOLLOWER;
-                            nodeInfo->term = voteResponse.Get_term();
-                        }
-
                         peer_index = (*PeerIdIndexMap)[voteResponse.Get_node_id()];
-                        request_completed[peer_index] = true;
+
+                        // in case we get multiple response for the same request
+                        if (!request_completed[peer_index]){
+                            if (voteResponse.Get_voteGranted()) {
+                                nodeInfo -> num_votes ++;
+
+                            }
+                            else {  // vote got rejected, which means the node lags behind
+                                nodeInfo->role = FOLLOWER;
+                                nodeInfo->term = voteResponse.Get_term();
+                            }
+                            request_completed[peer_index] = true;
+                        }
                     }
 
                     /*  when the candidate gets a log replication request from other node */
