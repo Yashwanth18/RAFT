@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+#define WRITE 0
+#define READ 1
+
 #define FOLLOWER 0
 #define CANDIDATE 1
 #define LEADER 2
@@ -14,6 +17,12 @@
 #define APPEND_ENTRIES_REQUEST 3
 #define APPEND_ENTRIES_RESPONSE 4
 
+
+#define CUSTOMER_REQUEST 5
+
+#define SENDER_FOLLOWER 1
+
+#define SENDER_LEADER 2
 
 struct Peer_Info{
   int unique_id;
@@ -182,6 +191,57 @@ public:
     void Print();
 };
 
+
+
+class ResponseToCustomer{
+ private:
+  int senderType;
+  int leader_id;
+ public:
+  ResponseToCustomer();
+  void Set(int _sender_type, int _leader_id);
+  void Marshal(char * buffer);
+  void UnMarshal(char * buffer);
+  int Size();
+
+  /* getters for private variables */
+
+
+  int Get_leader_id();
+  int Get_sender_type();
+
+  void Print();
+};
+
+
+
+class CustomerRequest{
+ private:
+  int messageType;
+  int requestType;
+  int uniqueID;
+  int opcode;
+  int arg1;
+  int arg2;
+ public:
+  CustomerRequest();
+  void Set(int _messageType, int _request_type, int _unique_id, int _opcode, int _arg1, int _arg2);
+
+  void Marshal(char *buffer);
+  void UnMarshal(char * buffer);
+
+  int Size();
+
+  /* Get private variables */
+  int Get_messageType();
+  int Get_unique_id();
+  int Get_log_term();
+  int Get_opcode();
+  int Get_arg1();
+  int Get_arg2();
+
+  void Print();
+};
 
 #endif // #ifndef __MESSAGES_H__
 

@@ -27,9 +27,9 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     nodeInfo -> node_id = atoi(argv[3]);
     nodeInfo -> num_peers = atoi(argv[4]);
 
-    nodeInfo -> leader_id = -1;
-//    nodeInfo -> role = FOLLOWER;
-    nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
+    nodeInfo -> leader_id = 11;
+    nodeInfo -> role = FOLLOWER;
+    //nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
 
     return 1;
 }

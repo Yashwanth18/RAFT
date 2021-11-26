@@ -88,6 +88,8 @@ void ServerStub:: Handle_Poll_Candidate(ServerState * serverState, std::map<int,
     for(int i = 0; i < num_peers; i++) {   /* looping through file descriptors */
         if (pfds_server[i].revents & POLLIN) {     /* got ready-to-read from poll() */
 
+          std::cout << "readable data is ready " << '\n';
+
             if (i==0){                             /* events at the listening socket */
                 Accept_Connection();
             }
@@ -193,42 +195,68 @@ void ServerStub::FillRequestVote(ServerState * serverState, NodeInfo * nodeInfo,
 /* functionalities include:
   ~ non-blocking receive RequestVoteRPC
 */
-void ServerStub:: Handle_Poll_Follower(ServerState *serverState, ServerTimer *timer, NodeInfo *nodeInfo){
+void ServerStub:: Handle_Poll_Follower(std::vector<Peer_Info> *PeerServerInfo, ServerState *serverState, ServerTimer *timer, NodeInfo *nodeInfo){
     RequestVote requestVote;
     VoteResponse voteResponse;
-    char buf[requestVote.Size()];
+    CustomerRequest customer_request;
+    char buf[customer_request.Size()];
     int messageType;
     int num_peers = nodeInfo -> num_peers;
+    ResponseToCustomer response_to_customer;
 
-    for(int i = 0; i < num_peers; i++) {   /* looping through file descriptors */
+    for(int i = 0; i <= num_peers; i++) {   /* looping through file descriptors */
         if (pfds_server[i].revents & POLLIN) {            /* got ready-to-read from poll() */
 
+
             if (i==0){ /* events at the listening socket */
+
                 Accept_Connection();
             }
 
             else{ /* events from established connection */
 
-                int nbytes = recv(pfds_server[i].fd, buf, sizeof(requestVote), 0);
+                int nbytes = recv(pfds_server[i].fd, buf, customer_request.Size(), 0);
 
                 if (nbytes <= 0){  /* connection closed or error */
+
                     close(pfds_server[i].fd);
-                    pfds_server.erase(pfds_server.begin()+i);     /* delete */
+                    pfds_server.erase(pfds_server.begin() + i);     /* delete */
+
                 }
 
                 else{             /* got good data */
 
-                    requestVote.Unmarshal(buf);
-                    requestVote.Print();
+                    memcpy(&messageType, buf, sizeof(messageType));
 
-                    timer -> Print_elapsed_time();
 
-                    messageType = VOTE_RESPONSE;
-                    voteResponse.Set(messageType, serverState -> currentTerm,
-                                     Decide_Vote(serverState, nodeInfo, &requestVote),
-                                     nodeInfo -> node_id);
+                    if (ntohl(messageType) == CUSTOMER_REQUEST) {
 
-                    SendVoteResponse(&voteResponse, pfds_server[i].fd);
+                      customer_request.UnMarshal(buf);
+
+                      customer_request.Print();
+                      pollfd p;
+                      pfds_server.push_back(p);
+
+                      response_to_customer.Set(SENDER_FOLLOWER, nodeInfo->leader_id);
+
+                      SendResponseToCustomer(&response_to_customer, pfds_server[i].fd);
+
+
+                    }
+
+                    else if(ntohl(messageType) == VOTE_REQUEST) {
+                      requestVote.Unmarshal(buf);
+                      requestVote.Print();
+
+                      timer->Print_elapsed_time();
+
+                      messageType = VOTE_RESPONSE;
+                      voteResponse.Set(messageType, serverState->currentTerm,
+                                       Decide_Vote(serverState, nodeInfo, &requestVote),
+                                       nodeInfo->node_id);
+
+                      SendVoteResponse(&voteResponse, pfds_server[i].fd);
+                    }
                 } /* End got good data */
             } /* End events from established connection */
 
@@ -303,5 +331,31 @@ int ServerStub::SendVoteResponse(VoteResponse *voteResponse, int fd) {
         remain_size -= bytes_written;
     }
     return 1;
+}
+
+
+
+int ServerStub::SendResponseToCustomer(ResponseToCustomer *response_to_customer_from_follower, int fd) {
+  int remain_size = response_to_customer_from_follower -> Size();
+  char buf[remain_size];
+  int offset = 0;
+  int bytes_written;
+
+  response_to_customer_from_follower->Marshal(buf);
+
+  while (remain_size > 0){
+    try{
+      bytes_written = send(fd, buf+offset, remain_size, 0);
+      if (bytes_written < 0){
+        throw bytes_written;
+      }
+    }
+    catch(int stat){
+      return 0;
+    }
+    offset += bytes_written;
+    remain_size -= bytes_written;
+  }
+  return 1;
 }
 /*---------------Log Replication Helper Functions---------------------------------- */

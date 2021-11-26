@@ -41,10 +41,11 @@ public:
     void FillRequestVote(ServerState * serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
 
     /* follower helper functions */
-    void Handle_Poll_Follower(ServerState *serverState, ServerTimer *timer, NodeInfo *nodeInfo);
+    void Handle_Poll_Follower(std::vector<Peer_Info> * PeerServerInfo, ServerState *serverState, ServerTimer *timer, NodeInfo *nodeInfo);
     bool Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
     bool Compare_Log(ServerState *serverState, NodeInfo * nodeInfo,RequestVote * requestVote);
     int SendVoteResponse(VoteResponse *voteResponse, int fd);
+    int SendResponseToCustomer(ResponseToCustomer *response_to_customer_from_follower, int fd);
 
     /* Leader helper functions */
 

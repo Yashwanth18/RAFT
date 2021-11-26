@@ -1,5 +1,6 @@
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 #include <arpa/inet.h>
 #include "Messages.h"
@@ -475,4 +476,158 @@ void AppendEntryResponse::Print(){
     std::cout << "nodeID : " << nodeID << '\n';
     std::cout << "-----------ResponseID : " << ResponseID << "--------------" << '\n';
     std::cout << "" << '\n';
+}
+
+
+/*-----------response to customer from follower class------------*/
+
+ResponseToCustomer::ResponseToCustomer() {
+
+  leader_id = -1;
+  senderType = -1;
+}
+
+void ResponseToCustomer::Print() {
+
+    std:: cout << "leader id is :" << leader_id << '\n';
+    std::cout << "sender type is : " << senderType << '\n';
+}
+
+
+
+void ResponseToCustomer::Set(int _sender_type, int _leader_id) {
+  senderType = _sender_type;
+  leader_id = _leader_id;
+}
+
+void ResponseToCustomer::Marshal(char *buffer) {
+
+
+    int net_sender_type = htonl(senderType);
+    int net_leader_id = htonl(leader_id);
+    int offset = 0;
+
+  memcpy(buffer + offset, &net_sender_type, sizeof(net_sender_type));
+  offset += sizeof(net_sender_type);
+  memcpy(buffer + offset, &net_leader_id, sizeof(net_leader_id));
+}
+
+void ResponseToCustomer::UnMarshal(char *buffer) {
+
+  int net_sender_type;
+  int net_leader_id;
+
+
+  int offset = 0;
+
+  memcpy(&net_sender_type, buffer + offset, sizeof(net_sender_type));
+  offset += sizeof(net_sender_type);
+  memcpy(&net_leader_id, buffer + offset, sizeof(net_leader_id));
+  senderType = ntohl(net_sender_type);
+  leader_id = ntohl(net_leader_id);
+}
+
+int ResponseToCustomer::Size() {
+
+  return sizeof(leader_id) + sizeof(senderType);
+
+}
+
+
+int ResponseToCustomer::Get_leader_id() {
+  return leader_id;
+}
+
+int ResponseToCustomer::Get_sender_type() {
+  return senderType;
+}
+
+/* -------------------------------- customer request class ------------------------------ */
+
+void CustomerRequest::Print() {
+    std::cout << "request type is : " << requestType << '\n';
+    std::cout << "message type is : " << messageType << '\n';
+    std::cout << "unique id is : " << uniqueID << '\n';
+    std::cout << "opcode is : " << opcode << '\n';
+    std::cout << "arg 1 is : " << arg1 << '\n';
+    std::cout << "arg2 is : " << arg2 << '\n';
+}
+
+int CustomerRequest::Get_messageType() {
+  return messageType;
+}
+
+CustomerRequest::CustomerRequest() {
+  requestType = -1;
+  messageType = CUSTOMER_REQUEST;
+  uniqueID = -1;
+  opcode = -1;
+  arg1 = -1;
+  arg2 = -1;
+}
+
+int CustomerRequest::Size() {
+  return sizeof(requestType) + sizeof(messageType) + sizeof(uniqueID)
+         + sizeof(opcode) + sizeof(arg1) + sizeof(arg2);
+}
+
+void CustomerRequest::Set(int _messageType, int _request_type, int _unique_id, int _opcode, int _arg1, int _arg2) {
+  messageType = _messageType;
+  requestType = _request_type;
+  uniqueID = _unique_id;
+  opcode = _opcode;
+  arg1 = _arg1;
+  arg2 = _arg2;
+}
+
+void CustomerRequest::Marshal(char *buffer) {
+  int net_messageType = htonl(messageType);
+  int net_request_type = htonl(requestType);
+  int net_unique_id = htonl(uniqueID);
+  int net_opcode = htonl(opcode);
+  int net_arg1 = htonl(arg1);
+  int net_arg2 = htonl(arg2);
+  int offset = 0;
+
+  memcpy(buffer + offset, &net_messageType, sizeof(net_messageType));
+  offset += sizeof(net_messageType);
+  memcpy(buffer + offset, &net_request_type, sizeof(net_request_type));
+  offset += sizeof(net_request_type);
+  memcpy(buffer + offset, &net_unique_id, sizeof(net_unique_id));
+  offset += sizeof(net_unique_id);
+  memcpy(buffer + offset, &net_opcode, sizeof(net_opcode));
+  offset += sizeof(net_opcode);
+  memcpy(buffer + offset, &net_arg1, sizeof(net_arg1));
+  offset += sizeof(net_arg1);
+  memcpy(buffer + offset, &net_arg2, sizeof(net_arg2));
+}
+
+void CustomerRequest::UnMarshal(char *buffer) {
+  int net_messageType;
+  int net_request_type;
+  int net_unique_id;
+  int net_opcode;
+  int net_arg1;
+  int net_arg2;
+
+  int offset = 0;
+
+  memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
+  offset += sizeof(net_messageType);
+  memcpy(&net_request_type, buffer + offset, sizeof(net_request_type));
+  offset += sizeof(net_request_type);
+  memcpy(&net_unique_id, buffer + offset, sizeof(net_unique_id));
+  offset += sizeof(net_unique_id);
+  memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
+  offset += sizeof(net_opcode);
+  memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
+  offset += sizeof(net_arg1);
+  memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
+
+  messageType = ntohl(net_messageType);
+  requestType = ntohl(net_request_type);
+  uniqueID = ntohl(net_unique_id);
+  opcode = ntohl(net_opcode);
+  arg1 = ntohl(net_arg1);
+  arg2 = ntohl(net_arg2);
 }

@@ -29,7 +29,6 @@ int main(int argc, char *argv[]) {
     serverStub.Init(&nodeInfo);
     Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
-
     timer.Start();
     while(true){
 
@@ -60,13 +59,17 @@ int main(int argc, char *argv[]) {
          }
 
          else if (nodeInfo.role == FOLLOWER){
-             if (timer.Check_election_timeout()){
-                 nodeInfo.role = CANDIDATE;
-             }
-             else{
+             //if (timer.Check_election_timeout()){
+              //   nodeInfo.role = CANDIDATE;
+             //}
+             //else{ // for client interaction debugging, commented this part
+
+
+
                  serverStub.Poll(poll_timeout);
-                 serverStub.Handle_Poll_Follower(&serverState, &timer, &nodeInfo);
-             }
+
+                 serverStub.Handle_Poll_Follower(&PeerServerInfo, &serverState, &timer, &nodeInfo);
+
          }
 
 
