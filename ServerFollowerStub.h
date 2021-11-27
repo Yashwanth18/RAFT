@@ -24,15 +24,24 @@ public:
     ServerFollowerStub() {};
 
     /* ---------------Follower helper function ----------*/
-    void Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *serverState, NodeInfo *nodeInfo);
+    void Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *serverState,
+                                   NodeInfo *nodeInfo);
 
-    /* For Log Replication */
+    void Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
+                                   AppendEntryRequest *appendEntryRequest, char *buf, int fd);
+
+    void Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo,
+                            RequestVote *requestVote, char *buf, int fd);
+
+    int Unmarshal_MessageType(char *buf);
+
+    /* For Log Replication Module */
     int Send_ResponseAppendEntry(ResponseAppendEntry *ResponseAppendEntry, int fd);
     bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
     void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
     void Print_Log(ServerState *serverState);
 
-    /* For Log Replication */
+    /* For Election Module */
     int SendVoteResponse(VoteResponse *voteResponse, int fd);
     int Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
     int Compare_Log(ServerState *serverState, NodeInfo * nodeInfo,RequestVote * requestVote);

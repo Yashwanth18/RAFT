@@ -156,7 +156,7 @@ void Get_Ack(ServerState *serverState, int Poll_timeout,
              ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap,
              int *RequestID){
 
-    int poll_count = serverStub -> Poll(Poll_timeout * 2);
+    int poll_count = serverStub -> Poll(Poll_timeout);
 
     if (poll_count > 0){
         serverStub -> Handle_Poll_Leader(serverState, PeerIdIndexMap, RequestID);
@@ -232,6 +232,7 @@ void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub
     int poll_timeout = timer -> Poll_timeout();
 
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
+
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
                                  Socket_Status, &RequestID, heartbeat);
 

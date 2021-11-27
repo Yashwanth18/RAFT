@@ -5,64 +5,87 @@
 void ServerFollowerStub::
 Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *serverState, NodeInfo *nodeInfo){
     AppendEntryRequest appendEntryRequest;
-    ResponseAppendEntry ResponseAppendEntry;
     RequestVote requestVote;
-    VoteResponse voteResponse;
 
     int max_buf_size = appendEntryRequest.Size() + requestVote.Size();
     char buf[max_buf_size];
-    int success;
-    int net_messageType;
     int messageType;
-    int ResponseID;
+    int nbytes;
+    pollfd pfd;
 
     for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
-        if ((*_pfds_server)[i].revents & POLLIN) {            /* got ready-to-read from poll() */
+        pfd = (*_pfds_server)[i];
+        if (pfd.revents & POLLIN) {            /* got ready-to-read from poll() */
 
             if (i==0){ /* events at the listening socket */
                 Accept_Connection(_pfds_server);
             }
 
             else { /* events from established connection */
-
-                int nbytes = recv((*_pfds_server)[i].fd, buf, max_buf_size, 0);
-                memcpy(&net_messageType, buf, sizeof(net_messageType));
-                messageType = ntohl(net_messageType);
+                nbytes = recv(pfd.fd, buf, max_buf_size, 0);
 
                 if (nbytes <= 0){  /* connection closed or error */
-                    close((*_pfds_server)[i].fd);
-                    (*_pfds_server)[i].fd = -1;     // never delete
+                    close(pfd.fd);
+                    pfd.fd = -1;     // never delete
                 }
-                else{             /* got good data */
-
+                else{   /* got good data */
+                    messageType = Unmarshal_MessageType(buf);
                     if (messageType == APPEND_ENTRY_REQUEST){
-                        appendEntryRequest.UnMarshal(buf);
-                        appendEntryRequest.Print();
-
-                        Set_CommitIndex(&appendEntryRequest, serverState);
-                        success = Set_Result(serverState, &appendEntryRequest);
-
-                        ResponseID = appendEntryRequest.Get_RequestID() + 1;
-                        ResponseAppendEntry.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
-                                                success, nodeInfo -> node_id, ResponseID);
-
-                        Send_ResponseAppendEntry(&ResponseAppendEntry, (*_pfds_server)[i].fd);
+                        Handle_AppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, buf, pfd.fd);
                     }
                     else if (messageType == VOTE_REQUEST){
-                        requestVote.Unmarshal(buf);
-                        requestVote.Print();
-
-                        success = Decide_Vote(serverState, nodeInfo, &requestVote);
-
-                        voteResponse.Set(VOTE_RESPONSE, serverState -> currentTerm, success,
-                                         nodeInfo -> node_id);
-
-                        SendVoteResponse(&voteResponse, (*_pfds_server)[i].fd);
+                        Handle_VoteRequest(serverState, nodeInfo, &requestVote, buf, pfd.fd);
                     }
                 } /* End got good data */
             } /* End events from established connection */
         } /* End: got ready-to-read from poll() */
     } /*  End: looping through file descriptors */
+}
+
+int ServerFollowerStub::Unmarshal_MessageType(char *buf){
+    int net_messageType;
+    int messageType;
+
+    memcpy(&net_messageType, buf, sizeof(net_messageType));
+    messageType = ntohl(net_messageType);
+    return messageType;
+}
+
+void ServerFollowerStub::
+Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo, AppendEntryRequest *appendEntryRequest,
+                          char *buf, int fd) {
+
+    ResponseAppendEntry ResponseAppendEntry;
+    int success;
+    int ResponseID;
+
+    appendEntryRequest -> UnMarshal(buf);
+    appendEntryRequest -> Print();
+
+    Set_CommitIndex(appendEntryRequest, serverState);
+    success = Set_Result(serverState, appendEntryRequest);
+
+    ResponseID = appendEntryRequest -> Get_RequestID() + 1;
+    ResponseAppendEntry.Set(APPEND_ENTRY_RESPONSE, serverState -> currentTerm,
+                            success, nodeInfo -> node_id, ResponseID);
+
+    Send_ResponseAppendEntry(&ResponseAppendEntry, fd);
+}
+
+void ServerFollowerStub::
+Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote, char *buf, int fd) {
+    int success;
+    VoteResponse voteResponse;
+
+    requestVote -> Unmarshal(buf);
+    requestVote -> Print();
+
+    success = Decide_Vote(serverState, nodeInfo, requestVote);
+
+    voteResponse.Set(VOTE_RESPONSE, serverState -> currentTerm, success,
+                     nodeInfo -> node_id);
+
+    SendVoteResponse(&voteResponse, fd);
 }
 
 
