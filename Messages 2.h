@@ -8,13 +8,11 @@
 #define CANDIDATE 1
 #define LEADER 2
 
-#define CLIENT_CONNECTION 1
-#define SERVER_CONNECTION 2
 
 #define VOTE_REQUEST 1
 #define VOTE_RESPONSE 2
-#define APPEND_ENTRY_REQUEST 3
-#define APPEND_ENTRY_RESPONSE 4
+#define APPEND_ENTRIES_REQUEST 3
+#define APPEND_ENTRIES_RESPONSE 4
 
 
 struct Peer_Info{
@@ -54,11 +52,16 @@ struct NodeInfo{
     int role;
     int server_port;
     int client_port;
+
+    /* for leader election */
     int num_votes;
 };
-/*-----------------------------------Leader Election----------------------------------*/
 
-/* ----------------Request Vote Class-----------------*/
+
+
+
+
+/* -----------------Class for Request Vote -----------------*/
 class RequestVote {
 private:
     int messageType;
@@ -87,16 +90,16 @@ public:
     void Print();
 };
 
-/* -----------------Response Vote Class -----------------*/
+/* -----------------Class for Response Vote -----------------*/
 class VoteResponse{
 private:
     int messageType;
     int term;
-    int voteGranted;
+    bool voteGranted;
     int node_id;
 public:
     VoteResponse();
-    void Set(int _messageType, int _term, int _voteGranted, int _node_id);
+    void Set(int _messageType, int _term, bool _voteGranted, int _node_id);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -106,15 +109,13 @@ public:
 
     /* get private variable function */
     int Get_messageType();
-    int Get_voteGranted();
+    bool Get_voteGranted();
     int Get_node_id();
     int Get_term();
-
+    
 };
 
-/*-----------------------------------Log replication----------------------------------*/
-
-/* -----AppendEntryRequest Class-----*/
+/*-----------Log replication------------------*/
 class AppendEntryRequest{
 private:
     int messageType;
@@ -153,8 +154,7 @@ public:
     void Print();
 };
 
-/* -----ResponseAppendEntry Class-----*/
-class ResponseAppendEntry{
+class AppendEntryResponse{
 private:
     int messageType;
     int term;     // currentTerm of the follower, for leader to update itself
@@ -163,7 +163,7 @@ private:
     int ResponseID;
 
 public:
-    ResponseAppendEntry();
+    AppendEntryResponse();
     void Set(int _messageType, int _term, int _success, int _nodeID, int _RequestID);
 
     void Marshal(char *buffer);
@@ -182,4 +182,6 @@ public:
     void Print();
 };
 
+
 #endif // #ifndef __MESSAGES_H__
+
