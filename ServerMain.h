@@ -12,9 +12,7 @@
 #include "ServerTimer.h"
 #include "ServerStub.h"
 
-/* Usage (Command line argument format):
-        ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server)
-*/
+/* Usage: ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server) */
 
 /* return 0 on failure and 1 on success */
 int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
@@ -22,12 +20,9 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
         std::cout << "not enough arguments" << std::endl;
         return 0;
     }
-
 //    nodeInfo -> role = FOLLOWER;
     nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
-
     nodeInfo -> leader_id = -1;
-
     nodeInfo -> server_port = atoi(argv[1]);
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
@@ -43,13 +38,11 @@ void Init_ServerState(ServerState * serverState, int num_peers){
     LogEntry logEntry {-1, -1, -1, -1};
     serverState -> smr_log.push_back(logEntry);
 
-
     /* volatile state on all servers */
     serverState -> commitIndex = 0;
     serverState -> last_applied = 0;
 
     /* volatile state on leaders (Reinitialized after election) */
-
     for (int i = 0; i < num_peers; i++){
         serverState -> matchIndex.push_back(0);
         serverState -> nextIndex.push_back(1);
@@ -134,15 +127,14 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
     int send_status;
     for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
 
-
-        /*  if we have not heard back from ith peer and socket for ith peer is still alive */
-        if (Socket_Status[i]) {
-            std::cout << "sending heartbeat "<< '\n';
+        if (Socket_Status[i]) { /*  if socket is alive */
 
             if (heartbeat){
+                std::cout << "sending heartbeat "<< '\n';
                 send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
                                                                    Socket[i], i, -1);
             }
+
             else{
                 send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
                                                                    Socket[i], i, RequestID[i]);
@@ -156,7 +148,7 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
                 Socket[i] = serverStub -> Create_Socket(); // new socket
             }
 
-        } /*  End: if we have not heard back from ith peer and socket for ith peer is still alive */
+        } /*  End: if socket is alive */
     }  /* End: Send to all peers in parallel */
 }
 
@@ -164,7 +156,7 @@ void Get_Ack(ServerState *serverState, int Poll_timeout,
              ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap,
              int *RequestID){
 
-    int poll_count = serverStub -> Poll(Poll_timeout) * 2;
+    int poll_count = serverStub -> Poll(Poll_timeout * 2);
 
     if (poll_count > 0){
         serverStub -> Handle_Poll_Leader(serverState, PeerIdIndexMap, RequestID);
@@ -228,6 +220,23 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
     }
 }
 
+/* To be used in the Candidate_Role function. Candidate send a heartbeat message right after being elected
+ * to establish its authority to all nodes */
+void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
+                        ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
+                        std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
+                        bool *Socket_Status, int *Socket){
+
+    bool heartbeat = true;
+    int RequestID = -1;
+    int poll_timeout = timer -> Poll_timeout();
+
+    Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
+    BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
+                                 Socket_Status, &RequestID, heartbeat);
+
+    Get_Ack(serverState, poll_timeout, serverStub, PeerIdIndexMap, &RequestID);
+}
 
 /* -------------------------Functions declaration-----------------------------*/
 void Follower_Role(ServerStub *serverStub, ServerState *serverState,
@@ -237,11 +246,6 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
                   int poll_timeout, std::vector<Peer_Info> *PeerServerInfo,
                   std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
                   bool *Socket_Status, int *Socket, int *RequestID);
-
-void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
-                    ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
-                    std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                    bool *Socket_Status, int *Socket);
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                     ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,

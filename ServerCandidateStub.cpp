@@ -94,7 +94,7 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                         int localTerm = serverState -> currentTerm;
                         int leader_id = appendEntryRequest.Get_leaderId();
 
-                        if (leader_term > localTerm) {
+                        if (leader_term >= localTerm) {
                             nodeInfo -> leader_id = leader_id;
                             nodeInfo -> role =  FOLLOWER;
                         }

@@ -11,8 +11,8 @@ int main(int argc, char *argv[]) {
     std::map<int,int> PeerIdIndexMap;
 
     int poll_timeout = timer.Poll_timeout();
-    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)) { return 0; }
-    if (!Init_NodeInfo(&nodeInfo, argc, argv)) { return 0; }
+    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap))      { return 0; }
+    if (!Init_NodeInfo(&nodeInfo, argc, argv))                                  { return 0; }
 
     Init_ServerState(&serverState, nodeInfo.num_peers);
     serverStub.Init(&nodeInfo);     // a listening port for peer servers is created here
@@ -23,19 +23,20 @@ int main(int argc, char *argv[]) {
     bool Is_Init[nodeInfo.num_peers];
     Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
-    /* Debug purpose only!: make believe for now that this comes from the customer */
-    LogEntry logEntry1 {1, 1, 1, 1};
-    serverState.smr_log.push_back(logEntry1);
-    /* ------------------------------------------------------------------------*/
-
-    if (nodeInfo.role == FOLLOWER){
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-    }
-
     int RequestID [nodeInfo.num_peers];
     for (int i = 0; i < nodeInfo.num_peers; i++) {
         RequestID[i] = 0;
     }
+
+    /* Debug purpose only!: make believe for now that this comes from the customer */
+    LogEntry logEntry1 {1, 10, 11, 12};
+    serverState.smr_log.push_back(logEntry1);
+    /* ------------------------------------------------------------------------*/
+
+    if (nodeInfo.role == FOLLOWER){
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+    }
+
 
     timer.Start();
     while(true) {
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
         }
     }
 }
+/* -------------------------------End: Main Function------------------------------------ */
 
 void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                  int poll_timeout, std::vector<Peer_Info> *PeerServerInfo,
@@ -66,35 +68,18 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
 
     /* to-do: merge this with client interface. Wait for the request to arrive in the request queue
      * for some duration. If no request, break wait conditional variable and set heartbeat = true*/
-    std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
-    bool heartbeat = true;
+    // std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
 
+    bool heartbeat = true;
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
-    BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init, Socket_Status,
-                                 RequestID, heartbeat);
+    BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket,
+                                 Is_Init, Socket_Status, RequestID, heartbeat);
 
     Get_Ack(serverState, poll_timeout, serverStub, PeerIdIndexMap, RequestID);
  }
 
 
-/* To be used in the Candidate_Role function. Candidate send a heartbeat message right after being elected
- * to establish its authority to all nodes */
-void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
-                        ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
-                        std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                        bool *Socket_Status, int *Socket){
-
-    bool heartbeat = true;
-    int RequestID = -1;
-    int poll_timeout = timer -> Poll_timeout() * 2;
-
-    Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
-    BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
-                                 Socket_Status, &RequestID, heartbeat);
-
-    Get_Ack(serverState, poll_timeout, serverStub, PeerIdIndexMap, &RequestID);
-}
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                     ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
@@ -142,7 +127,7 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
     }
 
     else {
-        poll_count = serverStub -> Poll(poll_timeout);
+        poll_count = serverStub -> Poll(poll_timeout * 2);
         if (poll_count > 0) {
             timer -> Restart();
             timer -> Print_elapsed_time();

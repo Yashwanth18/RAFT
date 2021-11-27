@@ -6,11 +6,19 @@ void ServerLeaderStub::
 Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, ServerState *serverState,
                    std::map<int,int> *PeerIdIndexMap, int * RequestID){
 
+    AppendEntryRequest appendEntryRequest;
     ResponseAppendEntry ResponseAppendEntry;
+    RequestVote requestVote;
+    VoteResponse voteResponse;
 
-    char buf[ResponseAppendEntry.Size()];
+    int max_data_size = appendEntryRequest.Size() + ResponseAppendEntry.Size() +
+                    requestVote.Size() + voteResponse.Size();
+
+    char buf[max_data_size];
     int num_alive_sockets = _pfds_server -> size();
     int peer_index;
+    int net_messageType;
+    int messageType;
 
     for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
         if ((*_pfds_server)[i].revents & POLLIN) {     /* got ready-to-read from poll() */
@@ -20,7 +28,7 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, ServerState *serverSt
             }
 
             else{                                   /* events from established connection */
-                int nbytes = recv((*_pfds_server)[i].fd, buf, sizeof(ResponseAppendEntry), 0);
+                int nbytes = recv((*_pfds_server)[i].fd, buf, max_data_size, 0);
 
                 if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
                     close((*_pfds_server)[i].fd);
@@ -28,34 +36,37 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, ServerState *serverSt
                 }
 
                 else{    /* got good data */
-                    ResponseAppendEntry.UnMarshal(buf);
-                    ResponseAppendEntry.Print();
 
-                    if (ResponseAppendEntry.Get_messageType() != APPEND_ENTRY_RESPONSE){
+                    memcpy(&net_messageType, buf, sizeof(net_messageType));
+                    messageType = ntohl(net_messageType);
+
+                    if (messageType != APPEND_ENTRY_RESPONSE){
                         perror( "Undefined Message error type received by leader" );
                     }
+                    else{
+                        ResponseAppendEntry.UnMarshal(buf);
+                        ResponseAppendEntry.Print();
 
-                    if (ResponseAppendEntry.Get_ResponseID() == 0){ // if heartbeat
-                        // to-do: check if the leader term is stale here
-                        std::cout << "Received heartbeat ack "<< '\n';
-                    }
-
-                    else{   // if response from proper log replication request
-                        peer_index = (*PeerIdIndexMap)[ResponseAppendEntry.Get_nodeID()];
-
-                        if (ResponseAppendEntry.Get_success()) {
-                            serverState -> nextIndex[peer_index] ++;
+                        if (ResponseAppendEntry.Get_ResponseID() == 0){ // if heartbeat
+                            // to-do: check if the leader term is stale here
+                            std::cout << "Received heartbeat ack "<< '\n';
                         }
 
-                        else {  // rejected: the follower node lags behind /* to-do */
-                            if (ResponseAppendEntry.Get_ResponseID() > RequestID[i]){
-                                serverState -> nextIndex[peer_index] --;
-                                RequestID[i]++;
+                        else{   // if response from proper log replication request
+                            peer_index = (*PeerIdIndexMap)[ResponseAppendEntry.Get_nodeID()];
+
+                            if (ResponseAppendEntry.Get_success()) {
+                                serverState -> nextIndex[peer_index] ++;
+                            }
+
+                            else {  // rejected: the follower node lags behind /* to-do */
+                                if (ResponseAppendEntry.Get_ResponseID() > RequestID[i]){
+                                    serverState -> nextIndex[peer_index] --;
+                                    RequestID[i]++;
+                                }
                             }
                         }
                     }
-
-
                 } /* End got good data */
             } /* End events from established connection */
         } /* End got ready-to-read from poll() */
