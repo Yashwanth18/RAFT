@@ -7,6 +7,8 @@
 #include <map>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <sstream>
 
 #include "Messages.h"
 #include "ServerTimer.h"
@@ -30,6 +32,46 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     nodeInfo -> num_votes = 0;
   return 1;
 }
+
+void Read_Logs_From_File(ServerState * serverState)
+{
+
+  std::string line;
+  std::ifstream logFile ("example.txt");
+
+  if (logFile.is_open()) {
+
+    while (!logFile.eof()) {
+
+      getline(logFile, line);
+
+      std::stringstream temp(line);
+      std::string intermediate_string;
+
+      std::vector<int> tokens;
+      LogEntry log_entry{};
+
+      while (getline(temp, intermediate_string, ',')) {
+
+        tokens.push_back(stoi(intermediate_string));
+      }
+
+      log_entry.logTerm = tokens.at(0);
+      log_entry.opcode = tokens.at(1);
+      log_entry.arg1 = tokens.at(2);
+      log_entry.arg2 = tokens.at(3);
+
+      serverState->smr_log.push_back(log_entry);
+    }
+
+    logFile.close();
+  }
+  else{
+    std::cout << "cannot open file " << '\n';
+    return;
+  }
+}
+
 
 void Init_ServerState(ServerState * serverState, int num_peers){
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
@@ -136,6 +178,7 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
             }
 
             else{
+                std:: cout << "sending log information : " << '\n';
                 send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
                                                                    Socket[i], i, RequestID[i]);
             }

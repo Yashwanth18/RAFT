@@ -29,18 +29,24 @@ int main(int argc, char *argv[]) {
     }
 
     /* Debug purpose only!: make believe for now that this comes from the customer */
-    LogEntry logEntry1 {1, 10, 11, 12};
-    serverState.smr_log.push_back(logEntry1);
+//    LogEntry logEntry1 {1, 10, 11, 12};
+//    serverState.smr_log.push_back(logEntry1);
+//    serverState.smr_log.push_back(log_entry2);
+//      Read_Logs_From_File(&serverState);
     /* ------------------------------------------------------------------------*/
 
     if (nodeInfo.role == FOLLOWER){
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
+    if (nodeInfo.role == LEADER) {
+        Read_Logs_From_File(&serverState); // only for debugging purpose
+    }
 
     timer.Start();
     while(true) {
         if (nodeInfo.role == LEADER) {
+
             Leader_Role (&serverState, &nodeInfo, &serverStub, poll_timeout, &PeerServerInfo,
                          &PeerIdIndexMap, Is_Init, Socket_Status, Socket, RequestID);
         }
@@ -70,7 +76,9 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
      * for some duration. If no request, break wait conditional variable and set heartbeat = true*/
     // std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
 
-    bool heartbeat = true;
+    bool heartbeat = false; // to replicate leader data to the follower
+
+
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket,
