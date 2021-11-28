@@ -18,7 +18,7 @@ void ServerTimer::Restart() {
 
 /* poll timeout small compared to election_timeout */
 int ServerTimer::Poll_timeout(){
-	return election_timeout.count() / 2; // Balance between jamming the receiver and preventing election timeout
+	return election_timeout.count() / 4; // Balance between jamming the receiver and preventing election timeout
 }
 
 int ServerTimer::Check_election_timeout() {

@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
-
     timer.Start();
     while(true) {
         if (nodeInfo.role == LEADER) {
@@ -122,11 +121,9 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
     }
 
     else {
-        poll_count = serverStub -> Poll(poll_timeout);
+        poll_count = serverStub -> Poll(poll_timeout * 2); // listen longer than Leader 2x
         if (poll_count > 0) {
-            timer -> Restart();
-            timer -> Print_elapsed_time();
-            serverStub -> Handle_Poll_Follower(serverState, nodeInfo);
+            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
         }
     }
 

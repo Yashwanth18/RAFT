@@ -48,5 +48,5 @@ public:
 
 
     /* -------------------------------------Follower helper function ------------------------------------*/
-    void Handle_Poll_Follower(ServerState *serverState, NodeInfo *nodeInfo);
+    void Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo);
 };

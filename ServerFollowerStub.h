@@ -24,7 +24,7 @@ public:
     ServerFollowerStub() {};
 
     /* ---------------Follower helper function ----------*/
-    void Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *serverState,
+    void Stub_Handle_Poll_Follower(ServerTimer *Timer, std::vector<pollfd> *_pfds_server, ServerState *serverState,
                                    NodeInfo *nodeInfo);
 
     void Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,

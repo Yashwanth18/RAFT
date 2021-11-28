@@ -3,7 +3,8 @@
 
 /* functionalities include: RequestVoteRPC & AppendEntryRPC */
 void ServerFollowerStub::
-Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *serverState, NodeInfo *nodeInfo){
+Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
+                          ServerState *serverState, NodeInfo *nodeInfo){
     AppendEntryRequest appendEntryRequest;
     RequestVote requestVote;
 
@@ -36,8 +37,11 @@ Stub_Handle_Poll_Follower(std::vector<pollfd> *_pfds_server, ServerState *server
                     else if (messageType == VOTE_REQUEST){
                         Handle_VoteRequest(serverState, nodeInfo, &requestVote, buf, pfd.fd);
                     }
+
+                    timer -> Restart();
                 } /* End got good data */
             } /* End events from established connection */
+
         } /* End: got ready-to-read from poll() */
     } /*  End: looping through file descriptors */
 }
