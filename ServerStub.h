@@ -117,14 +117,18 @@ public:
 
     /* -------------------------------------Follower helper function ------------------------------------*/
 
-    /** It handles both the append entry request if the request is from a leader, or a
+
+    /**
+     * It handles both the append entry request if the request is from a leader, or a
      * request for a vote if the request is from a candidate. If its an append entry request,
      * it sets the result and sends it back to the leader, if its a request for a vote,
      * it sets if the vote can be granted or not and sends it back to the candidate
      *
+     * @param Timer the server timer to keep track if the follower becomes time out
      * @param serverState struct consisting the details about the servers log,
      *                    the current term of the server
      * @param nodeInfo the struct containing the info about a server node
      */
-    void Handle_Poll_Follower(ServerState *serverState, NodeInfo *nodeInfo);
+    void Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo);
+
 };

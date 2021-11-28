@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
-
     timer.Start();
     while(true) {
         if (nodeInfo.role == LEADER) {
@@ -68,7 +67,7 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
 
     /* to-do: merge this with client interface. Wait for the request to arrive in the request queue
      * for some duration. If no request, break wait conditional variable and set heartbeat = true*/
-    // std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
+    std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
 
     bool heartbeat = true;
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
@@ -116,22 +115,15 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
     int poll_count;
     int poll_timeout = timer -> Poll_timeout();
 
-//    poll_count = serverStub -> Poll(poll_timeout);
-//    if (poll_count > 0) {
-//        serverStub -> Handle_Poll_Follower(serverState, timer, nodeInfo);
-//    }
-
     if ( timer -> Check_election_timeout() ) {
         nodeInfo -> role = CANDIDATE;
         std::cout << "Timeout: I'm the candidate now!" << '\n';
     }
 
     else {
-        poll_count = serverStub -> Poll(poll_timeout * 2);
+        poll_count = serverStub -> Poll(poll_timeout * 2); // listen longer than Leader 2x
         if (poll_count > 0) {
-            timer -> Restart();
-            timer -> Print_elapsed_time();
-            serverStub -> Handle_Poll_Follower(serverState, nodeInfo);
+            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
         }
     }
 

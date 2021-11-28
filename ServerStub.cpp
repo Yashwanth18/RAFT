@@ -17,8 +17,8 @@ int ServerStub::Poll(int poll_timeout){
 }
 
 /* ---------------------------------Follower Helper function: ---------------------------------- */
-void ServerStub::Handle_Poll_Follower(ServerState *serverState, NodeInfo *nodeInfo){
-    serverFollowerStub.Stub_Handle_Poll_Follower(&pfds_server, serverState, nodeInfo);
+void ServerStub::Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo){
+    serverFollowerStub.Stub_Handle_Poll_Follower(Timer, &pfds_server, serverState, nodeInfo);
 }
 
 /* ---------------------------------Candidate helper functions -----------------------------------*/
