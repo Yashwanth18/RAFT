@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
 
     if (nodeInfo.role == FOLLOWER){
         std::this_thread::sleep_for(std::chrono::seconds(3));
+        serverState.outputFile.open("outputFile.txt");
     }
 
     if (nodeInfo.role == LEADER) {
@@ -132,6 +133,7 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
     if ( timer -> Check_election_timeout() ) {
         nodeInfo -> role = CANDIDATE;
         std::cout << "Timeout: I'm the candidate now!" << '\n';
+        serverState -> outputFile.close();
     }
 
     else {

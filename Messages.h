@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-
+#include "fstream"
 #define FOLLOWER 0
 #define CANDIDATE 1
 #define LEADER 2
@@ -41,6 +41,7 @@ struct ServerState{
     int commitIndex;
     int last_applied;
 
+    std::ofstream outputFile;
     /* volatile state on leaders (Reinitialized after election) */
     std::vector<int> nextIndex;     // size = num_peers
     std::vector<int> matchIndex;    // size = num_peers

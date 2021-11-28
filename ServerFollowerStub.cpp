@@ -204,6 +204,11 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
                 }
 
                 serverState->smr_log.push_back(remote_logEntry);
+                serverState -> outputFile << remote_logEntry.logTerm << ","
+                                          << remote_logEntry.opcode << ","
+                                          << remote_logEntry.arg1 << ","
+                                          << remote_logEntry.arg2 << '\n';
+
                 return true;
             }
         }
