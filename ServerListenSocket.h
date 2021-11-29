@@ -18,6 +18,11 @@ public:
 	ServerListenSocket() {}
 	~ServerListenSocket() {}
 
+    /**
+     * Initializes the listening port to accept the incoming connections
+     * @param port the listening port
+     * @return the file descriptor for listening
+     */
 	int Init(int port);		//return the file descriptor for listening
 
 	//std::unique_ptr<ServerListenSocket> Accept();

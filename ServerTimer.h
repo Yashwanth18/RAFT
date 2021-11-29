@@ -13,12 +13,31 @@ public:
 
 	ServerTimer();
 
+    /**
+     * Starts the timer
+     */
 	void Start();
+
+    /**
+     * restarts the timer
+     */
 	void Restart();
 
+    /**
+     * Determines if the elections has been timed out or not
+     * @return 1 if election is timed out , 0 otherwise
+     */
 	int Check_election_timeout();		//return 1 if election_timeout and 0 otherwise
 
+    /**
+     * prints the elapsed time
+     */
 	void Print_elapsed_time();
+
+    /**
+     * return max duration in millisecond for polling func
+     * @return max duration in millisecond for polling func
+     */
 	int Poll_timeout(); 					 //return max duration in millisecond for polling func
 };
 

@@ -42,7 +42,7 @@ public:
     /**
      * Returns the number of nodes which have readable data within the specified time limit
      * @param poll_timeout The timeout argument specifies the number of milliseconds that
-       poll() should block waiting for a file descriptor to become ready
+     *                     poll() should block waiting for a file descriptor to become ready
      * @return the number of nodes which has readable data
      */
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
