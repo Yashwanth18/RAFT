@@ -10,10 +10,10 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
-    int num_alive_sockets = _pfds_server -> size();
+    int num_sockets = _pfds_server -> size();
     pollfd pfd;
 
-    for(int i = 0; i < num_alive_sockets; i++) {   /* looping through file descriptors */
+    for(int i = 0; i < num_sockets; i++) {   /* looping through file descriptors */
         pfd = (*_pfds_server)[i];
 
         if (pfd.revents & POLLIN) {     /* got ready-to-read from poll() */

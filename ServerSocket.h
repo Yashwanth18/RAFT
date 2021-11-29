@@ -35,8 +35,6 @@ public:
     /* Send */
     int Send_Message(char *buf, int size, int fd);
 
-    /* Read */
-    int Read_Message(int fd, char *buf, int size);
 
     int Unmarshal_MessageType(char *buf);
 };

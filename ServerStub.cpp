@@ -11,12 +11,12 @@ void ServerStub::Init(NodeInfo * nodeInfo){
 }
 
 void ServerStub:: Set_Pfd(int new_fd, int peer_index){
-
+    int num_sockets = pfds_server.size();
     pollfd new_pfd;
     new_pfd.fd = new_fd;
     new_pfd.events = POLLIN;
 
-    if (peer_index + 1 < pfds_server.size()){
+    if (peer_index + 1 < num_sockets){
         perror("Set_Pfd");
     }
     pfds_server[peer_index + 1] = new_pfd;

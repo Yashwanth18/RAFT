@@ -41,8 +41,9 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
     pollfd pfd;
     int messageType;
     int nbytes;
+    int num_sockets = _pfds_server -> size();
 
-    for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
+    for(int i = 0; i < num_sockets; i++) {   /* looping through file descriptors */
         pfd = (*_pfds_server)[i];
 
         if ( pfd.revents & POLLIN) {     /* got ready-to-read from poll() */

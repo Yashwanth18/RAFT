@@ -51,31 +51,7 @@ int ServerSocket::Send_Message(char *buf, int size, int fd){
     return 1;
 }
 
-/* return 1 if success and 0 if failure */
-int ServerSocket::Read_Message(int fd, char *buf, int size){
-    int bytes_read = 0;
-    int offset = 0;
-    while (size > 0) {
-        try{
-            bytes_read = recv(fd, buf + offset, size, 0);
-            if (bytes_read <= 0) {
-                throw bytes_read;
-            }
-        }
-        catch (int stat){
-            return 0;
-        }
 
-        assert(bytes_read != 0);
-
-        size -= bytes_read;
-        offset += bytes_read;
-        assert(size >= 0);
-    }
-
-    return 1;
-
-}
 
 /* return 0 on failure and 1 on success */
 int ServerSocket::Connect_To(std::string ip, int port, int new_fd){
