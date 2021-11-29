@@ -99,15 +99,18 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 
         /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
         if (!Is_Init[i]) {
-            std::cout << "Still trying to connect "<< '\n';
+            // std::cout << "Still trying to connect "<< '\n';
 
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
-            if (connect_status) {   /* connection successful */
-                std::cout << "Connection Successful "<< '\n';
+
+            if (connect_status) {   /* connection successful */ // problem here !!!
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
-                serverStub -> Add_Socket_To_Poll(Socket[i]);
+
+                std::cout << "Connection Successful "<< '\n';
+                std::cout << "Socket[i]: " << Socket[i] << '\n';
+                serverStub -> Add_Socket_To_Poll(Socket[i]);    // problem here !!!
             }
             else {    /* fail connect */
                 close (Socket_Status[i]);
@@ -141,7 +144,7 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
             }
 
             if (!send_status) {
-                std::cout << " Fail to send to serve "<< '\n';
+                std::cout << "Fail to send "<< '\n';
                 Is_Init[i] = false;
                 Socket_Status[i] = false;
                 close(Socket[i]);
@@ -211,7 +214,7 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
         serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap, Request_Completed, nodeInfo);
 
         num_votes = nodeInfo -> num_votes;
-        std:: cout << "num_votes: " <<  num_votes << '\n';
+        // std:: cout << "num_votes: " <<  num_votes << '\n';
 
         if ( num_votes > majority ){
             nodeInfo -> role = LEADER;
@@ -251,4 +254,4 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                     ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
                     std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                    bool *Socket_Status, int *Socket);
+                    bool *Socket_Status, int *Socket, int *RequestID);

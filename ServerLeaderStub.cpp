@@ -33,20 +33,20 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
                     messageType = Unmarshal_MessageType(buf);
 
                     if (messageType == APPEND_ENTRY_REQUEST){
-                        std::cout << " Leader received appendEntryRequest" << '\n';
+                        std::cout << "Leader received appendEntryRequest" << '\n';
                         Handle_AppendEntryRequest(serverState, nodeInfo, buf);
                     }
                     else if (messageType == VOTE_REQUEST){
-                        std::cout << " Leader received VoteRequest" << '\n';
+                        std::cout << "Leader received VoteRequest" << '\n';
                         Handle_VoteRequest(serverState, nodeInfo, buf);
                     }
                     else if (messageType == RESPONSE_VOTE){
-                        std::cout << " Leader received ResponseVote" << '\n';
+                        std::cout << "Leader received ResponseVote" << '\n';
                         Handle_ResponseVote(serverState, nodeInfo, buf);
                     }
 
                     else if (messageType == RESPONSE_APPEND_ENTRY){     // the main functionality
-                        std::cout << " Leader received ResponseAppendEntry" << '\n';
+                        std::cout << "Leader received ResponseAppendEntry" << '\n';
                         Handle_ResponseAppendEntry(buf, nodeInfo, serverState, PeerIdIndexMap, RequestID, i);
                     }
 
@@ -73,8 +73,9 @@ void ServerLeaderStub::Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
     }
 
     if (responseAppendEntry.Get_ResponseID() == HEARTBEAT){ // HEARTBEAT defined as 0
-        std::cout << "Received heartbeat ack "<< '\n';
+        std::cout << "Leader received heartbeat ack "<< '\n';
     }
+
     else{   // if response from proper log replication request
         peer_index = (*PeerIdIndexMap)[responseAppendEntry.Get_nodeID()];
 
@@ -115,6 +116,9 @@ Handle_ResponseVote(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
     responseVote.Unmarshal(buf);
     int remote_term = responseVote.Get_term();
     int local_term = serverState -> currentTerm;
+
+    std::cout << "remote_term: " << remote_term << '\n';
+    std::cout << "local_term: " << local_term << '\n';
 
     if (remote_term > local_term){
         nodeInfo -> role = FOLLOWER;
@@ -157,19 +161,25 @@ void ServerLeaderStub::FillAppendEntryRequest(ServerState * serverState, NodeInf
     int _sender_term = serverState -> currentTerm;
     int _leaderId = nodeInfo -> node_id;
     int _leaderCommit = serverState -> commitIndex;
-    int last_log_index = serverState -> smr_log.size() -1;
 
-    int nextIndexPeer = serverState -> nextIndex[peer_index];
     int _prevLogIndex = serverState -> nextIndex[peer_index] - 1;
     int _prevLogTerm = -1;
+    LogEntry logEntry;
 
+    int last_log_index = serverState -> smr_log.size() -1;
+    int nextIndexPeer = serverState -> nextIndex[peer_index];
     std::cout << "nextIndexPeer: " << nextIndexPeer << '\n';
 
     if (nextIndexPeer > last_log_index){
         perror("nextIndexPeer out of range");
     }
 
-    LogEntry logEntry = serverState -> smr_log.at(nextIndexPeer);
+    if (RequestID == -1){
+        logEntry = LogEntry{-1, -1, -1, -1};
+    }
+    else{
+        logEntry = serverState -> smr_log.at(nextIndexPeer);
+    }
 
     if (_prevLogIndex >= 0){
         _prevLogTerm = serverState -> smr_log.at(_prevLogIndex).logTerm;

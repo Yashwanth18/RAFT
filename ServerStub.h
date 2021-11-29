@@ -35,6 +35,8 @@ public:
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
     void Add_Socket_To_Poll(int new_fd);
 
+    void Init_Pfds();
+
     /* ---------------Candidate helper functions ----------*/
     void Handle_Poll_Candidate(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
                                bool *request_completed, NodeInfo *nodeInfo);

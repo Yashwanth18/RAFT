@@ -5,7 +5,7 @@
 # command line format: ./server port_server port_client ID num_peers (repeat ID Ip port_server)
 
 #------------user's configuration before running this script---------
-num_peers=1
+num_peers=2
 #------------End: user's configuration------------------
 
 
@@ -27,7 +27,7 @@ Print_init_server_role(){
   fi
 }
 
-###-------------- main function--------------------###
+###------------------------------ main function-------------------------###
 node_ID=$1
 port_server=${port_server_root}${node_ID}
 

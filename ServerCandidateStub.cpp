@@ -35,16 +35,12 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                            ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
                            bool *Request_completed, NodeInfo *nodeInfo){
 
-
-    int messageType;
-    ResponseVote ResponseVote;
-    AppendEntryRequest appendEntryRequest;
-
-    int max_buf_size = ResponseVote.Size() + appendEntryRequest.Size();
-    std::cout << "candidate poll: max_buf_size" << max_buf_size << '\n';
-    char buf[max_buf_size];
+    int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
+                        sizeof(VoteRequest) + sizeof(ResponseVote);
+    char buf[max_data_size];
     int nbytes;
     pollfd pfd;
+    int messageType;
 
     for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
         pfd = (*_pfds_server)[i];
@@ -56,7 +52,7 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
             }
 
             else{                                   /* events from established connection */
-                nbytes = recv( pfd.fd, buf, max_buf_size, 0);
+                nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
                 if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
                     close(pfd.fd);
@@ -68,28 +64,25 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
 
                     /*  when the candidate gets a log replication request from a leader node */
                     if (messageType == APPEND_ENTRY_REQUEST) {  // main functionality
-                        std::cout << " Candidate received AppendEntryRequest" << '\n';
+                        std::cout << "Candidate received AppendEntryRequest" << '\n';
                         Handle_AppendEntryRequest(nodeInfo, serverState, buf);
-                    }
-                    else if (messageType == VOTE_REQUEST){
-                        std::cout << " Candidate received VoteRequest" << '\n';
-                        // do nothing here?
                     }
 
                     else if (messageType == RESPONSE_VOTE) {     // main functionality
-                        std::cout << " Candidate received ResponseVote" << '\n';
+                        std::cout << "Candidate received ResponseVote" << '\n';
                         Handle_ResponseVote(nodeInfo, serverState, buf, Request_completed, PeerIdIndexMap);
                     }
-
-                    else if (messageType == RESPONSE_APPEND_ENTRY){
-                        std::cout << " Candidate received ResponseAppendEntry" << '\n';
+                    else if (messageType == VOTE_REQUEST){
+                        std::cout << "Candidate received VoteRequest" << '\n';
                         // do nothing here?
                     }
-
+                    else if (messageType == RESPONSE_APPEND_ENTRY){
+                        std::cout << "Candidate received ResponseAppendEntry" << '\n';
+                        // do nothing here?
+                    }
                     else{
                         std::cout << "Candidate received undefined message type" << '\n';
                     }
-
                 }    /* End got good data */
             }  /* End events from established connection */
         }   /* End got ready-to-read from poll() */

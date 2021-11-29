@@ -7,7 +7,6 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
 
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
-
     char buf[max_data_size];
     int messageType;
     int nbytes;
@@ -32,25 +31,23 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                 else{   /* got good data */
                     messageType = Unmarshal_MessageType(buf);
                     if (messageType == APPEND_ENTRY_REQUEST){   // main functionality
-                        std::cout << " Follower received AppendEntryRequest" << '\n';
+                        std::cout << "Follower received AppendEntryRequest" << '\n';
                         Handle_AppendEntryRequest(serverState, nodeInfo, buf, pfd.fd);
                     }
                     else if (messageType == VOTE_REQUEST){      // main functionality
-                        std::cout << " Follower received VoteRequest" << '\n';
+                        std::cout << "Follower received VoteRequest" << '\n';
                         Handle_VoteRequest(serverState, nodeInfo, buf, pfd.fd);
                     }
                     else if (messageType == RESPONSE_VOTE){
-                        std::cout << " Follower received ResponseVote" << '\n';
+                        std::cout << "Follower received ResponseVote" << '\n';
                         // do nothing here?
                     }
-
-                    else if (messageType == RESPONSE_APPEND_ENTRY){     // the main functionality
-                        std::cout << " Follower received ResponseAppendEntry" << '\n';
+                    else if (messageType == RESPONSE_APPEND_ENTRY){
+                        std::cout << "Follower received ResponseAppendEntry" << '\n';
                         // do nothing here?
                     }
-
                     else{
-                        std::cout << " Leader received undefined message type" << '\n';
+                        std::cout << "Follower received undefined message type" << '\n';
                     }
                     timer -> Restart();
                 } /* End got good data */
@@ -202,10 +199,7 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
     }
 }
 
-
-
-/* to-do: Ideally, should return false to the leader first before modifying local log to
- * optimize latency */
+/* to-do: Clean this up */
 bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
     /* local state */
     int local_term = serverState -> currentTerm;
