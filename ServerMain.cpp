@@ -34,12 +34,11 @@ int main(int argc, char *argv[]) {
     /* ------------------------------------------------------------------------*/
 
     if (nodeInfo.role == FOLLOWER){
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        // std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     timer.Start();
     while(true) {
-        // std::cout << "Term: " << serverState.currentTerm << '\n';
 
         if (nodeInfo.role == FOLLOWER) {
             Follower_Role(&serverStub, &serverState, &timer, &nodeInfo);
@@ -53,7 +52,6 @@ int main(int argc, char *argv[]) {
         else if (nodeInfo.role == LEADER) {
             Leader_Role (&serverState, &nodeInfo, &serverStub, poll_timeout, &PeerServerInfo,
                          &PeerIdIndexMap, Is_Init, Socket_Status, Socket, LogRep_RequestID);
-            break;
         }
         else {
             std::cout << "Undefined Server Role Initialization" << '\n';
@@ -94,7 +92,13 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
     // reset timer, increment term number, reset variables
     Setup_New_Election(serverState, timer, nodeInfo, VoteRequest_Completed, VoteRequest_Sent);
 
-    while (!timer -> Check_election_timeout() && nodeInfo -> role == CANDIDATE) {
+    while (nodeInfo -> role == CANDIDATE) {
+
+        if (timer -> Check_election_timeout()){
+            std::cout << "Candidate timeout: Candidate Resigning to be a follower "<< '\n';
+            nodeInfo -> role = FOLLOWER;     // to-do: for when follower can time out
+            break;
+        }
 
         Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
@@ -113,7 +117,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
             }
         }
     }
-    // nodeInfo -> role = FOLLOWER;     // for when follower can time out
+
 }
 
 

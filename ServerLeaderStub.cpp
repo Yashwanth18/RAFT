@@ -66,14 +66,25 @@ void ServerLeaderStub::Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
     responseAppendEntry.Unmarshal(buf);
     responseAppendEntry.Print();
     int peer_index;
+    int remote_term;
+    int local_term;
 
-    if (responseAppendEntry.Get_term() < serverState -> currentTerm){   // check if we are stale
+    remote_term = responseAppendEntry.Get_term();
+    local_term = serverState -> currentTerm;
+
+    if (remote_term > local_term){   // check if we are stale
+        std::cout << "remote_term: " << remote_term << '\n';
+        std::cout << "local_term: " << local_term << '\n';
+
+        std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
         nodeInfo -> role = FOLLOWER;
+
         serverState -> currentTerm = responseAppendEntry.Get_term();
     }
 
     if (responseAppendEntry.Get_ResponseID() == HEARTBEAT){ // HEARTBEAT defined as 0
         std::cout << "Leader received heartbeat ack "<< '\n';
+        responseAppendEntry.Print();
     }
 
     else{   // if response from proper log replication request
@@ -123,7 +134,9 @@ Handle_ResponseVote(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
     std::cout << "local_term: " << local_term << '\n';
 
     if (remote_term > local_term){
+        std::cout << "Handle_ResponseVote: Leader Resigning to be a follower "<< '\n';
         nodeInfo -> role = FOLLOWER;
+
         serverState -> currentTerm = remote_term;
     }
 }
@@ -137,7 +150,9 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
     int local_term = serverState -> currentTerm;
 
     if (remote_term > local_term){
+        std::cout << "Handle_VoteRequest: Leader Resigning to be a follower "<< '\n';
         nodeInfo -> role = FOLLOWER;
+
         serverState -> currentTerm = remote_term;
     }
 }

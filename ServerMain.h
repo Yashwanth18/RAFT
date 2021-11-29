@@ -20,15 +20,16 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
         std::cout << "not enough arguments" << std::endl;
         return 0;
     }
-    // nodeInfo -> role = FOLLOWER;
+
     nodeInfo -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
+
     nodeInfo -> leader_id = -1;
     nodeInfo -> server_port = atoi(argv[1]);
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
     nodeInfo -> num_peers = atoi(argv[4]);
     nodeInfo -> num_votes = 0;
-  return 1;
+    return 1;
 }
 
 void Init_ServerState(ServerState * serverState, int num_peers){
@@ -96,25 +97,19 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
-
         if (!Is_Init[i]) {
-            // std::cout << "Still trying to connect "<< '\n';
-
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
 
-//            std::cout << "connect_status: "<< connect_status << '\n';
             if (connect_status) {   /* connection successful */ // problem here !!!
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
 
-//                std::cout << "Connection Successful "<< '\n';
-//                std::cout << "Socket[" << i << "]: " << Socket[i] << '\n';
                 serverStub -> Add_Socket_To_Poll(Socket[i]);    // problem here !!!
             }
             else {    /* fail connect */
-//                Is_Init[i] = false;
-//                Socket_Status[i] = false;
+                Is_Init[i] = false;
+                Socket_Status[i] = false;
                 close (Socket_Status[i]);
                 Socket[i] = serverStub -> Create_Socket();
             }
@@ -129,7 +124,6 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
                         NodeInfo *nodeInfo, bool * VoteRequest_Completed, bool *VoteRequest_Sent){
 
-    timer -> Restart(); /* (re)start a new election */
     serverState -> currentTerm ++;
     nodeInfo -> num_votes = 1; // vote for itself
 
@@ -137,6 +131,8 @@ void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
         VoteRequest_Completed[i] = false;
         VoteRequest_Sent[i] = false;
     }
+
+    timer -> Restart(); /* (re)start a new election */
 }
 
 void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo,
@@ -146,7 +142,6 @@ void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo,
     for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
 
         /*  if we have not sent and socket is alive */
-
         if (!VoteRequest_Sent[i] && Socket_Status[i] ) {
 
             send_status = serverStub -> SendVoteRequest(serverState, nodeInfo, Socket[i]);
@@ -185,7 +180,9 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
         if (num_votes > majority ){
             nodeInfo -> role = LEADER;
             std:: cout << "num_votes: " <<  num_votes << '\n';
-            std::cout << "I'm the leader!" << '\n';
+            std::cout << "\n****------------------******" << '\n';
+            std::cout << "****----I'm the leader!---******" << '\n';
+            std::cout << "****--------------------******\n" << '\n';
         }
     }
 }

@@ -69,19 +69,19 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                     }
 
                     else if (messageType == RESPONSE_VOTE) {     // main functionality
-                        std::cout << "Candidate received ResponseVote" << '\n';
+                        std::cout << "\nCandidate received ResponseVote" << '\n';
                         Handle_ResponseVote(nodeInfo, serverState, buf, VoteRequest_Completed, PeerIdIndexMap);
                     }
                     else if (messageType == VOTE_REQUEST){
-                        std::cout << "Candidate received VoteRequest" << '\n';
+                        std::cout << "\nCandidate received VoteRequest" << '\n';
                         // do nothing here?
                     }
                     else if (messageType == RESPONSE_APPEND_ENTRY){
-                        std::cout << "Candidate received ResponseAppendEntry" << '\n';
+                        std::cout << "\nCandidate received ResponseAppendEntry" << '\n';
                         // do nothing here?
                     }
                     else{
-                        std::cout << "Candidate received undefined message type" << '\n';
+                        std::cout << "\nCandidate received undefined message type" << '\n';
                     }
                 }    /* End got good data */
             }  /* End events from established connection */
@@ -128,8 +128,11 @@ Handle_AppendEntryRequest(NodeInfo *nodeInfo, ServerState *serverState, char *bu
 
     if (remote_term >= localTerm) {
         nodeInfo -> leader_id = appendEntryRequest.Get_nodeID();
-        nodeInfo -> role =  FOLLOWER;
         serverState -> votedFor = -1;
         serverState -> currentTerm = remote_term;
+
+        std::cout << "Candidate: Handle_AppendRequest: "
+                     "Resigning to be a follower "<< '\n';
+        nodeInfo -> role =  FOLLOWER;
     }
 }

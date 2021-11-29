@@ -20,7 +20,7 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
             }
 
             else { /* events from established connection */
-                nbytes = recv( pfd.fd, buf, max_data_size, 0);
+                nbytes = recv( pfd.fd, buf, max_data_size, 0); /* to-do: read all bytes? */
 
                 if (nbytes <= 0){  /* connection closed or error */
                     close(pfd.fd);
@@ -29,26 +29,24 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
 
                 else{   /* got good data */
                     messageType = Unmarshal_MessageType(buf);
-                    /* to-do: make sure you read all bytes */
 
                     if (messageType == APPEND_ENTRY_REQUEST){   // main functionality
-                        std::cout << "Follower received AppendEntryRequest" << '\n';
                         Handle_AppendEntryRequest(serverState, nodeInfo, buf, pfd.fd);
                     }
                     else if (messageType == VOTE_REQUEST){      // main functionality
-                        std::cout << "Follower received VoteRequest" << '\n';
+                        std::cout << "\nFollower received VoteRequest" << '\n';
                         Handle_VoteRequest(serverState, nodeInfo, buf, pfd.fd);
                     }
                     else if (messageType == RESPONSE_VOTE){
-                        std::cout << "Follower received ResponseVote" << '\n';
+                        std::cout << "\nFollower received ResponseVote" << '\n';
                         // do nothing here?
                     }
                     else if (messageType == RESPONSE_APPEND_ENTRY){
-                        std::cout << "Follower received ResponseAppendEntry" << '\n';
+                        std::cout << "\nFollower received ResponseAppendEntry" << '\n';
                         // do nothing here?
                     }
                     else{
-                        std::cout << "Follower received undefined message type" << '\n';
+                        // std::cout << "Follower received undefined message type" << '\n';
                     }
                     timer -> Restart();
                 } /* End got good data */

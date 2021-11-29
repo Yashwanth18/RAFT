@@ -9,7 +9,7 @@ num_peers=2
 #------------End: user's configuration------------------
 
 
-port_server_root=2020
+port_server_root=2021
 port_client=101080
 run_location=0
 IP_root="10.200.125."
@@ -31,28 +31,21 @@ Print_init_server_role(){
 node_ID=$1
 port_server=${port_server_root}${node_ID}
 
-if [ $num_peers -eq 1 ]; then
-  ID_Peer1=$2
-  server_role=$3
-  Print_init_server_role
 
-  ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
-              $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
-              $server_role
-
-elif [ $num_peers -eq 2 ]; then      # number of servers = 3
+if [ $num_peers -eq 2 ]; then      # number of servers = 3
     ID_Peer1=$2
     ID_Peer2=$3
     server_role=$4
 
     echo Number of peer servers equal to $num_peers
-    Print_init_server_role
+    echo ***********------------*********************
+
     ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
               $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
               $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \
               $server_role
 
-elif [ $num_peers -eq 4 ]; then       # number of servers = 3
+elif [ $num_peers -eq 4 ]; then       # number of servers = 5
     ID_Peer1=$2
     ID_Peer2=$3
     ID_Peer3=$4
@@ -60,7 +53,8 @@ elif [ $num_peers -eq 4 ]; then       # number of servers = 3
     server_role=$6
 
     echo Number of peer servers equal to $num_peers
-    Print_init_server_role
+    echo ***********------------*********************
+
     ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
               $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
               $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \

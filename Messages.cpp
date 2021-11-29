@@ -6,16 +6,16 @@
 
 void Print_MessageType(int messageType){
     if (messageType == VOTE_REQUEST){
-        std::cout << "\nmessageType: VoteRequest" << '\n';
+        std::cout << "messageType: VoteRequest" << '\n';
     }
     else if (messageType == RESPONSE_VOTE){
-        std::cout << "\nmessageType: ResponseVote" << '\n';
+        std::cout << "messageType: ResponseVote" << '\n';
     }
     else if (messageType == APPEND_ENTRY_REQUEST){
-        std::cout << "\nmessageType: AppendEntryRequest" << '\n';
+        std::cout << "messageType: AppendEntryRequest" << '\n';
     }
     else if(messageType == RESPONSE_APPEND_ENTRY){
-        std::cout << "\nmessageType: ResponseAppendEntry" << '\n';
+        std::cout << "messageType: ResponseAppendEntry" << '\n';
     }
 }
 /*---------------------------------------Leader Election----------------------------------*/
@@ -108,7 +108,7 @@ int VoteRequest::Get_message_type() {
 }
 
 void VoteRequest::Print(){
-    ::Print_MessageType(messageType);
+    // ::Print_MessageType(messageType);
     std::cout << "term: " << term << '\n';
     std::cout << "candidateId: " << candidateId << '\n';
     std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
@@ -178,7 +178,7 @@ int ResponseVote::Size() {
 }
 
 void ResponseVote::Print() {
-    ::Print_MessageType(messageType);
+    // ::Print_MessageType(messageType);
     std::cout<<"term: "<< term <<'\n';
     std::cout<<"voteGranted: "<< voteGranted<<'\n';
     std::cout<<"node_id: "<< node_id<<'\n';
@@ -243,36 +243,36 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     int net_arg2;
     int net_leaderCommit;
     int net_LogRep_RequestID;
-    
+
     int offset = 0;
 
     memcpy(&net_messageType, buffer + offset, sizeof(net_messageType));
     offset += sizeof(net_messageType);
-    
+
     memcpy(&net_sender_term, buffer + offset, sizeof(net_sender_term));
     offset += sizeof(net_sender_term);
-    
+
     memcpy(&net_leaderId, buffer + offset, sizeof(net_leaderId));
     offset += sizeof(net_leaderId);
 
     memcpy(&net_prevLogTerm, buffer + offset, sizeof(net_prevLogTerm));
     offset += sizeof(net_prevLogTerm);
-    
+
     memcpy(&net_prevLogIndex, buffer + offset, sizeof(net_prevLogIndex));
     offset += sizeof(net_prevLogIndex);
-    
+
     memcpy(&net_logTerm, buffer + offset, sizeof(net_logTerm));
     offset += sizeof(net_logTerm);
-    
+
     memcpy(&net_opcode, buffer + offset, sizeof(net_opcode));
     offset += sizeof(net_opcode);
-    
+
     memcpy(&net_arg1, buffer + offset, sizeof(net_arg1));
     offset += sizeof(net_arg1);
-    
+
     memcpy(&net_arg2, buffer + offset, sizeof(net_arg2));
     offset += sizeof(net_arg2);
-    
+
     memcpy(&net_leaderCommit, buffer + offset, sizeof(net_leaderCommit));
     offset += sizeof(net_leaderCommit);
 
@@ -293,12 +293,12 @@ void AppendEntryRequest::Unmarshal(char *buffer){
 
 void AppendEntryRequest::Marshal(char *buffer){
     int net_messageType = htonl(messageType);
-    
+
     int net_sender_term = htonl(sender_term);
     int net_leaderId = htonl(leaderId);
     int net_prevLogTerm = htonl(prevLogTerm);
     int net_prevLogIndex = htonl(prevLogIndex);
-    
+
     int net_logTerm = htonl(logEntry. logTerm);
 
     int net_opcode = htonl(logEntry. opcode);
@@ -352,10 +352,12 @@ int AppendEntryRequest::Size() {
 void AppendEntryRequest::Print(){
 
     if (logEntry.logTerm == -1){
-        std::cout << "Received Heartbeat message " << '\n';
+        std::cout << "\nReceived Heartbeat message " << '\n';
+        std::cout << "sender_term : " << sender_term << '\n';
+        std::cout << "leaderId : " << leaderId << '\n';
     }
     else{
-        ::Print_MessageType(messageType);
+        // ::Print_MessageType(messageType);
         std::cout << "sender_term : " << sender_term << '\n';
         std::cout << "leaderId : " << leaderId << '\n';
         std::cout << "prevLogTerm : " << prevLogTerm << '\n';
@@ -492,9 +494,10 @@ int ResponseAppendEntry::Get_ResponseID() {
 }
 
 void ResponseAppendEntry::Print(){
-    ::Print_MessageType(messageType);
+    // ::Print_MessageType(messageType);
     std::cout << "term : " << term << '\n';
     std::cout << "success : " << success << '\n';
-    std::cout << "nodeID : " << nodeID << '\n';
-    std::cout << "-----------ResponseID : " << ResponseID << "--------------" << '\n';
+//    std::cout << "nodeID : " << nodeID << '\n';
+//    std::cout << "-----------ResponseID : " << ResponseID << "-----------" << '\n';
+    std::cout << "" << '\n';
 }

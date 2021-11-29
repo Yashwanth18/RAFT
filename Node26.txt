@@ -1,0 +1,3 @@
+Number of peer servers equal to 2
+Initialize server role to be a Follower
+***********------------*********************
