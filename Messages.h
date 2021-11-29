@@ -103,7 +103,6 @@ public:
 
     int Size();
     void Print();
-    void Print_MessageType();
 
     /* get private variable function */
     int Get_messageType();
@@ -128,13 +127,13 @@ private:
     int prevLogIndex;    // index of log entry immediately preceding new ones
 
     LogEntry logEntry;
-    int RequestID;
+    int LogRep_RequestID;
 
 public:
     AppendEntryRequest();
     void Set(int _messageType, int _sender_term, int _leaderId,
              int _prevLogTerm, int _prevLogIndex,
-             LogEntry * _logEntry, int _leaderCommit, int _RequestID);
+             LogEntry * _logEntry, int _leaderCommit, int _LogRep_RequestID);
 
     void Marshal(char *buffer);
     void Unmarshal(char * buffer);
@@ -149,10 +148,9 @@ public:
     int  Get_prevLogIndex();
     LogEntry Get_LogEntry();
     int  Get_leaderCommit();
-    int Get_RequestID();
+    int Get_LogRep_RequestID();
 
     void Print();
-    void Print_MessageType();
 };
 
 /* -----ResponseAppendEntry Class-----*/
@@ -166,7 +164,7 @@ private:
 
 public:
     ResponseAppendEntry();
-    void Set(int _messageType, int _term, int _success, int _nodeID, int _RequestID);
+    void Set(int _messageType, int _term, int _success, int _nodeID, int _LogRep_RequestID);
 
     void Marshal(char *buffer);
     void Unmarshal(char * buffer);
@@ -182,7 +180,6 @@ public:
 
 
     void Print();
-    void Print_MessageType();
 };
 
 #endif // #ifndef __MESSAGES_H__

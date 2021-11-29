@@ -8,6 +8,7 @@ void ServerStub::Init(NodeInfo * nodeInfo){
 
 void ServerStub::Add_Socket_To_Poll(int new_fd) {
     AddSocketToPoll(new_fd, &pfds_server);
+    std::cout << "pfds_server size: " << pfds_server.size() << '\n';
 }
 
 int ServerStub::Poll(int poll_timeout){
@@ -35,13 +36,13 @@ int ServerStub::SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, in
 /* ---------------------------------Leader helper function---------------------------------- */
 /* functionalities include: Receive acknowledgement from Follower */
 void ServerStub::
-Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo, std::map<int,int> *PeerIdIndexMap, int * RequestID){
-    serverLeaderStub.Stub_Handle_Poll_Leader(&pfds_server, nodeInfo, serverState, PeerIdIndexMap, RequestID);
+Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo, std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID){
+    serverLeaderStub.Stub_Handle_Poll_Leader(&pfds_server, nodeInfo, serverState, PeerIdIndexMap, LogRep_RequestID);
 }
 
 int ServerStub::
-SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index, int RequestID) {
-  return serverLeaderStub.Stub_SendAppendEntryRequest(serverState, nodeInfo, fd, peer_index, RequestID);
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index, int LogRep_RequestID) {
+  return serverLeaderStub.Stub_SendAppendEntryRequest(serverState, nodeInfo, fd, peer_index, LogRep_RequestID);
 }
 
 

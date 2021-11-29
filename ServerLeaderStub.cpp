@@ -3,10 +3,10 @@
 /* functionalities include: Receive acknowledgement from Follower */
 void ServerLeaderStub::
 Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, ServerState *serverState,
-                   std::map<int,int> *PeerIdIndexMap, int * RequestID){
+                   std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID){
 
     int messageType;
-    int read_status;
+    int nbytes;
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
@@ -22,14 +22,15 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
             }
 
             else{                                   /* events from established connection */
-                read_status = Read_Message(pfd.fd, buf, max_data_size);
+                nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
-                if (read_status <= 0){  /* remote connection closed or error */
+                if (nbytes <= 0){  /* remote connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;
                 }
 
                 else{    /* got good data */
+                    // to-do: make sure you read all the bytes
                     messageType = Unmarshal_MessageType(buf);
 
                     if (messageType == APPEND_ENTRY_REQUEST){
@@ -46,8 +47,7 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
                     }
 
                     else if (messageType == RESPONSE_APPEND_ENTRY){     // the main functionality
-                        std::cout << "Leader received ResponseAppendEntry" << '\n';
-                        Handle_ResponseAppendEntry(buf, nodeInfo, serverState, PeerIdIndexMap, RequestID, i);
+                        Handle_ResponseAppendEntry(buf, nodeInfo, serverState, PeerIdIndexMap, LogRep_RequestID, i);
                     }
 
                     else{
@@ -61,7 +61,7 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
 
 void ServerLeaderStub::Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
                                                   ServerState *serverState, std::map<int, int> *PeerIdIndexMap,
-                                                  int *RequestID, int socket_index) {
+                                                  int *LogRep_RequestID, int socket_index) {
     ResponseAppendEntry responseAppendEntry;
     responseAppendEntry.Unmarshal(buf);
     responseAppendEntry.Print();
@@ -77,6 +77,8 @@ void ServerLeaderStub::Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
     }
 
     else{   // if response from proper log replication request
+        std::cout << "Leader received ResponseAppendEntry" << '\n';
+
         peer_index = (*PeerIdIndexMap)[responseAppendEntry.Get_nodeID()];
 
         if (responseAppendEntry.Get_success()) {
@@ -84,11 +86,11 @@ void ServerLeaderStub::Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
         }
 
         else {  // rejected: the follower node lags behind
-            if (responseAppendEntry.Get_ResponseID() > RequestID[socket_index]){    // to handle duplicate message
+            if (responseAppendEntry.Get_ResponseID() > LogRep_RequestID[socket_index]){    // to handle duplicate message
                 serverState -> nextIndex[peer_index] --;
             }
         }
-        RequestID[socket_index]++;  // to handle duplicate message
+        LogRep_RequestID[socket_index]++;  // to handle duplicate message
     }
 }
 
@@ -143,19 +145,19 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
 
 /* --------------------------------Log Replication helper functions--------------------------------------------- */
 int ServerLeaderStub::
-Stub_SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index, int RequestID) {
+Stub_SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index, int LogRep_RequestID) {
     AppendEntryRequest appendEntryRequest;
     int size = appendEntryRequest.Size();
     char buf[size];
 
-    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, RequestID);
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, LogRep_RequestID);
 
     appendEntryRequest.Marshal(buf);
     return Send_Message(buf, size, fd);
 }
 
 void ServerLeaderStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                       AppendEntryRequest *appendEntryRequest,  int peer_index, int RequestID) {
+                       AppendEntryRequest *appendEntryRequest,  int peer_index, int LogRep_RequestID) {
 
     int _messageType = APPEND_ENTRY_REQUEST;
     int _sender_term = serverState -> currentTerm;
@@ -168,13 +170,12 @@ void ServerLeaderStub::FillAppendEntryRequest(ServerState * serverState, NodeInf
 
     int last_log_index = serverState -> smr_log.size() -1;
     int nextIndexPeer = serverState -> nextIndex[peer_index];
-    std::cout << "nextIndexPeer: " << nextIndexPeer << '\n';
 
     if (nextIndexPeer > last_log_index){
         perror("nextIndexPeer out of range");
     }
 
-    if (RequestID == -1){
+    if (LogRep_RequestID == -1){
         logEntry = LogEntry{-1, -1, -1, -1};
     }
     else{
@@ -186,6 +187,6 @@ void ServerLeaderStub::FillAppendEntryRequest(ServerState * serverState, NodeInf
     }
 
     appendEntryRequest -> Set(_messageType, _sender_term, _leaderId, _prevLogTerm, _prevLogIndex,
-                              &logEntry, _leaderCommit, RequestID);
+                              &logEntry, _leaderCommit, LogRep_RequestID);
 }
 

@@ -9,7 +9,7 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
     int messageType;
-    int read_status;
+    int nbytes;
 
     for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
         pollfd pfd = (*_pfds_server)[i];
@@ -20,15 +20,17 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
             }
 
             else { /* events from established connection */
-                read_status = Read_Message(pfd.fd, buf, max_data_size); /* to-do: implement proper read all bytes*/
+                nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
-                if (read_status <= 0){  /* connection closed or error */
+                if (nbytes <= 0){  /* connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;     // never delete
                 }
 
                 else{   /* got good data */
                     messageType = Unmarshal_MessageType(buf);
+                    /* to-do: make sure you read all bytes */
+
                     if (messageType == APPEND_ENTRY_REQUEST){   // main functionality
                         std::cout << "Follower received AppendEntryRequest" << '\n';
                         Handle_AppendEntryRequest(serverState, nodeInfo, buf, pfd.fd);
@@ -47,8 +49,6 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                     }
                     else{
                         std::cout << "Follower received undefined message type" << '\n';
-                        std::cout << "read_status: " << read_status << '\n';
-                        std::cout << "messageType: " << messageType << '\n';
                     }
                     timer -> Restart();
                 } /* End got good data */
@@ -87,7 +87,7 @@ Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo, char *bu
 
     success = Set_Result(serverState, &appendEntryRequest);
 
-    ResponseID = appendEntryRequest.Get_RequestID() + 1;
+    ResponseID = appendEntryRequest.Get_LogRep_RequestID() + 1;
     ResponseAppendEntry.Set(RESPONSE_APPEND_ENTRY, serverState -> currentTerm,
                             success, nodeInfo -> node_id, ResponseID);
 
@@ -119,8 +119,13 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf, int 
 int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote, int fd) {
     int size = ResponseVote -> Size();
     char buf[size];
+    int send_status;
+
     ResponseVote -> Marshal(buf);
-    return Send_Message(buf, size, fd);
+    send_status = Send_Message(buf, size, fd);
+
+    // std::cout << "send_status: " << send_status << '\n';
+    return send_status;
 }
 
 int ServerFollowerStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest) {
@@ -128,7 +133,10 @@ int ServerFollowerStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo
     int local_term = serverState -> currentTerm;
     int remote_term = VoteRequest -> Get_term();
 
-    if (remote_term > local_term){
+    if (remote_term <= local_term){
+        return false;
+    }
+    else {
         serverState -> votedFor = -1;
     }
 
@@ -223,7 +231,7 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
         return false;
     }
 
-    if (appendEntryRequest -> Get_RequestID() == -1){      // heartbeat message
+    if (appendEntryRequest -> Get_LogRep_RequestID() == -1){      // heartbeat message
         return true;
     }
 

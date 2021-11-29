@@ -212,13 +212,13 @@ AppendEntryRequest::AppendEntryRequest()  {
     logEntry.arg1 = -1;
     logEntry.arg2 = -1;
     leaderCommit = -1;
-    RequestID = -1;
+    LogRep_RequestID = -1;
 }
 
 
 void AppendEntryRequest:: Set(int _messageType, int _sender_term, int _leaderId,
                               int _prevLogTerm, int _prevLogIndex,
-                              LogEntry * _logEntry, int _leaderCommit, int _RequestID){
+                              LogEntry * _logEntry, int _leaderCommit, int _LogRep_RequestID){
 
     messageType = _messageType;
     sender_term = _sender_term;
@@ -227,7 +227,7 @@ void AppendEntryRequest:: Set(int _messageType, int _sender_term, int _leaderId,
     prevLogIndex = _prevLogIndex;
     logEntry = *_logEntry;
     leaderCommit = _leaderCommit;
-    RequestID = _RequestID;
+    LogRep_RequestID = _LogRep_RequestID;
 }
 
 
@@ -242,7 +242,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     int net_arg1;
     int net_arg2;
     int net_leaderCommit;
-    int net_RequestID;
+    int net_LogRep_RequestID;
     
     int offset = 0;
 
@@ -276,7 +276,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     memcpy(&net_leaderCommit, buffer + offset, sizeof(net_leaderCommit));
     offset += sizeof(net_leaderCommit);
 
-    memcpy(&net_RequestID, buffer + offset, sizeof(net_RequestID));
+    memcpy(&net_LogRep_RequestID, buffer + offset, sizeof(net_LogRep_RequestID));
 
     messageType = ntohl(net_messageType);
     sender_term = ntohl(net_sender_term);
@@ -288,7 +288,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     logEntry.arg1 = ntohl(net_arg1);
     logEntry.arg2 = ntohl(net_arg2);
     leaderCommit = ntohl(net_leaderCommit);
-    RequestID = ntohl(net_RequestID);
+    LogRep_RequestID = ntohl(net_LogRep_RequestID);
 }
 
 void AppendEntryRequest::Marshal(char *buffer){
@@ -306,7 +306,7 @@ void AppendEntryRequest::Marshal(char *buffer){
 
     int net_arg2 = htonl(logEntry.arg2);
     int net_leaderCommit = htonl(leaderCommit);
-    int net_RequestID = htonl(RequestID);
+    int net_LogRep_RequestID = htonl(LogRep_RequestID);
 
     int offset = 0;
 
@@ -340,28 +340,34 @@ void AppendEntryRequest::Marshal(char *buffer){
     memcpy(buffer + offset, &net_leaderCommit, sizeof(net_leaderCommit));
     offset += sizeof(net_leaderCommit);
 
-    memcpy(buffer + offset, &net_RequestID, sizeof(net_RequestID));
+    memcpy(buffer + offset, &net_LogRep_RequestID, sizeof(net_LogRep_RequestID));
 }
 
 int AppendEntryRequest::Size() {
     return sizeof(messageType) + sizeof(sender_term) + sizeof(leaderId) +
             sizeof(prevLogTerm) + sizeof(prevLogIndex) +
-           sizeof(logEntry )+ sizeof (leaderCommit) + sizeof (RequestID);
+           sizeof(logEntry )+ sizeof (leaderCommit) + sizeof (LogRep_RequestID);
 }
 
 void AppendEntryRequest::Print(){
-    ::Print_MessageType(messageType);
-    std::cout << "sender_term : " << sender_term << '\n';
-    std::cout << "leaderId : " << leaderId << '\n';
-    std::cout << "prevLogTerm : " << prevLogTerm << '\n';
-    std::cout << "prevLogIndex : " << prevLogIndex << '\n';
-    std::cout << "logTerm : "<< logEntry.logTerm << '\n';
-    std::cout << "opcode : "<< logEntry.opcode << '\n';
-    std::cout << "arg1 : " << logEntry.arg1 << '\n';
-    std::cout << "arg2 : " << logEntry.arg2 << '\n';
-    std::cout << "leaderCommit : " << leaderCommit << '\n';
-    std::cout << "RequestID : " << RequestID << '\n';
-    std::cout << "---------------------------" << '\n';
+
+    if (logEntry.logTerm == -1){
+        std::cout << "Received Heartbeat message " << '\n';
+    }
+    else{
+        ::Print_MessageType(messageType);
+        std::cout << "sender_term : " << sender_term << '\n';
+        std::cout << "leaderId : " << leaderId << '\n';
+        std::cout << "prevLogTerm : " << prevLogTerm << '\n';
+        std::cout << "prevLogIndex : " << prevLogIndex << '\n';
+        std::cout << "logTerm : "<< logEntry.logTerm << '\n';
+        std::cout << "opcode : "<< logEntry.opcode << '\n';
+        std::cout << "arg1 : " << logEntry.arg1 << '\n';
+        std::cout << "arg2 : " << logEntry.arg2 << '\n';
+        std::cout << "leaderCommit : " << leaderCommit << '\n';
+        std::cout << "LogRep_RequestID : " << LogRep_RequestID << '\n';
+        std::cout << "---------------------------" << '\n';
+    }
 }
 
 
@@ -391,8 +397,8 @@ int AppendEntryRequest:: Get_leaderCommit(){
     return leaderCommit;
 }
 
-int AppendEntryRequest::Get_RequestID() {
-    return RequestID;
+int AppendEntryRequest::Get_LogRep_RequestID() {
+    return LogRep_RequestID;
 }
 
 
@@ -491,5 +497,4 @@ void ResponseAppendEntry::Print(){
     std::cout << "success : " << success << '\n';
     std::cout << "nodeID : " << nodeID << '\n';
     std::cout << "-----------ResponseID : " << ResponseID << "--------------" << '\n';
-    std::cout << "" << '\n';
 }

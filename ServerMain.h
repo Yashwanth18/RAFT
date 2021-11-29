@@ -20,8 +20,8 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
         std::cout << "not enough arguments" << std::endl;
         return 0;
     }
-//    nodeInfo -> role = FOLLOWER;
-    nodeInfo -> role = atoi(argv[argc - 1]);  /* for testing purpose only! */
+    // nodeInfo -> role = FOLLOWER;
+    nodeInfo -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
     nodeInfo -> leader_id = -1;
     nodeInfo -> server_port = atoi(argv[1]);
     nodeInfo -> client_port = atoi(argv[2]);
@@ -96,79 +96,34 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
-        /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
+
         if (!Is_Init[i]) {
             // std::cout << "Still trying to connect "<< '\n';
 
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
 
-            std::cout << "connect_status: "<< connect_status << '\n';
+//            std::cout << "connect_status: "<< connect_status << '\n';
             if (connect_status) {   /* connection successful */ // problem here !!!
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
 
-                std::cout << "Connection Successful "<< '\n';
-                std::cout << "Socket[i]: " << Socket[i] << '\n';
+//                std::cout << "Connection Successful "<< '\n';
+//                std::cout << "Socket[" << i << "]: " << Socket[i] << '\n';
                 serverStub -> Add_Socket_To_Poll(Socket[i]);    // problem here !!!
             }
             else {    /* fail connect */
-                Is_Init[i] = false;
-                Socket_Status[i] = false;
+//                Is_Init[i] = false;
+//                Socket_Status[i] = false;
                 close (Socket_Status[i]);
                 Socket[i] = serverStub -> Create_Socket();
             }
 
-        } /* End: if we have not heard back from ith peer and socket for ith peer is not initialized */
+        } /* End: not initialized */
     }  /* End: iterator through all peers */
 }
 
-
-
-void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
-                                  ServerStub *serverStub, int *Socket, bool *Is_Init,
-                                  bool *Socket_Status, int *RequestID, bool heartbeat){
-
-    int send_status;
-    for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
-
-        if (Socket_Status[i]) { /*  if socket is alive */
-
-            if (heartbeat){
-                std::cout << "sending heartbeat "<< '\n';
-                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
-                                                                   Socket[i], i, -1);
-            }
-
-            else{
-                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
-                                                                   Socket[i], i, RequestID[i]);
-            }
-
-            if (!send_status) {
-                std::cout << "Fail to send "<< '\n';
-                Is_Init[i] = false;
-                Socket_Status[i] = false;
-                close(Socket[i]);
-                Socket[i] = serverStub -> Create_Socket(); // new socket
-            }
-
-        } /*  End: if socket is alive */
-    }  /* End: Send to all peers in parallel */
-}
-
-void Get_Ack(ServerState *serverState, NodeInfo *nodeInfo, int Poll_timeout,
-             ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap,
-             int *RequestID){
-
-    int poll_count = serverStub -> Poll(Poll_timeout);
-
-    if (poll_count > 0){
-        serverStub -> Handle_Poll_Leader(serverState, nodeInfo, PeerIdIndexMap, RequestID);
-    }
-}
-
-
+/* ---------------------------------------------------------------------------------*/
 /* ------------------------Candidate helper function -----------------------*/
 
 void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
@@ -186,25 +141,27 @@ void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
 
 void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo,
                            ServerStub * serverStub, int * Socket, bool * Is_Init,
-                           bool * Socket_Status, bool * VoteRequest_Completed, bool *VoteRequest_Sent){
-
+                           bool * Socket_Status, bool *VoteRequest_Sent){
+    int send_status;
     for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
 
-        /*  if we have not heard back from ith peer and socket for ith peer is still alive */
+        /*  if we have not sent and socket is alive */
+
         if (!VoteRequest_Sent[i] && Socket_Status[i] ) {
 
-            if (!serverStub -> SendVoteRequest(serverState, nodeInfo, Socket[i])) {
-                // if send fail
+            send_status = serverStub -> SendVoteRequest(serverState, nodeInfo, Socket[i]);
+
+            if (send_status) {  // send succeed
+                VoteRequest_Sent[i] = true;
+            }
+
+            else{ // if send fail
                 Is_Init[i] = false;
                 Socket_Status[i] = false;
                 close(Socket[i]);
                 Socket[i] = serverStub -> Create_Socket(); // new socket
             }
-            else{  // send succeed
-                VoteRequest_Sent[i] = true;
-            }
-
-        } /*  End: if we have not heard back from ith peer and socket for ith peer is still alive */
+        } /*  End: if we have not sent and socket is alive */
     }  /* End: Send to all peers in parallel */
 }
 
@@ -215,9 +172,9 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
               std::map<int,int> *PeerIdIndexMap){
 
 
-    int poll_count = serverStub -> Poll(poll_timeout);
     int num_votes;
     int majority = nodeInfo -> num_peers / 2;
+    int poll_count = serverStub -> Poll(poll_timeout);
 
     if (poll_count > 0){
         serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap,
@@ -233,6 +190,53 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
     }
 }
 
+
+void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
+                                  ServerStub *serverStub, int *Socket, bool *Is_Init,
+                                  bool *Socket_Status, int *LogRep_RequestID, bool heartbeat){
+
+    int send_status;
+    for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
+
+        if (Socket_Status[i]) { /*  if socket is alive */
+
+            if (heartbeat){
+                std::cout << "sending heartbeat "<< '\n';
+                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
+                                                                   Socket[i], i, -1);
+            }
+
+            else{
+                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
+                                                                   Socket[i], i, LogRep_RequestID[i]);
+            }
+
+            if (!send_status) {
+                std::cout << "Fail to send "<< '\n';
+                Is_Init[i] = false;
+                Socket_Status[i] = false;
+                close(Socket[i]);
+                Socket[i] = serverStub -> Create_Socket(); // new socket
+            }
+
+        } /*  End: if socket is alive */
+    }  /* End: Send to all peers in parallel */
+}
+
+void Get_Ack(ServerState *serverState, NodeInfo *nodeInfo, int Poll_timeout,
+             ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap,
+             int *LogRep_RequestID){
+
+    int poll_count = serverStub -> Poll(Poll_timeout);
+
+    if (poll_count > 0){
+        serverStub -> Handle_Poll_Leader(serverState, nodeInfo, PeerIdIndexMap, LogRep_RequestID);
+    }
+}
+
+
+
+/* ---------------------------------------------------------------------------*/
 /* To be used in the Candidate_Role function. Candidate send a heartbeat message right
  * after being elected to establish its authority to all nodes */
 void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
@@ -241,15 +245,15 @@ void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub
                         bool *Socket_Status, int *Socket){
 
     bool heartbeat = true;
-    int RequestID = -1;
+    int LogRep_RequestID = -1;
     int poll_timeout = timer -> Poll_timeout();
 
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
-                                 Socket_Status, &RequestID, heartbeat);
+                                 Socket_Status, &LogRep_RequestID, heartbeat);
 
-    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, &RequestID);
+    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, &LogRep_RequestID);
 }
 
 /* -------------------------Functions declaration-----------------------------*/
@@ -259,9 +263,9 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
 void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                   int poll_timeout, std::vector<Peer_Info> *PeerServerInfo,
                   std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                  bool *Socket_Status, int *Socket, int *RequestID);
+                  bool *Socket_Status, int *Socket, int *LogRep_RequestID);
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                     ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
                     std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                    bool *Socket_Status, int *Socket, int *RequestID);
+                    bool *Socket_Status, int *Socket, int *LogRep_RequestID);

@@ -5,7 +5,7 @@
 # command line format: ./server port_server port_client ID num_peers (repeat ID Ip port_server)
 
 #------------user's configuration before running this script---------
-num_peers=4
+num_peers=2
 #------------End: user's configuration------------------
 
 

@@ -44,10 +44,10 @@ public:
 
     /* ----------------------------------Leader helper function ------------------------------------*/
     void Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo , std::map<int,int> *PeerIdIndexMap,
-                            int * RequestID);
+                            int * LogRep_RequestID);
 
     int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                               int fd, int peer_index, int RequestID);
+                               int fd, int peer_index, int LogRep_RequestID);
 
 
     /* -------------------------------------Follower helper function ------------------------------------*/

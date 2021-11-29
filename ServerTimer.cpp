@@ -5,7 +5,7 @@
 
 ServerTimer::ServerTimer() {
 	srand(time(0));
-    election_timeout = std::chrono::duration<double, std::milli>(150 + rand() % 1000);
+    election_timeout = std::chrono::duration<double, std::milli>(150 + rand() % 2000);
 }
 
 void ServerTimer::Start() {
@@ -18,7 +18,7 @@ void ServerTimer::Restart() {
 
 /* poll timeout small compared to election_timeout */
 int ServerTimer::Poll_timeout(){
-	return election_timeout.count() / 4; // Balance between jamming the receiver and preventing election timeout
+	return election_timeout.count() / 3; // Balance between jamming the receiver and preventing election timeout
 }
 
 int ServerTimer::Check_election_timeout() {

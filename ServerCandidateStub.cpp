@@ -38,9 +38,9 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
-    int read_status;
     pollfd pfd;
     int messageType;
+    int nbytes;
 
     for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
         pfd = (*_pfds_server)[i];
@@ -52,9 +52,9 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
             }
 
             else{                                   /* events from established connection */
-                read_status = Read_Message(pfd.fd, buf, max_data_size);
+                nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
-                if (read_status <= 0){   /* error handling for read: remote connection closed or error */
+                if (nbytes <= 0){   /* error handling for read: remote connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;
                 }
@@ -74,9 +74,6 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                     }
                     else if (messageType == VOTE_REQUEST){
                         std::cout << "Candidate received VoteRequest" << '\n';
-                        VoteRequest voteRequest;
-                        voteRequest.Unmarshal(buf);
-                        voteRequest.Print();
                         // do nothing here?
                     }
                     else if (messageType == RESPONSE_APPEND_ENTRY){
@@ -114,11 +111,9 @@ Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,
 
         else {  // vote got rejected
             if (ResponseVote.Get_term() > serverState -> currentTerm){ // we are stale
-                nodeInfo -> role = FOLLOWER;
                 serverState -> currentTerm = ResponseVote.Get_term();
             }
         }
-
         VoteRequest_Completed[peer_index] = true;
     }
 }

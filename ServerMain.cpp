@@ -23,9 +23,9 @@ int main(int argc, char *argv[]) {
     bool Is_Init[nodeInfo.num_peers];
     Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
 
-    int RequestID [nodeInfo.num_peers];
+    int LogRep_RequestID [nodeInfo.num_peers];
     for (int i = 0; i < nodeInfo.num_peers; i++) {
-        RequestID[i] = 0;
+        LogRep_RequestID[i] = 0;
     }
 
     /* Debug purpose only!: make believe for now that this comes from the customer */
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     /* ------------------------------------------------------------------------*/
 
     if (nodeInfo.role == FOLLOWER){
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
     timer.Start();
@@ -47,12 +47,12 @@ int main(int argc, char *argv[]) {
 
         else if (nodeInfo.role == CANDIDATE) {
             Candidate_Role(&serverState, &nodeInfo, &serverStub, &timer, &PeerServerInfo,
-                           &PeerIdIndexMap, Is_Init, Socket_Status, Socket, RequestID);
+                           &PeerIdIndexMap, Is_Init, Socket_Status, Socket, LogRep_RequestID);
         }
 
         else if (nodeInfo.role == LEADER) {
             Leader_Role (&serverState, &nodeInfo, &serverStub, poll_timeout, &PeerServerInfo,
-                         &PeerIdIndexMap, Is_Init, Socket_Status, Socket, RequestID);
+                         &PeerIdIndexMap, Is_Init, Socket_Status, Socket, LogRep_RequestID);
             break;
         }
         else {
@@ -65,19 +65,19 @@ int main(int argc, char *argv[]) {
 void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                  int poll_timeout, std::vector<Peer_Info> *PeerServerInfo,
                  std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                 bool *Socket_Status, int *Socket, int *RequestID){
+                 bool *Socket_Status, int *Socket, int *LogRep_RequestID){
 
     /* to-do: merge this with client interface. Wait for the request to arrive in the request queue
      * for some duration. If no request, break wait conditional variable and set heartbeat = true */
-    std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 2));
     bool heartbeat = true;
 
     Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket,
-                                 Is_Init, Socket_Status, RequestID, heartbeat);
+                                 Is_Init, Socket_Status, LogRep_RequestID, heartbeat);
 
-    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, RequestID);
+    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, LogRep_RequestID);
  }
 
 
@@ -85,7 +85,7 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                     ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
                     std::map<int,int> *PeerIdIndexMap, bool *Is_Init,
-                    bool *Socket_Status, int *Socket, int *RequestID) {
+                    bool *Socket_Status, int *Socket, int *LogRep_RequestID) {
 
     int poll_timeout = timer -> Poll_timeout();
     bool VoteRequest_Completed [ nodeInfo -> num_peers ];
@@ -99,7 +99,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
         Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
         BroadCast_VoteRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
-                              Socket_Status, VoteRequest_Completed, VoteRequest_Sent);
+                              Socket_Status, VoteRequest_Sent);
 
         Get_Vote(serverState, poll_timeout, nodeInfo, serverStub, VoteRequest_Completed,
                  PeerIdIndexMap);
@@ -108,8 +108,8 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
             Send_One_HeartBeat(serverState, nodeInfo, serverStub, timer, PeerServerInfo,
                                PeerIdIndexMap, Is_Init, Socket_Status, Socket);
 
-            for (int i = 0; i < nodeInfo -> num_peers; i++) { // reset RequestID for log replication
-                RequestID[i] = 0;
+            for (int i = 0; i < nodeInfo -> num_peers; i++) {
+                LogRep_RequestID[i] = 0; // reset LogRep_RequestID for log replication
             }
         }
     }

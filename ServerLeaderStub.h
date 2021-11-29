@@ -23,18 +23,18 @@ public:
     ServerLeaderStub() {};
 
     void Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo,
-                                 ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * RequestID);
+                                 ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID);
 
     int Stub_SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                               int fd, int peer_index, int RequestID);
+                               int fd, int peer_index, int LogRep_RequestID);
 
     void FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                 AppendEntryRequest *appendEntryRequest,  int peer_index,
-                                int RequestID);
+                                int LogRep_RequestID);
 
     void Handle_ResponseAppendEntry(char *buf, NodeInfo *nodeInfo,
                                     ServerState *serverState, std::map<int, int> *PeerIdIndexMap,
-                                    int *RequestID, int socket_index);
+                                    int *LogRep_RequestID, int socket_index);
 
     void Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf);
 
