@@ -8,8 +8,6 @@
 #define CANDIDATE 1
 #define LEADER 2
 
-#define CLIENT_CONNECTION 1
-#define SERVER_CONNECTION 2
 
 #define VOTE_REQUEST 1
 #define RESPONSE_VOTE 2
@@ -86,6 +84,7 @@ public:
 
     int Size();
     void Print();
+    void Print_MessageType();
 };
 
 /* -----------------Response Vote Class -----------------*/
@@ -104,6 +103,7 @@ public:
 
     int Size();
     void Print();
+    void Print_MessageType();
 
     /* get private variable function */
     int Get_messageType();
@@ -152,6 +152,7 @@ public:
     int Get_RequestID();
 
     void Print();
+    void Print_MessageType();
 };
 
 /* -----ResponseAppendEntry Class-----*/
@@ -181,6 +182,7 @@ public:
 
 
     void Print();
+    void Print_MessageType();
 };
 
 #endif // #ifndef __MESSAGES_H__

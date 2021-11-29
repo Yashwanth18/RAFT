@@ -2,7 +2,7 @@
 
 
 
-void ServerSocket::Socket_Add_Socket_To_Poll(int new_fd, std::vector<pollfd> *_pfds_server) {
+void ServerSocket::AddSocketToPoll(int new_fd, std::vector<pollfd> *_pfds_server) {
     pollfd new_pfd;
     new_pfd.fd = new_fd;
     new_pfd.events = POLLIN;
@@ -27,7 +27,7 @@ void ServerSocket::Accept_Connection(std::vector<pollfd> *_pfds_server){
     new_fd = accept((*_pfds_server)[0].fd, (struct sockaddr *) &addr, &addr_size);
     if (new_fd < 0) perror ("accept");
 
-    Socket_Add_Socket_To_Poll(new_fd, _pfds_server);
+    AddSocketToPoll(new_fd, _pfds_server);
 }
 
 int ServerSocket::Send_Message(char *buf, int size, int fd){
@@ -51,6 +51,32 @@ int ServerSocket::Send_Message(char *buf, int size, int fd){
     return 1;
 }
 
+/* return 1 if success and 0 if failure */
+int ServerSocket::Read_Message(int fd, char *buf, int size){
+    int bytes_read = 0;
+    int offset = 0;
+    while (size > 0) {
+        try{
+            bytes_read = recv(fd, buf + offset, size, 0);
+            if (bytes_read <= 0) {
+                throw bytes_read;
+            }
+        }
+        catch (int stat){
+            return 0;
+        }
+
+        assert(bytes_read != 0);
+
+        size -= bytes_read;
+        offset += bytes_read;
+        assert(size >= 0);
+    }
+
+    return 1;
+
+}
+
 /* return 0 on failure and 1 on success */
 int ServerSocket::Connect_To(std::string ip, int port, int new_fd){
     struct sockaddr_in addr;
@@ -72,7 +98,7 @@ int ServerSocket::Connect_To(std::string ip, int port, int new_fd){
         return 0;
     }
 
-    fcntl(new_fd, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking */
+    fcntl(new_fd, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking after connection successful*/
     return 1;
 }
 

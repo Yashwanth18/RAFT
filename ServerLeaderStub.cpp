@@ -6,7 +6,7 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
                    std::map<int,int> *PeerIdIndexMap, int * RequestID){
 
     int messageType;
-    int nbytes;
+    int read_status;
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
@@ -22,9 +22,9 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
             }
 
             else{                                   /* events from established connection */
-                nbytes = recv(pfd.fd, buf, max_data_size, 0);
+                read_status = Read_Message(pfd.fd, buf, max_data_size);
 
-                if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
+                if (read_status <= 0){  /* remote connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;
                 }

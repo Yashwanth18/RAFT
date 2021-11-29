@@ -4,7 +4,7 @@
 int ServerListenSocket::Init(int port) {
 	struct sockaddr_in addr;
 
-	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	int fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
 
 	if (fd_ < 0) {
@@ -12,7 +12,7 @@ int ServerListenSocket::Init(int port) {
 		return false;
 	}
 
-	fcntl(fd_, F_SETFL, O_NONBLOCK);   //set socket to non-blocking
+	fcntl(fd_, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking */
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -30,16 +30,3 @@ int ServerListenSocket::Init(int port) {
 	return fd_;
 }
 
-// std::unique_ptr<ServerListenSocket> ServerListenSocket::Accept() {
-// 	int accepted_fd;
-// 	struct sockaddr_in addr;
-// 	unsigned int addr_size = sizeof(addr);
-// 	accepted_fd = accept(fd_, (struct sockaddr *) &addr, &addr_size);
-//
-// 	if (accepted_fd < 0) {
-// 		perror("ERROR: failed to accept connection");
-// 		return nullptr;
-// 	}
-//
-// 	return std::unique_ptr<ServerListenSocket>(new ServerListenSocket(accepted_fd, IsNagleOn()));
-// }

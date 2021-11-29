@@ -11,16 +11,13 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "Socket.h"
+class ServerListenSocket{
 
-class ServerListenSocket: public Socket {
 public:
-	ServerListenSocket() {}
+	ServerListenSocket() = default;
 	~ServerListenSocket() {}
 
-	int Init(int port);		//return the file descriptor for listening
-
-	//std::unique_ptr<ServerListenSocket> Accept();
+	int Init(int port);		// return the file descriptor for listening
 };
 
 

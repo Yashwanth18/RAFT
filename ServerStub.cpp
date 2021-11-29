@@ -3,11 +3,11 @@
 /* Return 1 on success and 0 on failure */
 void ServerStub::Init(NodeInfo * nodeInfo){
     /* Listen for both the clients and the peer servers through one socket */
-    Socket_Add_Socket_To_Poll(ListenSocket.Init(nodeInfo -> server_port), &pfds_server);
+    AddSocketToPoll(ListenSocket.Init(nodeInfo -> server_port), &pfds_server);
 }
 
 void ServerStub::Add_Socket_To_Poll(int new_fd) {
-    Socket_Add_Socket_To_Poll(new_fd, &pfds_server);
+    AddSocketToPoll(new_fd, &pfds_server);
 }
 
 int ServerStub::Poll(int poll_timeout){
@@ -23,9 +23,9 @@ void ServerStub::Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverSta
 
 /* ---------------------------------Candidate helper functions -----------------------------------*/
 void ServerStub::Handle_Poll_Candidate(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
-                                       bool *request_completed, NodeInfo *nodeInfo){
+                                       bool *VoteRequest_Completed, NodeInfo *nodeInfo){
     serverCandidateStub.Stub_Handle_Poll_Candidate(&pfds_server, serverState, PeerIdIndexMap,
-                                                   request_completed, nodeInfo);
+                                                   VoteRequest_Completed, nodeInfo);
 }
 
 int ServerStub::SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, int fd){

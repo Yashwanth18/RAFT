@@ -25,12 +25,12 @@ public:
 
     /* ---------------Candidate helper functions ----------*/
     void Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server, ServerState * serverState,
-                               std::map<int,int> *PeerIdIndexMap, bool *request_completed,
+                               std::map<int,int> *PeerIdIndexMap, bool *VoteRequest_Completed,
                                NodeInfo *nodeInfo);
 
     void Handle_AppendEntryRequest(NodeInfo *nodeInfo, ServerState *serverState, char *buf);
     void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,
-                             bool *Request_completed, std::map<int,int> *PeerIdIndexMap);
+                             bool *VoteRequest_Completed, std::map<int,int> *PeerIdIndexMap);
 
     int Stub_SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, int fd);
     void FillVoteRequest(ServerState * serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest);

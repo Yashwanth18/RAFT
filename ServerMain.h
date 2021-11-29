@@ -96,7 +96,6 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
-
         /*  if we have not heard back from ith peer and socket for ith peer is not initialized */
         if (!Is_Init[i]) {
             // std::cout << "Still trying to connect "<< '\n';
@@ -104,6 +103,7 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
 
+            std::cout << "connect_status: "<< connect_status << '\n';
             if (connect_status) {   /* connection successful */ // problem here !!!
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
@@ -113,6 +113,8 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
                 serverStub -> Add_Socket_To_Poll(Socket[i]);    // problem here !!!
             }
             else {    /* fail connect */
+                Is_Init[i] = false;
+                Socket_Status[i] = false;
                 close (Socket_Status[i]);
                 Socket[i] = serverStub -> Create_Socket();
             }
@@ -169,32 +171,38 @@ void Get_Ack(ServerState *serverState, NodeInfo *nodeInfo, int Poll_timeout,
 
 /* ------------------------Candidate helper function -----------------------*/
 
-void Setup_New_Election(ServerState * serverState, ServerTimer * timer, NodeInfo *nodeInfo, bool * Request_Completed){
+void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
+                        NodeInfo *nodeInfo, bool * VoteRequest_Completed, bool *VoteRequest_Sent){
 
     timer -> Restart(); /* (re)start a new election */
     serverState -> currentTerm ++;
     nodeInfo -> num_votes = 1; // vote for itself
 
     for (int i = 0; i < nodeInfo -> num_peers; i++){
-        Request_Completed[i] = false;
+        VoteRequest_Completed[i] = false;
+        VoteRequest_Sent[i] = false;
     }
 }
 
-void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo, ServerStub * serverStub, int * Socket,
-                           bool * Is_Init, bool * Socket_Status, bool * Request_Completed){
+void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo,
+                           ServerStub * serverStub, int * Socket, bool * Is_Init,
+                           bool * Socket_Status, bool * VoteRequest_Completed, bool *VoteRequest_Sent){
 
     for (int i = 0; i < nodeInfo -> num_peers; i++) { /* Send to all peers in parallel */
 
         /*  if we have not heard back from ith peer and socket for ith peer is still alive */
-        if (!Request_Completed[i] && Socket_Status[i] ) {
+        if (!VoteRequest_Sent[i] && Socket_Status[i] ) {
 
             if (!serverStub -> SendVoteRequest(serverState, nodeInfo, Socket[i])) {
                 // if send fail
                 Is_Init[i] = false;
                 Socket_Status[i] = false;
                 close(Socket[i]);
-                Socket[i] = serverStub->Create_Socket(); // new socket
-            }   // End: if send fail
+                Socket[i] = serverStub -> Create_Socket(); // new socket
+            }
+            else{  // send succeed
+                VoteRequest_Sent[i] = true;
+            }
 
         } /*  End: if we have not heard back from ith peer and socket for ith peer is still alive */
     }  /* End: Send to all peers in parallel */
@@ -203,7 +211,8 @@ void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo, Server
 
 
 void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
-              ServerStub * serverStub, bool *Request_Completed, std::map<int,int> *PeerIdIndexMap){
+              ServerStub * serverStub, bool *VoteRequest_Completed,
+              std::map<int,int> *PeerIdIndexMap){
 
 
     int poll_count = serverStub -> Poll(poll_timeout);
@@ -211,20 +220,21 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
     int majority = nodeInfo -> num_peers / 2;
 
     if (poll_count > 0){
-        serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap, Request_Completed, nodeInfo);
+        serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap,
+                                            VoteRequest_Completed, nodeInfo);
 
         num_votes = nodeInfo -> num_votes;
-        // std:: cout << "num_votes: " <<  num_votes << '\n';
 
-        if ( num_votes > majority ){
+        if (num_votes > majority ){
             nodeInfo -> role = LEADER;
+            std:: cout << "num_votes: " <<  num_votes << '\n';
             std::cout << "I'm the leader!" << '\n';
         }
     }
 }
 
-/* To be used in the Candidate_Role function. Candidate send a heartbeat message right after being elected
- * to establish its authority to all nodes */
+/* To be used in the Candidate_Role function. Candidate send a heartbeat message right
+ * after being elected to establish its authority to all nodes */
 void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                         ServerTimer *timer, std::vector<Peer_Info> *PeerServerInfo,
                         std::map<int,int> *PeerIdIndexMap, bool *Is_Init,

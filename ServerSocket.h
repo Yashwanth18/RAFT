@@ -24,9 +24,9 @@ class ServerSocket{
 public:
     ServerSocket() {};
 
-    /* Accept Connection and Recv*/
+    /* Accept Connection */
     void Accept_Connection(std::vector<pollfd> *_pfds_server);
-    void Socket_Add_Socket_To_Poll(int new_fd, std::vector<pollfd> *_pfds_server);
+    void AddSocketToPoll(int new_fd, std::vector<pollfd> *_pfds_server);
 
     /* Connect */
     int Create_Socket();
@@ -34,6 +34,9 @@ public:
 
     /* Send */
     int Send_Message(char *buf, int size, int fd);
+
+    /* Read */
+    int Read_Message(int fd, char *buf, int size);
 
     int Unmarshal_MessageType(char *buf);
 };

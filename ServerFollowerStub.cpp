@@ -9,11 +9,10 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
     int messageType;
-    int nbytes;
-    pollfd pfd;
+    int read_status;
 
     for(int i = 0; i < _pfds_server -> size(); i++) {   /* looping through file descriptors */
-        pfd = (*_pfds_server)[i];
+        pollfd pfd = (*_pfds_server)[i];
         if (pfd.revents & POLLIN) {            /* got ready-to-read from poll() */
 
             if (i==0){ /* events at the listening socket */
@@ -21,9 +20,9 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
             }
 
             else { /* events from established connection */
-                nbytes = recv(pfd.fd, buf, max_data_size, 0);
+                read_status = Read_Message(pfd.fd, buf, max_data_size); /* to-do: implement proper read all bytes*/
 
-                if (nbytes <= 0){  /* connection closed or error */
+                if (read_status <= 0){  /* connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;     // never delete
                 }
@@ -48,6 +47,8 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                     }
                     else{
                         std::cout << "Follower received undefined message type" << '\n';
+                        std::cout << "read_status: " << read_status << '\n';
+                        std::cout << "messageType: " << messageType << '\n';
                     }
                     timer -> Restart();
                 } /* End got good data */
@@ -127,7 +128,11 @@ int ServerFollowerStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo
     int local_term = serverState -> currentTerm;
     int remote_term = VoteRequest -> Get_term();
 
-    if ( Compare_Log(serverState, nodeInfo, VoteRequest) && serverState -> votedFor == -1){
+    if (remote_term > local_term){
+        serverState -> votedFor = -1;
+    }
+
+    if ( Compare_Log(serverState, VoteRequest) && serverState -> votedFor == -1){
         result = (remote_term > local_term);
     }
 
@@ -140,7 +145,7 @@ int ServerFollowerStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo
 }
 
 /* Comparing the last_term and log length for the candidate node and the follower node */
-bool ServerFollowerStub::Compare_Log(ServerState *serverState, NodeInfo * nodeInfo, VoteRequest * VoteRequest) {
+bool ServerFollowerStub::Compare_Log(ServerState *serverState, VoteRequest * VoteRequest) {
 
     int candidate_last_log_term = VoteRequest -> Get_last_log_term();
     int candidate_last_log_index = VoteRequest -> Get_last_log_index();

@@ -21,7 +21,7 @@
 class ServerFollowerStub: public ServerSocket{
 
 public:
-    ServerFollowerStub() {};
+    ServerFollowerStub() = default;
 
     /* ---------------Follower helper function ----------*/
     void Stub_Handle_Poll_Follower(ServerTimer *Timer, std::vector<pollfd> *_pfds_server, ServerState *serverState,
@@ -37,11 +37,11 @@ public:
     int Send_ResponseAppendEntry(ResponseAppendEntry *ResponseAppendEntry, int fd);
     bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
     void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
-    void Print_Log(ServerState *serverState);
+    static void Print_Log(ServerState *serverState);
 
     /* For Election Module */
     int SendResponseVote(ResponseVote *ResponseVote, int fd);
     int Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest);
-    bool Compare_Log(ServerState *serverState, NodeInfo * nodeInfo,VoteRequest * VoteRequest);
+    static bool Compare_Log(ServerState *serverState, VoteRequest * VoteRequest);
 
 };

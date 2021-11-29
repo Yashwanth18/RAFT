@@ -4,6 +4,20 @@
 #include <arpa/inet.h>
 #include "Messages.h"
 
+void Print_MessageType(int messageType){
+    if (messageType == VOTE_REQUEST){
+        std::cout << "\nmessageType: VoteRequest" << '\n';
+    }
+    else if (messageType == RESPONSE_VOTE){
+        std::cout << "\nmessageType: ResponseVote" << '\n';
+    }
+    else if (messageType == APPEND_ENTRY_REQUEST){
+        std::cout << "\nmessageType: AppendEntryRequest" << '\n';
+    }
+    else if(messageType == RESPONSE_APPEND_ENTRY){
+        std::cout << "\nmessageType: ResponseAppendEntry" << '\n';
+    }
+}
 /*---------------------------------------Leader Election----------------------------------*/
         /*-----------------VoteRequest Class----------------*/
 VoteRequest::VoteRequest()  {
@@ -94,7 +108,7 @@ int VoteRequest::Get_message_type() {
 }
 
 void VoteRequest::Print(){
-    std::cout << "\nmessage type: " << messageType << '\n';
+    ::Print_MessageType(messageType);
     std::cout << "term: " << term << '\n';
     std::cout << "candidateId: " << candidateId << '\n';
     std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
@@ -164,7 +178,7 @@ int ResponseVote::Size() {
 }
 
 void ResponseVote::Print() {
-    std::cout<<"\nmessageType: " << messageType << '\n';
+    ::Print_MessageType(messageType);
     std::cout<<"term: "<< term <<'\n';
     std::cout<<"voteGranted: "<< voteGranted<<'\n';
     std::cout<<"node_id: "<< node_id<<'\n';
@@ -336,7 +350,7 @@ int AppendEntryRequest::Size() {
 }
 
 void AppendEntryRequest::Print(){
-    std::cout << "\nmessageType: " << messageType << '\n';
+    ::Print_MessageType(messageType);
     std::cout << "sender_term : " << sender_term << '\n';
     std::cout << "leaderId : " << leaderId << '\n';
     std::cout << "prevLogTerm : " << prevLogTerm << '\n';
@@ -349,6 +363,7 @@ void AppendEntryRequest::Print(){
     std::cout << "RequestID : " << RequestID << '\n';
     std::cout << "---------------------------" << '\n';
 }
+
 
 /* ----------------------Get private variables --------------------*/
 int AppendEntryRequest::Get_messageType(){
@@ -471,7 +486,7 @@ int ResponseAppendEntry::Get_ResponseID() {
 }
 
 void ResponseAppendEntry::Print(){
-    std::cout << "\nmessageType: " << messageType << '\n';
+    ::Print_MessageType(messageType);
     std::cout << "term : " << term << '\n';
     std::cout << "success : " << success << '\n';
     std::cout << "nodeID : " << nodeID << '\n';

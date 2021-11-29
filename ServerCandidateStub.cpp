@@ -33,12 +33,12 @@ void ServerCandidateStub::FillVoteRequest(ServerState * serverState, NodeInfo * 
 void ServerCandidateStub::
 Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                            ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
-                           bool *Request_completed, NodeInfo *nodeInfo){
+                           bool *VoteRequest_Completed, NodeInfo *nodeInfo){
 
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
-    int nbytes;
+    int read_status;
     pollfd pfd;
     int messageType;
 
@@ -52,9 +52,9 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
             }
 
             else{                                   /* events from established connection */
-                nbytes = recv( pfd.fd, buf, max_data_size, 0);
+                read_status = Read_Message(pfd.fd, buf, max_data_size);
 
-                if (nbytes <= 0){   /* error handling for recv: remote connection closed or error */
+                if (read_status <= 0){   /* error handling for read: remote connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;
                 }
@@ -70,10 +70,13 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
 
                     else if (messageType == RESPONSE_VOTE) {     // main functionality
                         std::cout << "Candidate received ResponseVote" << '\n';
-                        Handle_ResponseVote(nodeInfo, serverState, buf, Request_completed, PeerIdIndexMap);
+                        Handle_ResponseVote(nodeInfo, serverState, buf, VoteRequest_Completed, PeerIdIndexMap);
                     }
                     else if (messageType == VOTE_REQUEST){
                         std::cout << "Candidate received VoteRequest" << '\n';
+                        VoteRequest voteRequest;
+                        voteRequest.Unmarshal(buf);
+                        voteRequest.Print();
                         // do nothing here?
                     }
                     else if (messageType == RESPONSE_APPEND_ENTRY){
@@ -92,7 +95,7 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
 
 void ServerCandidateStub::
 Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,
-                    bool *Request_completed, std::map<int,int> *PeerIdIndexMap){
+                    bool *VoteRequest_Completed, std::map<int,int> *PeerIdIndexMap){
 
     ResponseVote ResponseVote;
     int peer_index;
@@ -103,7 +106,7 @@ Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,
     peer_index = (*PeerIdIndexMap)[ResponseVote.Get_nodeID()];
 
     // in case we get multiple response for the same request
-    if (!Request_completed[peer_index]){
+    if (!VoteRequest_Completed[peer_index]){
 
         if (ResponseVote.Get_voteGranted()) { // vote granted
             nodeInfo -> num_votes ++;
@@ -116,7 +119,7 @@ Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,
             }
         }
 
-        Request_completed[peer_index] = true;
+        VoteRequest_Completed[peer_index] = true;
     }
 }
 

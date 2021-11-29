@@ -88,18 +88,20 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
                     bool *Socket_Status, int *Socket, int *RequestID) {
 
     int poll_timeout = timer -> Poll_timeout();
-    bool Request_Completed [ nodeInfo -> num_peers ];
+    bool VoteRequest_Completed [ nodeInfo -> num_peers ];
+    bool VoteRequest_Sent [ nodeInfo -> num_peers ];
 
-    Setup_New_Election(serverState, timer, nodeInfo, Request_Completed);
+    // reset timer, increment term number, reset variables
+    Setup_New_Election(serverState, timer, nodeInfo, VoteRequest_Completed, VoteRequest_Sent);
 
     while (!timer -> Check_election_timeout() && nodeInfo -> role == CANDIDATE) {
 
         Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);
 
         BroadCast_VoteRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
-                              Socket_Status, Request_Completed);
+                              Socket_Status, VoteRequest_Completed, VoteRequest_Sent);
 
-        Get_Vote(serverState, poll_timeout, nodeInfo, serverStub, Request_Completed,
+        Get_Vote(serverState, poll_timeout, nodeInfo, serverStub, VoteRequest_Completed,
                  PeerIdIndexMap);
 
         if (nodeInfo -> role == LEADER) {
@@ -121,22 +123,22 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState,
     int poll_count;
     int poll_timeout = timer -> Poll_timeout();
 
-//    poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
-//    if (poll_count > 0) {
-//        serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+    poll_count = serverStub -> Poll(poll_timeout);
+    if (poll_count > 0) {
+        serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+    }
+
+//    if ( timer -> Check_election_timeout() ) {
+//        nodeInfo -> role = CANDIDATE;
+//        std::cout << "Timeout: I'm the candidate now!" << '\n';
 //    }
-
-    if ( timer -> Check_election_timeout() ) {
-        nodeInfo -> role = CANDIDATE;
-        std::cout << "Timeout: I'm the candidate now!" << '\n';
-    }
-
-    else {
-        poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
-        if (poll_count > 0) {
-            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
-        }
-    }
+//
+//    else {
+//        poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
+//        if (poll_count > 0) {
+//            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+//        }
+//    }
 
 }
 
