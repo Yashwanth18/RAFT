@@ -26,13 +26,14 @@ public:
 
     void Init(int port);
     void Add_Socket_To_Poll(int new_fd);
-
-    int Poll(int Poll_timeout);  /* Poll_timeout is in millisecond; */
-    void Handle_Follower_Poll(ServerState *serverState, ClientTimer * timer, NodeInfo *nodeInfo);
     void Accept_Connection();
+    int Poll(int Poll_timeout);  /* Poll_timeout is in millisecond; */
 
-    bool Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, RequestVote *requestVote);
-    bool Compare_Log(ServerState *serverState, NodeInfo * nodeInfo, RequestVote * requestVote); /* to-do: to be implemented */
+    void Handle_Follower_Poll(ServerState * serverState, ClientTimer * timer, NodeInfo *nodeInfo);
+    int Send_ResponseAppendEntry(ResponseAppendEntry *ResponseAppendEntry, int fd);
 
-    int Send_voteResponse(VoteResponse *voteResponse, int fd);
+    bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
+    void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
+
+    void Print_Log(ServerState * serverState);
 };

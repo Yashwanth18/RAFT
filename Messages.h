@@ -8,11 +8,14 @@
 #define CANDIDATE 1
 #define LEADER 2
 
+#define CLIENT_CONNECTION 1
+#define SERVER_CONNECTION 2
 
 #define VOTE_REQUEST 1
-#define VOTE_RESPONSE 2
-#define APPEND_ENTRIES_REQUEST 3
-#define APPEND_ENTRIES_RESPONSE 4
+#define RESPONSE_VOTE 2
+#define APPEND_ENTRY_REQUEST 3
+#define RESPONSE_APPEND_ENTRY 4
+#define HEARTBEAT 0
 
 
 struct Peer_Info{
@@ -52,17 +55,12 @@ struct NodeInfo{
     int role;
     int server_port;
     int client_port;
-
-    /* for leader election */
     int num_votes;
 };
+/*-----------------------------------Leader Election----------------------------------*/
 
-
-
-
-
-/* -----------------Class for Request Vote -----------------*/
-class RequestVote {
+/* ----------------Request Vote Class-----------------*/
+class VoteRequest {
 private:
     int messageType;
     int term;
@@ -71,7 +69,7 @@ private:
     int lastLogTerm;
 
 public:
-    RequestVote();
+    VoteRequest();
     void Set(int _messageType, int _term, int _candidateId,
              int _lastLogIndex, int _lastLogTerm);
 
@@ -90,16 +88,16 @@ public:
     void Print();
 };
 
-/* -----------------Class for Response Vote -----------------*/
-class VoteResponse{
+/* -----------------Response Vote Class -----------------*/
+class ResponseVote{
 private:
     int messageType;
     int term;
-    bool voteGranted;
+    int voteGranted;
     int node_id;
 public:
-    VoteResponse();
-    void Set(int _messageType, int _term, bool _voteGranted, int _node_id);
+    ResponseVote();
+    void Set(int _messageType, int _term, int _voteGranted, int _node_id);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -109,13 +107,15 @@ public:
 
     /* get private variable function */
     int Get_messageType();
-    bool Get_voteGranted();
-    int Get_node_id();
+    int Get_voteGranted();
+    int Get_nodeID();
     int Get_term();
-    
+
 };
 
-/*-----------Log replication------------------*/
+/*-----------------------------------Log replication----------------------------------*/
+
+/* -----AppendEntryRequest Class-----*/
 class AppendEntryRequest{
 private:
     int messageType;
@@ -137,14 +137,14 @@ public:
              LogEntry * _logEntry, int _leaderCommit, int _RequestID);
 
     void Marshal(char *buffer);
-    void UnMarshal(char * buffer);
+    void Unmarshal(char * buffer);
 
     int Size();
 
     /* Get private variables */
     int Get_messageType();
-    int Get_sender_term();
-    int Get_leaderId();
+    int Get_term();
+    int Get_nodeID();
     int Get_prevLogTerm();
     int  Get_prevLogIndex();
     LogEntry Get_LogEntry();
@@ -154,7 +154,8 @@ public:
     void Print();
 };
 
-class AppendEntryResponse{
+/* -----ResponseAppendEntry Class-----*/
+class ResponseAppendEntry{
 private:
     int messageType;
     int term;     // currentTerm of the follower, for leader to update itself
@@ -163,11 +164,11 @@ private:
     int ResponseID;
 
 public:
-    AppendEntryResponse();
+    ResponseAppendEntry();
     void Set(int _messageType, int _term, int _success, int _nodeID, int _RequestID);
 
     void Marshal(char *buffer);
-    void UnMarshal(char * buffer);
+    void Unmarshal(char * buffer);
 
     int Size();
 
@@ -182,6 +183,4 @@ public:
     void Print();
 };
 
-
 #endif // #ifndef __MESSAGES_H__
-
