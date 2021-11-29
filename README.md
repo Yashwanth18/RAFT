@@ -11,3 +11,5 @@ To Do:
 > Case where follower fails
 * Log replication 
 > For ease of debuggin and development purpose, assume the client program takes the role of a follower node. 
+
+Documentation for all the functions are present in the header files and not in cpp files.
