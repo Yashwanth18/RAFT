@@ -81,6 +81,10 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServe
             std::string IP = argv[3*i + 3];
             int server_port = atoi(argv[3*i + 4]);
 
+            std::cout << "unique_id: " << unique_id << std::endl;
+            std::cout << "IP: " << IP << std::endl;
+            std::cout << "server_port: " << server_port << std::endl;
+
             Peer_Info peer_server_info {unique_id, IP, server_port};
             PeerServerInfo -> push_back(peer_server_info);
             (*PeerIdIndexMap)[unique_id] = i-1;
@@ -98,12 +102,14 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
     for (int i = 0; i < nodeInfo -> num_peers; i++) {       /* iterator through all peers */
 
         if (!Is_Init[i]) {
+            std::cout << "Trying to Connect"<< '\n';
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
 
+
             if (connect_status) {   /* connection successful */
                 // problem here !!!
-
+                std::cout << "Connection successful"<< '\n';
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
                 serverStub -> Set_Pfd(Socket[i], i);

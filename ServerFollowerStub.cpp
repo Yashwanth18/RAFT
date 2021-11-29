@@ -270,7 +270,9 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
 
 void ServerFollowerStub::Print_Log(ServerState *serverState){
     LogEntry logEntry;
-    for (int i = 0; i < serverState -> smr_log.size(); i++){
+    int log_size = serverState -> smr_log.size();
+
+    for (int i = 0; i < log_size; i++){
         logEntry = serverState -> smr_log.at(i);
 
         std::cout << "-----Log entry number: "<< i << "-----" << '\n';

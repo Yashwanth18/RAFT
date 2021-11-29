@@ -92,8 +92,8 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
     while (nodeInfo -> role == CANDIDATE) {
 
         if (timer -> Check_election_timeout()){
-            std::cout << "Candidate timeout: Candidate Resigning to be a follower "<< '\n';
-            nodeInfo -> role = FOLLOWER;     // to-do: for when follower can time out
+            // std::cout << "Candidate timeout: Candidate Resigning to be a follower "<< '\n';
+            // nodeInfo -> role = FOLLOWER;     // to-do: for when follower can time out
             break;
         }
 
@@ -124,25 +124,23 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState, ServerTimer
     int poll_count;
     int poll_timeout = timer -> Poll_timeout();
 
-//    poll_count = serverStub -> Poll(poll_timeout);
-//    if (poll_count > 0) {
-//        serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
-//    }
+   poll_count = serverStub -> Poll(poll_timeout);
+   if (poll_count > 0) {
+       serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+   }
 
-    if ( timer -> Check_election_timeout() ) {
-        nodeInfo -> role = CANDIDATE;
-        Init_Socket(serverStub, nodeInfo -> num_peers, Socket, Is_Init, Socket_Status);
-
-        std::cout << "Timeout: I'm the candidate now!" << '\n';
-    }
-
-    else {
-        poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
-        if (poll_count > 0) {
-            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
-        }
-    }
+    // if ( timer -> Check_election_timeout() ) {
+    //     nodeInfo -> role = CANDIDATE;
+    //     Init_Socket(serverStub, nodeInfo -> num_peers, Socket, Is_Init, Socket_Status);
+    //
+    //     std::cout << "Timeout: I'm the candidate now!" << '\n';
+    // }
+    //
+    // else {
+    //     poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
+    //     if (poll_count > 0) {
+    //         serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+    //     }
+    // }
 
 }
-
-

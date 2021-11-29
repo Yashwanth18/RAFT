@@ -6,6 +6,7 @@
 
 #------------user's configuration before running this script---------
 num_peers=2
+local=0     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 
@@ -37,33 +38,43 @@ if [ $num_peers -eq 2 ]; then      # number of servers = 3
     ID_Peer2=$3
     server_role=$4
 
-    echo Number of peer servers equal to $num_peers
-    echo ***********------------*********************
+    if [ $local -eq 0 ]; then
+      ip_peer1="${IP_root}${ID_Peer1}"
+      ip_peer2="${IP_root}${ID_Peer2}"
+    elif [ $local -eq 1 ]; then
+      ip_peer1=IP_local
+      ip_peer2=IP_local
+    fi
 
-    ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
-              $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
-              $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \
-              $server_role
-
-elif [ $num_peers -eq 4 ]; then       # number of servers = 5
-    ID_Peer1=$2
-    ID_Peer2=$3
-    ID_Peer3=$4
-    ID_Peer4=$5
-    server_role=$6
+    echo $ip_peer1
+    echo $ip_peer2
 
     echo Number of peer servers equal to $num_peers
     echo ***********------------*********************
 
     ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
-              $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
-              $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \
-              $ID_Peer3 $IP_local "${port_server_root}${ID_Peer3}" \
-              $ID_Peer4 $IP_local "${port_server_root}${ID_Peer4}" \
+              $ID_Peer1 $ip_peer1 "${port_server_root}${ID_Peer1}" \
+              $ID_Peer2 $ip_peer2 "${port_server_root}${ID_Peer2}" \
               $server_role
 
-
-else
-    echo undefined option for number of peer servers
+# elif [ $num_peers -eq 4 ]; then       # number of servers = 5
+#     ID_Peer1=$2
+#     ID_Peer2=$3
+#     ID_Peer3=$4
+#     ID_Peer4=$5
+#     server_role=$6
+#
+#     echo Number of peer servers equal to $num_peers
+#     echo ***********------------*********************
+#
+#     ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
+#               $ID_Peer1 $IP_local "${port_server_root}${ID_Peer1}" \
+#               $ID_Peer2 $IP_local "${port_server_root}${ID_Peer2}" \
+#               $ID_Peer3 $IP_local "${port_server_root}${ID_Peer3}" \
+#               $ID_Peer4 $IP_local "${port_server_root}${ID_Peer4}" \
+#               $server_role
+#
+#
+# else
+#     echo undefined option for number of peer servers
 fi
-
