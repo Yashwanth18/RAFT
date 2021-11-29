@@ -101,11 +101,12 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
             connect_status = serverStub -> Connect_To( (*PeerServerInfo) [i].IP,
                                                        (*PeerServerInfo) [i].port, Socket[i]);
 
-            if (connect_status) {   /* connection successful */ // problem here !!!
+            if (connect_status) {   /* connection successful */
+                // problem here !!!
+
                 Is_Init[i] = true;
                 Socket_Status[i] = true;
-
-                serverStub -> Add_Socket_To_Poll(Socket[i]);    // problem here !!!
+                serverStub -> Set_Pfd(Socket[i], i);
             }
             else {    /* fail connect */
                 Is_Init[i] = false;
@@ -198,14 +199,13 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
         if (Socket_Status[i]) { /*  if socket is alive */
 
             if (heartbeat){
-                std::cout << "sending heartbeat "<< '\n';
-                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
-                                                                   Socket[i], i, -1);
+                send_status = serverStub ->
+                        SendAppendEntryRequest(serverState, nodeInfo, Socket[i], i, -1);
             }
 
             else{
-                send_status = serverStub -> SendAppendEntryRequest(serverState, nodeInfo,
-                                                                   Socket[i], i, LogRep_RequestID[i]);
+                send_status = serverStub ->
+                        SendAppendEntryRequest(serverState, nodeInfo, Socket[i], i, LogRep_RequestID[i]);
             }
 
             if (!send_status) {
@@ -254,8 +254,8 @@ void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub
 }
 
 /* -------------------------Functions declaration-----------------------------*/
-void Follower_Role(ServerStub *serverStub, ServerState *serverState,
-                   ServerTimer *timer, NodeInfo *nodeInfo);
+void Follower_Role(ServerStub *serverStub, ServerState *serverState, ServerTimer *timer,
+                   NodeInfo *nodeInfo, int *Socket, bool *Is_Init, bool *Socket_Status);
 
 void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serverStub,
                   int poll_timeout, std::vector<Peer_Info> *PeerServerInfo,

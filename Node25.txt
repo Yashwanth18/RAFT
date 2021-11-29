@@ -1,3 +1,870 @@
 Number of peer servers equal to 2
-Initialize server role to be a Follower
 ***********------------*********************
+
+Follower received VoteRequest
+term: 2
+candidateId: 26
+lastLogIndex: 1
+lastLogTerm: 1
+--------------------------
+
+Received Heartbeat message 
+sender_term : 2
+leaderId : 26
+
+Received Heartbeat message 
+sender_term : 2
+leaderId : 26
+
+Received Heartbeat message 
+sender_term : 2
+leaderId : 26
+
+Received Heartbeat message 
+sender_term : 2
+leaderId : 26
+
+Received Heartbeat message 
+sender_term : 2
+leaderId : 26
+
+Follower received VoteRequest
+term: 1
+candidateId: 24
+lastLogIndex: 1
+lastLogTerm: 1
+--------------------------
+Timeout: I'm the candidate now!
+pfds_server size: 9
+pfds_server size: 10
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 12
+pfds_server size: 13
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 14
+pfds_server size: 15
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 17
+pfds_server size: 18
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 19
+pfds_server size: 20
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 22
+pfds_server size: 23
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 25
+pfds_server size: 26
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 28
+pfds_server size: 29
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 30
+pfds_server size: 31
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 33
+pfds_server size: 34
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 35
+pfds_server size: 36
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 38
+pfds_server size: 39
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 41
+pfds_server size: 42
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 44
+pfds_server size: 45
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 46
+pfds_server size: 47
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 49
+pfds_server size: 50
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 51
+pfds_server size: 52
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 54
+pfds_server size: 55
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 57
+pfds_server size: 58
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 60
+pfds_server size: 61
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 62
+pfds_server size: 63
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 65
+pfds_server size: 66
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 67
+pfds_server size: 68
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 70
+pfds_server size: 71
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 73
+pfds_server size: 74
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 76
+pfds_server size: 77
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 78
+pfds_server size: 79
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 81
+pfds_server size: 82
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 83
+pfds_server size: 84
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 86
+pfds_server size: 87
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 89
+pfds_server size: 90
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 92
+pfds_server size: 93
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 94
+pfds_server size: 95
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 97
+pfds_server size: 98
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 99
+pfds_server size: 100
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 102
+pfds_server size: 103
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 105
+pfds_server size: 106
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 108
+pfds_server size: 109
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 110
+pfds_server size: 111
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 113
+pfds_server size: 114
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 115
+pfds_server size: 116
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 118
+pfds_server size: 119
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 121
+pfds_server size: 122
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 124
+pfds_server size: 125
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 126
+pfds_server size: 127
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 129
+pfds_server size: 130
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 131
+pfds_server size: 132
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 134
+pfds_server size: 135
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 137
+pfds_server size: 138
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 140
+pfds_server size: 141
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 142
+pfds_server size: 143
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 145
+pfds_server size: 146
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 147
+pfds_server size: 148
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 150
+pfds_server size: 151
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 153
+pfds_server size: 154
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 156
+pfds_server size: 157
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 158
+pfds_server size: 159
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 161
+pfds_server size: 162
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 163
+pfds_server size: 164
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 166
+pfds_server size: 167
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 169
+pfds_server size: 170
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 172
+pfds_server size: 173
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 174
+pfds_server size: 175
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 177
+pfds_server size: 178
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 179
+pfds_server size: 180
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 182
+pfds_server size: 183
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 185
+pfds_server size: 186
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 188
+pfds_server size: 189
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 190
+pfds_server size: 191
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 193
+pfds_server size: 194
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 195
+pfds_server size: 196
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 198
+pfds_server size: 199
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 201
+pfds_server size: 202
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 204
+pfds_server size: 205
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 206
+pfds_server size: 207
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 209
+pfds_server size: 210
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 211
+pfds_server size: 212
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 214
+pfds_server size: 215
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 217
+pfds_server size: 218
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 220
+pfds_server size: 221
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 222
+pfds_server size: 223
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 225
+pfds_server size: 226
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 227
+pfds_server size: 228
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 230
+pfds_server size: 231
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 233
+pfds_server size: 234
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 236
+pfds_server size: 237
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 238
+pfds_server size: 239
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 241
+pfds_server size: 242
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 243
+pfds_server size: 244
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 246
+pfds_server size: 247
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 249
+pfds_server size: 250
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 252
+pfds_server size: 253
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 254
+pfds_server size: 255
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 257
+pfds_server size: 258
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 259
+pfds_server size: 260
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 262
+pfds_server size: 263
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 265
+pfds_server size: 266
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 268
+pfds_server size: 269
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 270
+pfds_server size: 271
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 273
+pfds_server size: 274
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 275
+pfds_server size: 276
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 278
+pfds_server size: 279
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 281
+pfds_server size: 282
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 284
+pfds_server size: 285
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 286
+pfds_server size: 287
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 289
+pfds_server size: 290
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 291
+pfds_server size: 292
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 294
+pfds_server size: 295
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 297
+pfds_server size: 298
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 300
+pfds_server size: 301
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 302
+pfds_server size: 303
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 305
+pfds_server size: 306
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 307
+pfds_server size: 308
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 310
+pfds_server size: 311
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 313
+pfds_server size: 314
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 316
+pfds_server size: 317
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 318
+pfds_server size: 319
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 321
+pfds_server size: 322
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 323
+pfds_server size: 324
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 326
+pfds_server size: 327
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 329
+pfds_server size: 330
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 332
+pfds_server size: 333
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 334
+pfds_server size: 335
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 337
+pfds_server size: 338
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 339
+pfds_server size: 340
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 342
+pfds_server size: 343
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 345
+pfds_server size: 346
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 348
+pfds_server size: 349
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 350
+pfds_server size: 351
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 353
+pfds_server size: 354
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 355
+pfds_server size: 356
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 358
+pfds_server size: 359
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 361
+pfds_server size: 362
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 364
+pfds_server size: 365
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 366
+pfds_server size: 367
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 369
+pfds_server size: 370
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 371
+pfds_server size: 372
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 374
+pfds_server size: 375
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 377
+pfds_server size: 378
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 380
+pfds_server size: 381
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 382
+pfds_server size: 383
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 385
+pfds_server size: 386
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 387
+pfds_server size: 388
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 390
+pfds_server size: 391
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 393
+pfds_server size: 394
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 396
+pfds_server size: 397
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 398
+pfds_server size: 399
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 401
+pfds_server size: 402
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 403
+pfds_server size: 404
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 406
+pfds_server size: 407
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 409
+pfds_server size: 410
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 412
+pfds_server size: 413
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 414
+pfds_server size: 415
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 417
+pfds_server size: 418
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 419
+pfds_server size: 420
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size: 422
+pfds_server size: 423
+
+Candidate received VoteRequest
+Candidate timeout: Candidate Resigning to be a follower 
+Timeout: I'm the candidate now!
+pfds_server size:

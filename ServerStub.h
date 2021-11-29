@@ -33,7 +33,7 @@ public:
     ServerStub() {};
     void Init(NodeInfo * nodeInfo);
     int Poll(int poll_timeout);          /* Poll_timeout is in millisecond */
-    void Add_Socket_To_Poll(int new_fd);
+    void Set_Pfd(int new_fd, int peer_index);
 
 
     /* ---------------Candidate helper functions ----------*/

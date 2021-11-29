@@ -4,11 +4,22 @@
 void ServerStub::Init(NodeInfo * nodeInfo){
     /* Listen for both the clients and the peer servers through one socket */
     AddSocketToPoll(ListenSocket.Init(nodeInfo -> server_port), &pfds_server);
+
+    for (int i = 0; i < nodeInfo -> num_peers; i++){
+        AddSocketToPoll(-1, &pfds_server);
+    }
 }
 
-void ServerStub::Add_Socket_To_Poll(int new_fd) {
-    AddSocketToPoll(new_fd, &pfds_server);
-    std::cout << "pfds_server size: " << pfds_server.size() << '\n';
+void ServerStub:: Set_Pfd(int new_fd, int peer_index){
+
+    pollfd new_pfd;
+    new_pfd.fd = new_fd;
+    new_pfd.events = POLLIN;
+
+    if (peer_index + 1 < pfds_server.size()){
+        perror("Set_Pfd");
+    }
+    pfds_server[peer_index + 1] = new_pfd;
 }
 
 int ServerStub::Poll(int poll_timeout){
