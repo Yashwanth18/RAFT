@@ -5,8 +5,6 @@
 #include <sys/ioctl.h>
 #include <iomanip>
 #include <map>
-#include <chrono>
-#include <thread>
 
 #include "Messages.h"
 #include "ServerTimer.h"
@@ -71,9 +69,9 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
             std::string IP = argv[3*i + 3];
             int server_port = atoi(argv[3*i + 4]);
 
-            std::cout << "unique_id: " << unique_id << std::endl;
-            std::cout << "IP: " << IP << std::endl;
-            std::cout << "server_port: " << server_port << std::endl;
+//            std::cout << "unique_id: " << unique_id << std::endl;
+//            std::cout << "IP: " << IP << std::endl;
+//            std::cout << "server_port: " << server_port << std::endl;
 
             Peer_Info peer_server_info {unique_id, IP, server_port};
             PeerServerInfo -> push_back(peer_server_info);

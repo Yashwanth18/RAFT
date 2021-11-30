@@ -42,8 +42,6 @@ if [ $num_peers -eq 1 ]; then
         ip_peer1=$IP_local
       fi
 
-      echo $ip_peer1
-
       echo Number of peer servers equal to $num_peers
       echo ***********------------*********************
 
@@ -64,8 +62,8 @@ elif [ $num_peers -eq 2 ]; then      # number of servers = 3
       ip_peer2=$IP_local
     fi
 
-    echo $ip_peer1
-    echo $ip_peer2
+#    echo $ip_peer1
+#    echo $ip_peer2
 
     echo Number of peer servers equal to $num_peers
     echo ***********------------*********************

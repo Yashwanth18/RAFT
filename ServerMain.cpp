@@ -1,6 +1,9 @@
+#include <thread>
+
 #include "ServerMain.h"
 #include "ServerSocket.h"
 #include "ServerAdminStub.h"
+#include "ServerThread.h"
 
 
 int main(int argc, char *argv[]) {
@@ -19,6 +22,9 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<ServerSocket> new_socket;
     bool Socket_Status[nodeInfo.num_peers];
 
+    std::vector<std::thread> thread_vector;
+    Election election;
+
     timer.Start();
 
     if (nodeInfo.role == FOLLOWER) {
@@ -30,6 +36,11 @@ int main(int argc, char *argv[]) {
 
         while ( (new_socket = serverSocket.Accept()) ) {
             std::cout << "Accepted Connection " << '\n';
+
+            std::thread follower_thread(&Election::FollowerThread, &election,
+                                        std::move(new_socket), 7);
+
+            thread_vector.push_back(std::move(follower_thread));    // why? Question
         }
         return 0;
 
@@ -38,6 +49,7 @@ int main(int argc, char *argv[]) {
     else if (nodeInfo.role == CANDIDATE) {
         ServerAdminStub admin_stub[nodeInfo.num_peers];
         Socket_Status[0] = admin_stub[0].Init(PeerServerInfo[0].IP, PeerServerInfo[0].port);
+        std::cout << "Socket_Status: " << Socket_Status[0] << '\n';
     }
 
     else if (nodeInfo.role == LEADER) {

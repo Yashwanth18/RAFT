@@ -10,5 +10,5 @@ public:
 	ServerAdminSocket() {}
 	~ServerAdminSocket() {}
 
-	int Init(std::string ip, int port);
+	bool Init(std::string ip, int port);
 };

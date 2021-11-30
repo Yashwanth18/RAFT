@@ -8,18 +8,18 @@
 #include "ServerAdminSocket.h"
 
 /* return 0 if failure, and 1 if success */
-int ServerAdminSocket::Init(std::string ip, int port) {
+bool ServerAdminSocket::Init(std::string ip, int port) {
 	int status;
 
 	if (is_initialized_) {
-		return 1;
+		return true;
 	}
 
 	struct sockaddr_in addr;
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd_ < 0) {
 		perror("ERROR: failed to create a socket");
-		return 0;
+		return false;
 	}
 
 	memset(&addr, '\0', sizeof(addr));
@@ -35,10 +35,10 @@ int ServerAdminSocket::Init(std::string ip, int port) {
 		}
 	}
 	catch(int stat){
-		return 0;
+		return false;
 	}
 
 	is_initialized_ = true;
-	return 1;
+	return true;
 
 }
