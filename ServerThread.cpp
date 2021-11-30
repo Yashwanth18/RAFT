@@ -14,11 +14,9 @@ void Election::FollowerThread(std::unique_ptr<ServerSocket> socket) {
     char buf[max_data_size];
     int messageType;
 
-    std::cout << "max_data_size: " << max_data_size << '\n';
-    socket -> Recv(buf, max_data_size, 0);
-//    messageType = socket -> Unmarshal_MessageType(buf);
-//
-//    std::cout << "messageType: " << messageType << '\n';
+    messageType = serverFollowerStub.Get_MessageType(buf, max_data_size);
+    std::cout << "messageType: " << messageType << '\n';
+
 }
 
 

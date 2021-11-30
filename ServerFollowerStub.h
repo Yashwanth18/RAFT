@@ -15,6 +15,8 @@ public:
 	ServerFollowerStub();
 	void Init(std::unique_ptr<ServerSocket> socket);
 
+    int Get_MessageType(char *buf, int max_data_size);
+
     /* Election */
     int Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf);
     int SendResponseVote(ResponseVote *ResponseVote);

@@ -43,6 +43,10 @@ bool ServerSocket::Init(int port) {
 	return true;
 }
 
+int ServerSocket::Get_fd() {
+    return fd_;
+}
+
 std::unique_ptr<ServerSocket> ServerSocket::Accept() {
 	int accepted_fd;
 	struct sockaddr_in addr;
@@ -55,3 +59,4 @@ std::unique_ptr<ServerSocket> ServerSocket::Accept() {
 
 	return std::unique_ptr<ServerSocket>(new ServerSocket(accepted_fd, IsNagleOn()));
 }
+

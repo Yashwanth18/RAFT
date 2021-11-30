@@ -1,7 +1,6 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#include <string>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <assert.h>
@@ -9,6 +8,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <cstring>
+#include <iostream>
 
 #define NAGLE_ON	0
 #define NAGLE_OFF	1

@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
         while (true) {
             new_socket = serverSocket.Accept();
-            std::cout << "Accepted Connection " << '\n';
+            std::cout << "Accepted Connection " << new_socket -> Get_fd() << '\n';
 
             std::thread follower_thread(&Election::FollowerThread, &election,
                                         std::move(new_socket));

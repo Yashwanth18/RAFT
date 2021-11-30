@@ -7,7 +7,12 @@ void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
 	this->socket = std::move(socket);
 }
 
-
+int ServerFollowerStub::Get_MessageType(char *buf, int max_data_size) {
+    int messageType;
+    socket -> Recv(buf, max_data_size, 0);
+    messageType = socket -> Unmarshal_MessageType(buf);
+    return messageType;
+}
 
 int ServerFollowerStub::
 Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {

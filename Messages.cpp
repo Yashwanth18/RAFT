@@ -1,7 +1,7 @@
 #include <cstring>
+#include <arpa/inet.h>
 #include <iostream>
 
-#include <arpa/inet.h>
 #include "Messages.h"
 
 void Print_MessageType(int messageType){
