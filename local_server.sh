@@ -7,7 +7,7 @@
 
 #------------user's configuration before running this script---------
 num_peers=2
-local=0     # 0: run on VDI, 1: run on local machines
+local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 

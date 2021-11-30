@@ -16,13 +16,12 @@
 class Socket {
 protected:
 	bool is_initialized_;
+    int fd_;
 
 private:
 	int nagle_;
-
 public:
-	int fd_;
-	
+
 	Socket();
 	virtual ~Socket();
 
