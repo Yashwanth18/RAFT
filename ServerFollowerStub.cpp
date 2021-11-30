@@ -1,139 +1,50 @@
 #include "ServerFollowerStub.h"
+#include <iostream>
 
-/* functionalities include: VoteRequestRPC & AppendEntryRPC */
-void ServerFollowerStub::
-Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
-                          ServerState *serverState, NodeInfo *nodeInfo,
-                          int *Socket, bool *Is_Init, bool *Socket_Status){
+ServerFollowerStub::ServerFollowerStub() {}
 
-    int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
-                        sizeof(VoteRequest) + sizeof(ResponseVote);
-    char buf[max_data_size];
-    int messageType;
-    int nbytes;
-    int num_sockets = _pfds_server -> size();
-
-    for(int i = 0; i < num_sockets; i++) {   /* looping through file descriptors */
-        pollfd pfd = (*_pfds_server)[i];
-        if (pfd.revents & POLLIN) {            /* got ready-to-read from poll() */
-
-            if (i==0){ /* events at the listening socket */
-                Accept_Connection(_pfds_server);
-            }
-
-            else { /* events from established connection */
-                nbytes = recv( pfd.fd, buf, max_data_size, 0); /* to-do: read all bytes? */
-
-                if (nbytes <= 0){  /* connection closed or error */
-                    close(pfd.fd);
-                    (*_pfds_server)[i].fd = -1;     // never delete
-
-                    Is_Init[i+1] = false;
-                    Socket_Status[i+1] = false;
-                    Socket[i+1] = Create_Socket(); // new socket
-                    
-                }
-
-                else{   /* got good data */
-                    messageType = Unmarshal_MessageType(buf);
-
-                    if (messageType == APPEND_ENTRY_REQUEST){   // main functionality
-                        Handle_AppendEntryRequest(serverState, nodeInfo, buf, pfd.fd);
-                    }
-                    else if (messageType == VOTE_REQUEST){      // main functionality
-                        std::cout << "\nFollower received VoteRequest" << '\n';
-                        Handle_VoteRequest(serverState, nodeInfo, buf, pfd.fd);
-                    }
-                    else if (messageType == RESPONSE_VOTE){
-                        std::cout << "\nFollower received ResponseVote" << '\n';
-                        // do nothing here?
-                    }
-                    else if (messageType == RESPONSE_APPEND_ENTRY){
-                        std::cout << "\nFollower received ResponseAppendEntry" << '\n';
-                        // do nothing here?
-                    }
-                    else{
-                        // std::cout << "Follower received undefined message type" << '\n';
-                    }
-                    timer -> Restart();
-                } /* End got good data */
-            } /* End events from established connection */
-        } /* End: got ready-to-read from poll() */
-    } /*  End: looping through file descriptors */
-}
-
-void ServerFollowerStub::
-Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState, NodeInfo *nodeInfo){
-
-    int remote_term = appendEntryRequest -> Get_term();
-    int localTerm = serverState -> currentTerm;
-
-    if (remote_term >= localTerm) {
-        nodeInfo -> leader_id = appendEntryRequest -> Get_term();
-        nodeInfo -> role =  FOLLOWER;
-        serverState -> votedFor = -1;
-        serverState -> currentTerm = remote_term;
-    }
-}
-
-void ServerFollowerStub::
-Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf, int fd) {
-
-    AppendEntryRequest appendEntryRequest;
-    ResponseAppendEntry ResponseAppendEntry;
-    int success;
-    int ResponseID;
-
-    appendEntryRequest.Unmarshal(buf);
-    appendEntryRequest.Print();
-
-    Set_Leader(&appendEntryRequest, serverState, nodeInfo);
-    Set_CommitIndex(&appendEntryRequest, serverState);
-
-    success = Set_Result(serverState, &appendEntryRequest);
-
-    ResponseID = appendEntryRequest.Get_LogRep_RequestID() + 1;
-    ResponseAppendEntry.Set(RESPONSE_APPEND_ENTRY, serverState -> currentTerm,
-                            success, nodeInfo -> node_id, ResponseID);
-
-    Send_ResponseAppendEntry(&ResponseAppendEntry, fd); /* do error checking send here? */
+void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
+	this->socket = std::move(socket);
 }
 
 
-void ServerFollowerStub::
-Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf, int fd) {
+
+int ServerFollowerStub::
+Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
 
     VoteRequest voteRequest;
     ResponseVote ResponseVote;
     int success;
+    int send_status;
 
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
     success = Decide_Vote(serverState, nodeInfo, &voteRequest);
 
-    ResponseVote.Set(RESPONSE_VOTE, serverState -> currentTerm, success, nodeInfo -> node_id);
+    ResponseVote.Set(RESPONSE_VOTE, serverState -> currentTerm,
+                     success, nodeInfo -> node_id);
+    send_status = SendResponseVote(&ResponseVote);
 
-    SendResponseVote(&ResponseVote, fd); /* do error checking send here? */
+    return send_status;
 }
 
 
-/* --------------------------- Election Module helper functions--------------------------------------------- */
-
-/* return 0 on failure and 1 on success */
-int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote, int fd) {
+int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote) {
     int size = ResponseVote -> Size();
     char buf[size];
     int send_status;
 
     ResponseVote -> Marshal(buf);
-    send_status = Send_Message(buf, size, fd);
+    send_status = socket -> Send(buf, size, 0);
 
-    // std::cout << "send_status: " << send_status << '\n';
     return send_status;
 }
 
-int ServerFollowerStub::Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest) {
+
+bool ServerFollowerStub::
+Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest) {
+
     int result = false;
     int local_term = serverState -> currentTerm;
     int remote_term = VoteRequest -> Get_term();
@@ -179,109 +90,4 @@ bool ServerFollowerStub::Compare_Log(ServerState *serverState, VoteRequest * Vot
         return check_last_log_index;
     }
     return result;
-}
-
-
-/* ------------------------------------------------------------------------------------------------------------- */
-/* ------------------------------  Log Replication helper functions------------------------------------------- */
-
-int ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *ResponseAppendEntry, int fd){
-    int size = ResponseAppendEntry -> Size();
-    char buf[size];
-    int send_status;
-
-    ResponseAppendEntry -> Marshal(buf);
-    send_status = Send_Message(buf, size, fd);
-    return send_status;
-}
-
-
-/* If leaderCommit > commitIndex,
- * Set commitIndex = min(leaderCommit, index of last new entry) */
-void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState) {
-
-    /* local state */
-    int local_commitIndex = serverState -> commitIndex;
-    int local_log_length = serverState -> smr_log.size();
-
-    /* from the remote side */
-    int leaderCommit = appendEntryRequest -> Get_leaderCommit();
-
-    if (leaderCommit > local_commitIndex){
-        if (leaderCommit > local_log_length){
-            serverState -> commitIndex = local_log_length;
-        }
-        else{
-            serverState -> commitIndex = leaderCommit;
-        }
-    }
-}
-
-/* to-do: Clean this up */
-bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
-    /* local state */
-    int local_term = serverState -> currentTerm;
-    int local_log_length = serverState -> smr_log.size();
-    int local_prevLogTerm;
-    std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
-
-    /* from the remote side */
-    int remote_term = appendEntryRequest -> Get_term();
-    int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
-    int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
-    LogEntry remote_logEntry = appendEntryRequest -> Get_LogEntry();
-
-    /* Reply false the remote node is stale */
-    if (remote_term < local_term){
-        return false;
-    }
-
-    if (appendEntryRequest -> Get_LogRep_RequestID() == -1){      // heartbeat message
-        return true;
-    }
-
-    else {  // real log replication message
-
-        /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
-        if (local_log_length - 1 < remote_prevLogIndex) {
-            return false; // no element in local smr_log
-        }
-
-        else {   // if there is an entry in the local log at remote_prevLogIndex
-            local_prevLogTerm = serverState -> smr_log.at(remote_prevLogIndex).logTerm;
-
-            if (local_prevLogTerm != remote_prevLogTerm) { // check if conflicting prev log entry
-
-                if (local_log_length > 1) {  // keep first log to prevent index out of bound error
-                    /* erase conflicting log */
-                    serverState -> smr_log.erase(iter + remote_prevLogIndex, iter + local_log_length);
-                }
-
-                return false;
-            }
-
-            else {
-                // check for conflicting entry at the last index of local smr_log
-                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
-                    return true;     // Already in the smr_log !
-                }
-
-                serverState->smr_log.push_back(remote_logEntry);
-                return true;
-            }
-        }
-    }
-}
-
-
-void ServerFollowerStub::Print_Log(ServerState *serverState){
-    LogEntry logEntry;
-    int log_size = serverState -> smr_log.size();
-
-    for (int i = 0; i < log_size; i++){
-        logEntry = serverState -> smr_log.at(i);
-
-        std::cout << "-----Log entry number: "<< i << "-----" << '\n';
-        std::cout << "logTerm : "<< logEntry.logTerm << '\n';
-    }
 }

@@ -1,45 +1,20 @@
 #ifndef __SERVERSOCKET_H__
 #define __SERVERSOCKET_H__
 
-#include <poll.h>
-#include <vector>
-#include <string>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/tcp.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <map>
+#include <memory>
 
-#include "ServerListenSocket.h"
-#include "ServerTimer.h"
-#include "Messages.h"
+#include "Socket.h"
 
-
-
-class ServerSocket{
+class ServerSocket: public Socket {
 public:
-    ServerSocket() {};
+	ServerSocket() {}
+	~ServerSocket() {}
 
-    /* Accept Connection */
-    void Accept_Connection(std::vector<pollfd> *_pfds_server);
-    void AddSocketToPoll(int new_fd, std::vector<pollfd> *_pfds_server);
+	ServerSocket(int fd, bool nagle_on = NAGLE_ON);
 
-    /* Connect */
-    int Create_Socket();
-    int Connect_To(std::string ip, int port, int fd);
-
-    /* Send */
-    int Send_Message(char *buf, int size, int fd);
-
-
-    int Unmarshal_MessageType(char *buf);
+	bool Init(int port);
+	std::unique_ptr<ServerSocket> Accept();
 };
 
 
-
-#endif // #ifndef __SERVERSOCKET_H__
+#endif // end of #ifndef __SERVERSOCKET_H__
