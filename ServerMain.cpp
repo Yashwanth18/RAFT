@@ -2,7 +2,7 @@
 
 #include "ServerMain.h"
 #include "ServerSocket.h"
-#include "ServerAdminStub.h"
+#include "ServerOutStub.h"
 #include "ServerThread.h"
 
 
@@ -20,7 +20,6 @@ int main(int argc, char *argv[]) {
 
     ServerSocket serverSocket;
     std::unique_ptr<ServerSocket> new_socket;
-    bool Socket_Status[nodeInfo.num_peers];
 
     std::vector<std::thread> thread_vector;
     Election election;
@@ -36,25 +35,23 @@ int main(int argc, char *argv[]) {
 
         while (true) {
             new_socket = serverSocket.Accept();
-            std::cout << "Accepted Connection " << new_socket -> Get_fd() << '\n';
+            std::cout << "Accepted Connection from peer server" << '\n';
 
             std::thread follower_thread(&Election::FollowerThread, &election,
                                         std::move(new_socket), &nodeInfo, &serverState);
 
-            thread_vector.push_back(std::move(follower_thread));    // why? Question
+            thread_vector.push_back(std::move(follower_thread));
         }
         return 0;
 
     }
 
     else if (serverState.role == CANDIDATE) {
-        ServerAdminStub admin_stub[nodeInfo.num_peers];
-
-        Socket_Status[0] = admin_stub[0].Init(PeerServerInfo[0].IP, PeerServerInfo[0].port);
-        std::cout << "Socket_Status: " << Socket_Status[0] << '\n';
-
-        Socket_Status[0] = admin_stub[0].Send_RequestVote(&serverState, &nodeInfo);
-        std::cout << "Socket_Status: " << Socket_Status[0] << '\n';
+        for (int i = 0; i < nodeInfo.num_peers; i++){
+            std::thread candidate_thread(&Election::CandidateThread, &election,
+                                         i, &PeerServerInfo, &nodeInfo, &serverState);
+            thread_vector.push_back(std::move(candidate_thread));
+        }
     }
 
     else if (serverState.role == LEADER) {

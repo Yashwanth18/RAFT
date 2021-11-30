@@ -5,10 +5,10 @@
 
 
 
-class ServerAdminSocket: public Socket {
+class ServerOutSocket: public Socket {
 public:
-	ServerAdminSocket() {}
-	~ServerAdminSocket() {}
+	ServerOutSocket() {}
+	~ServerOutSocket() {}
 
 	bool Init(std::string ip, int port);
 };

@@ -5,10 +5,10 @@
 #include <netinet/tcp.h>
 #include <sys/types.h>
 #include <iostream>
-#include "ServerAdminSocket.h"
+#include "ServerOutSocket.h"
 
 /* return 0 if failure, and 1 if success */
-bool ServerAdminSocket::Init(std::string ip, int port) {
+bool ServerOutSocket::Init(std::string ip, int port) {
 	int status;
 
 	if (is_initialized_) {

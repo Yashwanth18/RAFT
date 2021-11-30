@@ -2,7 +2,7 @@
 #include <memory>
 #include "ServerThread.h"
 #include "ServerFollowerStub.h"
-#include "ServerAdminStub.h"
+#include "ServerOutStub.h"
 
 
 void Election::
@@ -26,8 +26,19 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerS
 
 
 void Election::
-CandidateThread() {
+CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
+                NodeInfo *nodeInfo, ServerState *serverState) {
 
+    bool socket_status;
+    ServerOutStub Out_stub;
+    std::string peer_IP = (*PeerServerInfo)[peer_index].IP;
+    int peer_port = (*PeerServerInfo)[peer_index].port;
+
+    socket_status = Out_stub.Init(peer_IP, peer_port);
+    std::cout << "Socket_Status: " << socket_status << '\n';
+
+    socket_status = Out_stub.Send_RequestVote(serverState, nodeInfo);
+    std::cout << "Socket_Status: " << socket_status << '\n';
 }
 
 

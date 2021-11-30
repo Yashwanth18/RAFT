@@ -1,12 +1,12 @@
 #include <string>
-#include "ServerAdminSocket.h"
+#include "ServerOutSocket.h"
 #include "Messages.h"
 
-class ServerAdminStub {
+class ServerOutStub {
 private:
-	ServerAdminSocket socket;
+	ServerOutSocket socket;
 public:
-	ServerAdminStub();
+	ServerOutStub();
 
 	bool Init(std::string ip, int port);
 

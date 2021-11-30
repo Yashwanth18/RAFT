@@ -1,17 +1,17 @@
-#include "ServerAdminStub.h"
+#include "ServerOutStub.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 
-ServerAdminStub::ServerAdminStub() {}
+ServerOutStub::ServerOutStub() {}
 
 /* return value: 0 on failure and 1 on success */
-bool ServerAdminStub::Init(std::string ip, int port) {
+bool ServerOutStub::Init(std::string ip, int port) {
 	return socket.Init(ip, port);
 }
 
 /* */
-int ServerAdminStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
+int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;
     int send_status;
     int size = VoteRequest.Size();
@@ -25,7 +25,7 @@ int ServerAdminStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeIn
     return send_status;
 }
 
-void ServerAdminStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
+void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                       VoteRequest *VoteRequest) {
     int messageType = VOTE_REQUEST;
     int term = serverState -> currentTerm;
