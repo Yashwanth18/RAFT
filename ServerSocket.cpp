@@ -1,91 +1,57 @@
+#include <iostream>
+
+#include <string.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/types.h>
+
 #include "ServerSocket.h"
 
-
-
-void ServerSocket::AddSocketToPoll(int new_fd, std::vector<pollfd> *_pfds_server) {
-    pollfd new_pfd;
-    new_pfd.fd = new_fd;
-    new_pfd.events = POLLIN;
-    _pfds_server -> push_back(new_pfd);
+ServerSocket::ServerSocket(int fd, bool nagle_on) {
+	fd_ = fd;
+	is_initialized_ = true;
+	NagleOn(nagle_on);
 }
 
-int ServerSocket::Unmarshal_MessageType(char *buf){
-    int net_messageType;
-    int messageType;
+bool ServerSocket::Init(int port) {
+	if (is_initialized_) {
+		return true;
+	}
 
-    memcpy(&net_messageType, buf, sizeof(net_messageType));
-    messageType = ntohl(net_messageType);
-    return messageType;
+	struct sockaddr_in addr;
+	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	if (fd_ < 0) {
+		perror("ERROR: failed to create a socket");
+		return false;
+	}
+
+	memset(&addr, '\0', sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(port);
+
+	if ((bind(fd_, (struct sockaddr *) &addr, sizeof(addr))) < 0) {
+		perror("ERROR: failed to bind");
+		return false;
+	}
+
+	listen(fd_, 8);
+
+	is_initialized_ = true;
+	return true;
 }
 
-void ServerSocket::Accept_Connection(std::vector<pollfd> *_pfds_server){
-    int new_fd;
-    struct sockaddr_in addr;
-    unsigned int addr_size = sizeof(addr);
+std::unique_ptr<ServerSocket> ServerSocket::Accept() {
+	int accepted_fd;
+	struct sockaddr_in addr;
+	unsigned int addr_size = sizeof(addr);
+	accepted_fd = accept(fd_, (struct sockaddr *) &addr, &addr_size);
+	if (accepted_fd < 0) {
+		perror("ERROR: failed to accept connection");
+		return nullptr;
+	}
 
-    // the listening socket is pfds_server[0].fd
-    new_fd = accept((*_pfds_server)[0].fd, (struct sockaddr *) &addr, &addr_size);
-    if (new_fd < 0) perror ("accept");
-
-    AddSocketToPoll(new_fd, _pfds_server);
-}
-
-int ServerSocket::Send_Message(char *buf, int size, int fd){
-    int remain_size = size;
-    int offset = 0;
-    int bytes_written;
-
-    while (remain_size > 0){
-        try{
-            bytes_written = send(fd, buf+offset, remain_size, 0);
-            if (bytes_written < 0){
-                throw bytes_written;
-            }
-        }
-        catch(int stat){
-            return 0;
-        }
-        offset += bytes_written;
-        remain_size -= bytes_written;
-    }
-    return 1;
-}
-
-
-
-/* return 0 on failure and 1 on success */
-int ServerSocket::Connect_To(std::string ip, int port, int new_fd){
-    struct sockaddr_in addr;
-    int connect_status;
-
-    memset(&addr, '\0', sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    addr.sin_port = htons(port);
-
-
-    try{
-        connect_status = connect(new_fd, (struct sockaddr *) &addr, sizeof(addr));
-        if (connect_status < 0){
-            throw connect_status;
-        }
-    }
-    catch(int stat){
-        return 0;
-    }
-
-    fcntl(new_fd, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking after connection successful*/
-    return 1;
-}
-
-int ServerSocket::Create_Socket() {
-    int new_fd;
-    new_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (new_fd < 0) {
-        perror("ERROR: failed to create a socket");
-        return -1;
-    }
-
-    return new_fd;
+	return std::unique_ptr<ServerSocket>(new ServerSocket(accepted_fd, IsNagleOn()));
 }

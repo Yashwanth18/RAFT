@@ -65,6 +65,14 @@ int Socket::Recv(char *buffer, int size, int flags) {
 	return 1;
 }
 
+int Socket::Unmarshal_MessageType(char *buf) {
+    int net_messageType;
+    int messageType;
+
+    memcpy(&net_messageType, buf, sizeof(net_messageType));
+    messageType = ntohl(net_messageType);
+    return messageType;
+}
 
 void Socket::Close() {
 	close(fd_);
