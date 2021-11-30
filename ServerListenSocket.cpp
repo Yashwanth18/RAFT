@@ -3,6 +3,7 @@
 
 int ServerListenSocket::Init(int port) {
 	struct sockaddr_in addr;
+	int yes = 1;
 
 	int fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -10,6 +11,11 @@ int ServerListenSocket::Init(int port) {
 	if (fd_ < 0) {
 		perror("ERROR: failed to create a socket");
 		return false;
+	}
+
+	if (setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes) == -1) {
+    perror("setsockopt");
+    exit(1);
 	}
 
 	fcntl(fd_, F_SETFL, O_NONBLOCK);   /* set socket to non-blocking */
@@ -29,4 +35,3 @@ int ServerListenSocket::Init(int port) {
 
 	return fd_;
 }
-

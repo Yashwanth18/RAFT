@@ -26,6 +26,7 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
                 if (nbytes <= 0){  /* connection closed or error */
                     close(pfd.fd);
                     pfd.fd = -1;     // never delete
+                    
                 }
 
                 else{   /* got good data */

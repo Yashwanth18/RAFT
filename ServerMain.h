@@ -129,7 +129,8 @@ void Try_Connect(NodeInfo * nodeInfo, ServerStub * serverStub, std::vector<Peer_
 /* ------------------------Candidate helper function -----------------------*/
 
 void Setup_New_Election(ServerState * serverState, ServerTimer * timer,
-                        NodeInfo *nodeInfo, bool * VoteRequest_Completed, bool *VoteRequest_Sent){
+                        NodeInfo *nodeInfo, bool * VoteRequest_Completed,
+                        bool *VoteRequest_Sent){
 
     serverState -> currentTerm ++;
     nodeInfo -> num_votes = 1; // vote for itself
