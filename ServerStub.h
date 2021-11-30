@@ -38,18 +38,21 @@ public:
 
     /* ---------------Candidate helper functions ----------*/
     void Handle_Poll_Candidate(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
-                               bool *VoteRequest_Completed, NodeInfo *nodeInfo);
+                               bool *VoteRequest_Completed, NodeInfo *nodeInfo,
+                               int *Socket, bool *Is_Init, bool *Socket_Status);
+
     int SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, int fd);
 
 
     /* ----------------------------------Leader helper function ------------------------------------*/
     void Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo , std::map<int,int> *PeerIdIndexMap,
-                            int * LogRep_RequestID);
+                            int * LogRep_RequestID, int *Socket, bool *Is_Init, bool *Socket_Status);
 
     int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
                                int fd, int peer_index, int LogRep_RequestID);
 
 
     /* -------------------------------------Follower helper function ------------------------------------*/
-    void Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo);
+    void Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo,
+                              int *Socket, bool *Is_Init, bool *Socket_Status);
 };

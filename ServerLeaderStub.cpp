@@ -2,8 +2,9 @@
 
 /* functionalities include: Receive acknowledgement from Follower */
 void ServerLeaderStub::
-Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, ServerState *serverState,
-                   std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID){
+Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo,
+                        ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
+                        int * LogRep_RequestID, int *Socket, bool *Is_Init, bool *Socket_Status){
 
     int messageType;
     int nbytes;
@@ -25,8 +26,11 @@ Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo, S
                 nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
                 if (nbytes <= 0){  /* remote connection closed or error */
-                    close(pfd.fd);
-                    pfd.fd = -1;
+                    close((*_pfds_server)[i].fd);
+                    (*_pfds_server)[i].fd = -1;     // never delete
+                    Is_Init[i+1] = false;
+                    Socket_Status[i+1] = false;
+                    Socket[i+1] = Create_Socket(); // new socket
                 }
 
                 else{    /* got good data */

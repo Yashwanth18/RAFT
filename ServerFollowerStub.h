@@ -24,8 +24,9 @@ public:
     ServerFollowerStub() = default;
 
     /* ---------------Follower helper function ----------*/
-    void Stub_Handle_Poll_Follower(ServerTimer *Timer, std::vector<pollfd> *_pfds_server, ServerState *serverState,
-                                   NodeInfo *nodeInfo);
+    void Stub_Handle_Poll_Follower(ServerTimer *Timer, std::vector<pollfd> *_pfds_server,
+                                   ServerState *serverState, NodeInfo *nodeInfo,
+                                   int *Socket, bool *Is_Init, bool *Socket_Status);
 
     void Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf, int fd);
     void Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState, NodeInfo *nodeInfo);

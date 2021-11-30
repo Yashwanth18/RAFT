@@ -23,7 +23,8 @@ public:
     ServerLeaderStub() {};
 
     void Stub_Handle_Poll_Leader(std::vector<pollfd> *_pfds_server, NodeInfo *nodeInfo,
-                                 ServerState *serverState, std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID);
+                                 ServerState *serverState, std::map<int,int> *PeerIdIndexMap,
+                                 int * LogRep_RequestID, int *Socket, bool *Is_Init, bool *Socket_Status);
 
     int Stub_SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
                                int fd, int peer_index, int LogRep_RequestID);

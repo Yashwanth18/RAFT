@@ -171,8 +171,8 @@ void BroadCast_VoteRequest(ServerState *serverState, NodeInfo * nodeInfo,
 
 
 void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
-              ServerStub * serverStub, bool *VoteRequest_Completed,
-              std::map<int,int> *PeerIdIndexMap){
+              ServerStub * serverStub, bool *VoteRequest_Completed, std::map<int,int> *PeerIdIndexMap,
+              int *Socket, bool *Is_Init, bool *Socket_Status){
 
 
     int num_votes;
@@ -181,7 +181,8 @@ void Get_Vote(ServerState * serverState, int poll_timeout, NodeInfo * nodeInfo,
 
     if (poll_count > 0){
         serverStub -> Handle_Poll_Candidate(serverState, PeerIdIndexMap,
-                                            VoteRequest_Completed, nodeInfo);
+                                            VoteRequest_Completed, nodeInfo,
+                                            Socket, Is_Init, Socket_Status);
 
         num_votes = nodeInfo -> num_votes;
 
@@ -229,12 +230,13 @@ void BroadCast_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo,
 
 void Get_Ack(ServerState *serverState, NodeInfo *nodeInfo, int Poll_timeout,
              ServerStub * serverStub, std::map<int,int> *PeerIdIndexMap,
-             int *LogRep_RequestID){
+             int *LogRep_RequestID, int *Socket, bool *Is_Init, bool *Socket_Status){
 
     int poll_count = serverStub -> Poll(Poll_timeout);
 
     if (poll_count > 0){
-        serverStub -> Handle_Poll_Leader(serverState, nodeInfo, PeerIdIndexMap, LogRep_RequestID);
+        serverStub -> Handle_Poll_Leader(serverState, nodeInfo, PeerIdIndexMap,
+                                         LogRep_RequestID, Socket, Is_Init, Socket_Status);
     }
 }
 
@@ -257,7 +259,8 @@ void Send_One_HeartBeat(ServerState *serverState, NodeInfo *nodeInfo, ServerStub
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket, Is_Init,
                                  Socket_Status, &LogRep_RequestID, heartbeat);
 
-    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, &LogRep_RequestID);
+    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap,
+            &LogRep_RequestID, Socket, Is_Init, Socket_Status);
 }
 
 /* -------------------------Functions declaration-----------------------------*/

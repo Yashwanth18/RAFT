@@ -33,7 +33,8 @@ void ServerCandidateStub::FillVoteRequest(ServerState * serverState, NodeInfo * 
 void ServerCandidateStub::
 Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                            ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
-                           bool *VoteRequest_Completed, NodeInfo *nodeInfo){
+                           bool *VoteRequest_Completed, NodeInfo *nodeInfo,
+                           int *Socket, bool *Is_Init, bool *Socket_Status){
 
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
@@ -56,8 +57,11 @@ Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server,
                 nbytes = recv( pfd.fd, buf, max_data_size, 0);
 
                 if (nbytes <= 0){   /* error handling for read: remote connection closed or error */
-                    close(pfd.fd);
-                    pfd.fd = -1;
+                    close( (*_pfds_server)[i].fd );
+                    (*_pfds_server)[i].fd = -1;     // never delete
+                    Is_Init[i+1] = false;
+                    Socket_Status[i+1] = false;
+                    Socket[i+1] = Create_Socket(); // new socket
                 }
 
                 else{    /* got good data */

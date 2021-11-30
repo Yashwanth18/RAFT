@@ -26,7 +26,7 @@ public:
     /* ---------------Candidate helper functions ----------*/
     void Stub_Handle_Poll_Candidate(std::vector<pollfd> *_pfds_server, ServerState * serverState,
                                std::map<int,int> *PeerIdIndexMap, bool *VoteRequest_Completed,
-                               NodeInfo *nodeInfo);
+                               NodeInfo *nodeInfo, int *Socket, bool *Is_Init, bool *Socket_Status);
 
     void Handle_AppendEntryRequest(NodeInfo *nodeInfo, ServerState *serverState, char *buf);
     void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState, char *buf,

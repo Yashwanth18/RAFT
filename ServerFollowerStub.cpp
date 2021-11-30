@@ -3,7 +3,8 @@
 /* functionalities include: VoteRequestRPC & AppendEntryRPC */
 void ServerFollowerStub::
 Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
-                          ServerState *serverState, NodeInfo *nodeInfo){
+                          ServerState *serverState, NodeInfo *nodeInfo,
+                          int *Socket, bool *Is_Init, bool *Socket_Status){
 
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
@@ -25,7 +26,11 @@ Stub_Handle_Poll_Follower(ServerTimer *timer, std::vector<pollfd> *_pfds_server,
 
                 if (nbytes <= 0){  /* connection closed or error */
                     close(pfd.fd);
-                    pfd.fd = -1;     // never delete
+                    (*_pfds_server)[i].fd = -1;     // never delete
+
+                    Is_Init[i+1] = false;
+                    Socket_Status[i+1] = false;
+                    Socket[i+1] = Create_Socket(); // new socket
                     
                 }
 

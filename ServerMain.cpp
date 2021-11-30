@@ -72,7 +72,8 @@ void Leader_Role (ServerState *serverState, NodeInfo *nodeInfo, ServerStub *serv
     BroadCast_AppendEntryRequest(serverState, nodeInfo, serverStub, Socket,
                                  Is_Init, Socket_Status, LogRep_RequestID, heartbeat);
 
-    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, LogRep_RequestID);
+    Get_Ack(serverState, nodeInfo, poll_timeout, serverStub, PeerIdIndexMap, LogRep_RequestID,
+            Socket, Is_Init, Socket_Status);
  }
 
 
@@ -103,7 +104,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
                               Socket_Status, VoteRequest_Sent);
 
         Get_Vote(serverState, poll_timeout, nodeInfo, serverStub, VoteRequest_Completed,
-                 PeerIdIndexMap);
+                 PeerIdIndexMap, Socket, Is_Init, Socket_Status);
 
         if (nodeInfo -> role == LEADER) {
             Send_One_HeartBeat(serverState, nodeInfo, serverStub, timer, PeerServerInfo,
@@ -139,7 +140,8 @@ void Follower_Role(ServerStub *serverStub, ServerState *serverState, ServerTimer
     else {
         poll_count = serverStub -> Poll(poll_timeout); // listen longer than leader by 2x
         if (poll_count > 0) {
-            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo);
+            serverStub -> Handle_Poll_Follower(timer, serverState, nodeInfo, Socket,
+                                               Is_Init, Socket_Status);
         }
     }
 

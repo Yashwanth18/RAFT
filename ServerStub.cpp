@@ -29,15 +29,21 @@ int ServerStub::Poll(int poll_timeout){
 }
 
 /* ---------------------------------Follower Helper function: ---------------------------------- */
-void ServerStub::Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo){
-    serverFollowerStub.Stub_Handle_Poll_Follower(Timer, &pfds_server, serverState, nodeInfo);
+void ServerStub::
+Handle_Poll_Follower(ServerTimer *Timer, ServerState *serverState, NodeInfo *nodeInfo,
+                     int *Socket, bool *Is_Init, bool *Socket_Status){
+    serverFollowerStub.Stub_Handle_Poll_Follower(Timer, &pfds_server, serverState, nodeInfo,
+                                                 Socket, Is_Init, Socket_Status);
 }
 
 /* ---------------------------------Candidate helper functions -----------------------------------*/
 void ServerStub::Handle_Poll_Candidate(ServerState * serverState, std::map<int,int> *PeerIdIndexMap,
-                                       bool *VoteRequest_Completed, NodeInfo *nodeInfo){
+                                       bool *VoteRequest_Completed, NodeInfo *nodeInfo,
+                                       int *Socket, bool *Is_Init, bool *Socket_Status){
+
     serverCandidateStub.Stub_Handle_Poll_Candidate(&pfds_server, serverState, PeerIdIndexMap,
-                                                   VoteRequest_Completed, nodeInfo);
+                                                   VoteRequest_Completed, nodeInfo,
+                                                   Socket, Is_Init, Socket_Status);
 }
 
 int ServerStub::SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, int fd){
@@ -47,8 +53,10 @@ int ServerStub::SendVoteRequest(ServerState *serverState, NodeInfo *nodeInfo, in
 /* ---------------------------------Leader helper function---------------------------------- */
 /* functionalities include: Receive acknowledgement from Follower */
 void ServerStub::
-Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo, std::map<int,int> *PeerIdIndexMap, int * LogRep_RequestID){
-    serverLeaderStub.Stub_Handle_Poll_Leader(&pfds_server, nodeInfo, serverState, PeerIdIndexMap, LogRep_RequestID);
+Handle_Poll_Leader(ServerState *serverState, NodeInfo *nodeInfo, std::map<int,int> *PeerIdIndexMap,
+                   int * LogRep_RequestID, int *Socket, bool *Is_Init, bool *Socket_Status){
+    serverLeaderStub.Stub_Handle_Poll_Leader(&pfds_server, nodeInfo, serverState, PeerIdIndexMap,
+                                             LogRep_RequestID, Socket, Is_Init, Socket_Status);
 }
 
 int ServerStub::
