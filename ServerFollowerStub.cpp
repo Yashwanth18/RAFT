@@ -25,10 +25,8 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
-    success = Decide_Vote(serverState, nodeInfo, &voteRequest);
-
-    ResponseVote.Set(RESPONSE_VOTE, serverState -> currentTerm,
-                     success, nodeInfo -> node_id);
+    success = Decide_Vote(serverState, &voteRequest);
+    ResponseVote.Set(RESPONSE_VOTE, serverState -> currentTerm, success, nodeInfo -> node_id);
     send_status = SendResponseVote(&ResponseVote);
 
     return send_status;
@@ -48,7 +46,7 @@ int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote) {
 
 
 bool ServerFollowerStub::
-Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest) {
+Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
 
     int result = false;
     int local_term = serverState -> currentTerm;

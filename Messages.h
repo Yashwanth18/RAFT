@@ -43,14 +43,16 @@ struct ServerState{
     /* volatile state on leaders (Reinitialized after election) */
     std::vector<int> nextIndex;     // size = num_peers
     std::vector<int> matchIndex;    // size = num_peers
+
+    /* */
+    int role;
+    int leader_id;
 };
 
 struct NodeInfo{
     int node_id;
-    int leader_id;
     int num_peers;
 
-    int role;
     int server_port;
     int client_port;
     int num_votes;

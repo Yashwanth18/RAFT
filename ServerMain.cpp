@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap))      { return 0; }
     if (!Init_NodeInfo(&nodeInfo, argc, argv))                                  { return 0; }
-    Init_ServerState(&serverState, nodeInfo.num_peers);
+    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
 
     ServerSocket serverSocket;
     std::unique_ptr<ServerSocket> new_socket;
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     timer.Start();
 
-    if (nodeInfo.role == FOLLOWER) {
+    if (serverState.role == FOLLOWER) {
 
         if (!serverSocket.Init(nodeInfo.server_port)) {
             std::cout << "Socket initialization failed" << std::endl;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
             std::cout << "Accepted Connection " << new_socket -> Get_fd() << '\n';
 
             std::thread follower_thread(&Election::FollowerThread, &election,
-                                        std::move(new_socket));
+                                        std::move(new_socket), &nodeInfo, &serverState);
 
             thread_vector.push_back(std::move(follower_thread));    // why? Question
         }
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     }
 
-    else if (nodeInfo.role == CANDIDATE) {
+    else if (serverState.role == CANDIDATE) {
         ServerAdminStub admin_stub[nodeInfo.num_peers];
 
         Socket_Status[0] = admin_stub[0].Init(PeerServerInfo[0].IP, PeerServerInfo[0].port);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Socket_Status: " << Socket_Status[0] << '\n';
     }
 
-    else if (nodeInfo.role == LEADER) {
+    else if (serverState.role == LEADER) {
 
     }
 

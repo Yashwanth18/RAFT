@@ -17,7 +17,7 @@ private:
 
 public:
 	Election(){}
-	void FollowerThread(std::unique_ptr<ServerSocket> socket);
+	void FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState);
     void CandidateThread();
     void LeaderThread();
 

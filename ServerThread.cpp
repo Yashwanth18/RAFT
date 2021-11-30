@@ -5,7 +5,9 @@
 #include "ServerAdminStub.h"
 
 
-void Election::FollowerThread(std::unique_ptr<ServerSocket> socket) {
+void Election::
+FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
+
     ServerFollowerStub serverFollowerStub;
     serverFollowerStub.Init(std::move(socket));
 
@@ -15,7 +17,10 @@ void Election::FollowerThread(std::unique_ptr<ServerSocket> socket) {
     int messageType;
 
     messageType = serverFollowerStub.Get_MessageType(buf, max_data_size);
-    std::cout << "messageType: " << messageType << '\n';
+
+    if (messageType == VOTE_REQUEST){ // main functionality
+        serverFollowerStub.Handle_VoteRequest(serverState, nodeInfo, buf);
+    }
 
 }
 

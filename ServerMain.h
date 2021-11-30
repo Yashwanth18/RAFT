@@ -18,9 +18,6 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
         return 0;
     }
 
-    nodeInfo -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
-
-    nodeInfo -> leader_id = -1;
     nodeInfo -> server_port = atoi(argv[1]);
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
@@ -29,7 +26,7 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     return 1;
 }
 
-void Init_ServerState(ServerState * serverState, int num_peers){
+void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *argv[]){
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     serverState -> currentTerm = 0;
     serverState -> votedFor = -1;
@@ -45,6 +42,9 @@ void Init_ServerState(ServerState * serverState, int num_peers){
         serverState -> matchIndex.push_back(0);
         serverState -> nextIndex.push_back(1);
     }
+
+    serverState -> leader_id = -1;
+    serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
 
 

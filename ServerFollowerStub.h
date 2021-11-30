@@ -20,7 +20,7 @@ public:
     /* Election */
     int Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf);
     int SendResponseVote(ResponseVote *ResponseVote);
-    bool Decide_Vote(ServerState *serverState, NodeInfo *nodeInfo, VoteRequest *VoteRequest);
+    bool Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest);
     bool Compare_Log(ServerState *serverState, VoteRequest * VoteRequest);
 
 };
