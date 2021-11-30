@@ -14,7 +14,7 @@
 class ServerListenSocket{
 
 public:
-	ServerListenSocket() = default;
+	ServerListenSocket() {};
 	~ServerListenSocket() {}
 
 	int Init(int port);		// return the file descriptor for listening
