@@ -19,7 +19,7 @@ public:
     bool Send_MessageType(int messageType);
 
     /* Election */
-    int Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf);
+    int Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo);
     int SendResponseVote(ResponseVote *ResponseVote);
     bool Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest);
     bool Compare_Log(ServerState *serverState, VoteRequest * VoteRequest);

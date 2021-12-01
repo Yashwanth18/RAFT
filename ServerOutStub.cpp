@@ -60,6 +60,40 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
 }
 
 
+void ServerOutStub::
+Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
+
+  ResponseVote ResponseVote;
+//  int peer_index;
+  char buf[ResponseVote.Size()];
+
+
+  if (!socket.Recv(buf, sizeof(ResponseVote), 0)){
+    perror("Read_MessageType");
+  }
+
+  ResponseVote.Unmarshal(buf);
+  ResponseVote.Print();
+
+//  peer_index = (*PeerIdIndexMap)[ResponseVote.Get_nodeID()];
+//
+//  // in case we get multiple response for the same request
+//  if (!VoteRequest_Completed[peer_index]){
+//
+//    if (ResponseVote.Get_voteGranted()) { // vote granted
+//      nodeInfo -> num_votes ++;
+//    }
+//
+//    else {  // vote got rejected
+//      if (ResponseVote.Get_term() > serverState -> currentTerm){ // we are stale
+//        serverState -> currentTerm = ResponseVote.Get_term();
+//      }
+//    }
+//    VoteRequest_Completed[peer_index] = true;
+//  }
+}
+
+
 /*--------------------------Leader Helper Functions---------------------------- */
 
 

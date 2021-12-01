@@ -34,13 +34,17 @@ bool ServerFollowerStub::Send_MessageType(int messageType) {
 }
 
 int ServerFollowerStub::
-Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
+Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo) {
 
     VoteRequest voteRequest;
     ResponseVote ResponseVote;
+    char buf[voteRequest.Size()];
     int success;
     int send_status;
-
+    if (!socket -> Recv(buf, sizeof(voteRequest), 0)){
+      perror("Read_MessageType");
+      return 0;
+    }
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 

@@ -9,6 +9,7 @@ void Election::
 FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
     int messageType;
     ServerFollowerStub serverFollowerStub;
+
     serverFollowerStub.Init(std::move(socket));
 
     messageType = serverFollowerStub.Read_MessageType();
@@ -16,8 +17,8 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerS
 
     if (messageType == VOTE_REQUEST) { // main functionality
         /* handle vote request */
-
-        serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
+        serverFollowerStub.Handle_VoteRequest(serverState, nodeInfo);
+        //serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
     }
 
 }
@@ -31,7 +32,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
     std::string peer_IP;
     int peer_port;
-    int messageType;
+    //int messageType;
 
     ul.lock();  // debugging purposes only!
 
@@ -45,9 +46,10 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         if (send_status){
             *sent = true;
-            messageType = Out_stub.Read_MessageType();
-            std::cout << "messageType: " << messageType << '\n';
-
+//            messageType = Out_stub.Read_MessageType();
+//            std::cout << "messageType: " << messageType << '\n';
+              Out_stub.Send_RequestVote(serverState, nodeInfo);
+              Out_stub.Handle_ResponseVote(nodeInfo, serverState);
         }
     }
     ul.unlock();    // debugging purposes only!
