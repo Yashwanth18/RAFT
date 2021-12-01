@@ -42,29 +42,16 @@ int main(int argc, char *argv[]) {
 
             thread_vector.push_back(std::move(follower_thread));
         }
-        return 0;
-
     }
 
     else if (serverState.role == CANDIDATE) {
-      int sent  = false;
-        while(true){
-            if (!sent){
-              ServerOutStub Out_stub;
+        bool sent = false;
+        while (true) {
+            std::thread candidate_thread(&Election::CandidateThread, &election,
+                                         0, &PeerServerInfo, &nodeInfo,
+                                         &serverState, &sent);
 
-              std::string peer_IP = PeerServerInfo[0].IP;
-              int peer_port = PeerServerInfo[0].port;
-
-              Out_stub.Init(peer_IP, peer_port);
-              int send_status = Out_stub.Send_RequestVote(&serverState, &nodeInfo);
-              std::cout<< "send_status: " << send_status << '\n';
-
-              if (send_status > 0){
-                sent = true;
-                char buf[1];
-                Out_stub.Read(buf, 1);
-              }
-            }
+            thread_vector.push_back(std::move(candidate_thread));
         }
     }
 

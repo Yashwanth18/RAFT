@@ -14,13 +14,15 @@
 class Election {
 
 private:
-
+    std::mutex lock_state;
 public:
 	Election(){}
 	void FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
                         ServerState *serverState);
+
     void CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                         NodeInfo *nodeInfo, ServerState *serverState);
+                         NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
+
     void LeaderThread();
 
 };

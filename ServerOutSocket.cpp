@@ -7,7 +7,8 @@
 #include <iostream>
 #include "ServerOutSocket.h"
 
-/* return 0 if failure, and 1 if success */
+/* Connect to the host with IP and port
+ * return 0 if failure, and 1 if success */
 bool ServerOutSocket::Init(std::string ip, int port) {
 	int status;
 

@@ -7,7 +7,31 @@ void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
 	this->socket = std::move(socket);
 }
 
+/* return 0 on failure */
+int ServerFollowerStub::Read_MessageType() {
+    int net_messageType;
+    int messageType;
+    char buf[sizeof (int)];
 
+    if (!socket -> Recv(buf, sizeof(int), 0)){
+        perror("Read_MessageType");
+        return 0;
+    }
+
+    memcpy(&net_messageType, buf, sizeof(net_messageType));
+    messageType = ntohl(net_messageType);
+    return messageType;
+}
+
+bool ServerFollowerStub::Send_MessageType(int messageType) {
+    char buf[sizeof (int)];
+    int send_status;
+    int net_messageType = htonl(messageType);
+
+    memcpy(buf, &net_messageType, sizeof(net_messageType));
+    send_status = socket -> Send(buf, sizeof (int), 0);
+    return send_status;
+}
 
 int ServerFollowerStub::
 Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {

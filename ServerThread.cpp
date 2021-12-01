@@ -7,45 +7,50 @@
 
 void Election::
 FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
+    int messageType;
+    ServerFollowerStub serverFollowerStub;
+    serverFollowerStub.Init(std::move(socket));
 
-    // ServerFollowerStub serverFollowerStub;
-    // serverFollowerStub.Init(std::move(socket));
+    messageType = serverFollowerStub.Read_MessageType();
+    std::cout<< "messageType: " << messageType << '\n';
 
-    int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
-                        sizeof(VoteRequest) + sizeof(ResponseVote);
-    char buf[max_data_size];
-    int read_status = socket -> Recv(buf, sizeof(VoteRequest), 0);
-
-    std::cout<< "read_status: " << read_status << '\n';
-
-    if (read_status > 0){
-      int messageType;
-      int net_messageType;
-      memcpy(&net_messageType, buf, sizeof(net_messageType));
-      messageType = ntohl(net_messageType);
-
-
-      if (messageType == VOTE_REQUEST){ // main functionality
-        VoteRequest voteRequest;
-        voteRequest.Unmarshal(buf);
-        voteRequest.Print();
-      }
-      char buf[1];
-      int ack = htonl(messageType);
-      memcpy(buf, &ack, sizeof(ack));
-      socket -> Send(buf, 1, 0);
+    if (messageType == VOTE_REQUEST) { // main functionality
+        serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
     }
-
-
-
 
 }
 
 
 void Election::
 CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                NodeInfo *nodeInfo, ServerState *serverState) {
+                NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
+
+    ServerOutStub Out_stub;
+    std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
+    std::string peer_IP;
+    int peer_port;
+    int messageType;
+
+    ul.lock();  // debugging purposes only!
+
+    if (!*sent){
+
+        peer_IP = (*PeerServerInfo)[peer_index].IP;
+        peer_port = (*PeerServerInfo)[peer_index].port;
+        Out_stub.Init(peer_IP, peer_port);
+
+        int send_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+
+        if (send_status){
+            *sent = true;
+            messageType = Out_stub.Read_MessageType();
+            std::cout << "messageType: " << messageType << '\n';
+
+        }
+    }
+    ul.unlock();    // debugging purposes only!
 }
+
 
 
 void Election::

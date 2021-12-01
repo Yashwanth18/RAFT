@@ -10,12 +10,33 @@ bool ServerOutStub::Init(std::string ip, int port) {
 	return socket.Init(ip, port);
 }
 
-int ServerOutStub::Read(char *buf, int size){
-		int socket_status = socket.Recv(buf, size);
-		return socket_status;
+
+
+int ServerOutStub::Read_MessageType() {
+    int net_messageType;
+    int messageType;
+    char buf[sizeof (int)];
+
+    if (!socket.Recv(buf, sizeof(int), 0)){
+        perror("Read_MessageType");
+        return 0;
+    }
+
+    memcpy(&net_messageType, buf, sizeof(net_messageType));
+    messageType = ntohl(net_messageType);
+    return messageType;
 }
 
-/* */
+bool ServerOutStub::Send_MessageType(int messageType) {
+    char buf[sizeof (int)];
+    int send_status;
+    int net_messageType = htonl(messageType);
+
+    memcpy(buf, &net_messageType, sizeof(net_messageType));
+    send_status = socket.Send(buf, sizeof (int), 0);
+    return send_status;
+}
+
 int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;
     int send_status;
