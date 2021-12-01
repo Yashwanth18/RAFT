@@ -190,31 +190,39 @@ void ServerFollowerStub::Print_Log(ServerState *serverState){
 
 /*-----------------------Responding to Candidate--------------------------------*/
 int ServerFollowerStub::
-Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
+Handle_VoteRequest(ServerState *serverState) {
 
     VoteRequest voteRequest;
-    ResponseVote ResponseVote;
+    ResponseVote responseVote;
+    char buf[voteRequest.Size()];
     int success;
     int send_status;
+
+    if (!socket -> Recv(buf, sizeof(voteRequest), 0)){
+        perror("Read_MessageType");
+        return 0;
+    }
 
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
     success = Decide_Vote(serverState, &voteRequest);
-    ResponseVote.Set(serverState -> currentTerm, success);
-    send_status = SendResponseVote(&ResponseVote);
+    responseVote.Set(serverState -> currentTerm, success);
+    responseVote.Print();
+
+    Send_MessageType(RESPONSE_VOTE);
+    send_status = SendResponseVote(&responseVote);
 
     return send_status;
 }
 
 
-int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote) {
-    int size = ResponseVote -> Size();
-    char buf[size];
+int ServerFollowerStub::SendResponseVote(ResponseVote *responseVote) {
+    char buf[sizeof (ResponseVote)];
     int send_status;
 
-    ResponseVote -> Marshal(buf);
-    send_status = socket -> Send(buf, size, 0);
+    responseVote -> Marshal(buf);
+    send_status = socket -> Send(buf, sizeof (ResponseVote), 0);
 
     return send_status;
 }

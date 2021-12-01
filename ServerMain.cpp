@@ -39,27 +39,38 @@ int main(int argc, char *argv[]) {
             std::thread Listen_thread(&Raft::Follower_ListeningThread, &Raft,
                                       &serverSocket, &nodeInfo, &serverState,
                                       &thread_vector, &timer);
+
             thread_vector.push_back(std::move(Listen_thread));
 
             while (true) {
-                if (timer.Check_Election_timeout()){
-                    // serverState.role = CANDIDATE;
-                    std::cout << "I'm a candidate now!" << '\n';
-                    break;
-                }
-                timer.Print_elapsed_time();
+//                if (timer.Check_Election_timeout()){
+//                    serverState.role = CANDIDATE;
+//                    std::cout << "I'm a candidate now!" << '\n';
+//                    break;
+//                }
+//                timer.Print_elapsed_time();
             }
         }
 
         else if (serverState.role == CANDIDATE) {
-            bool sent = false;
-            while (true) {
+
+            serverState.currentTerm ++;
+            bool sent[nodeInfo.num_peers];
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                sent[i] = false;
+            }
+
+            for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread candidate_thread(&Raft::CandidateThread, &Raft,
                                              0, &PeerServerInfo, &nodeInfo,
-                                             &serverState, &sent);
+                                             &serverState, &sent[i]);
 
                 thread_vector.push_back(std::move(candidate_thread));
             }
+            while (true) {
+
+            }
+
         }
 
         else if (serverState.role == LEADER) {
@@ -68,14 +79,15 @@ int main(int argc, char *argv[]) {
                 sent[i] = false;
             }
 
-            while (true) {
-                for (int i = 0; i < nodeInfo.num_peers; i++){
-                    std::thread leader_thread(&Raft::LeaderThread, &Raft,
-                                              i, &PeerServerInfo, &nodeInfo,
-                                              &serverState, &sent[i]);
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                std::thread leader_thread(&Raft::LeaderThread, &Raft,
+                                          i, &PeerServerInfo, &nodeInfo,
+                                          &serverState, &sent[i]);
 
-                    thread_vector.push_back(std::move(leader_thread));
-                }
+                thread_vector.push_back(std::move(leader_thread));
+            }
+            while (true) {
+
             }
         }
 

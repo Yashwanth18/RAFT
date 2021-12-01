@@ -33,24 +33,25 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
 
     serverFollowerStub.Init(std::move(socket));
 
-    while(true){    // break if connection closed by the other sides
-        ul.lock();
-        timer->Restart(); // debug only!
-        ul.unlock();
+    //while(true){    // break if connection closed by the other sides
+//        ul.lock();
+//        timer->Restart(); // debug only!
+//        ul.unlock();
 
         messageType = serverFollowerStub.Read_MessageType();
         std::cout << "messageType: " << messageType << '\n';
 
         if (messageType == VOTE_REQUEST) { // main functionality
             /* handle vote request */
-            serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
+            serverFollowerStub.Handle_VoteRequest(serverState);
         }
+
         else if (messageType == APPEND_ENTRY_REQUEST){
             timer->Restart();
             serverFollowerStub.Handle_AppendEntryRequest(serverState, nodeInfo);
 
         }
-    }
+    //}
 }
 
 void Raft::
@@ -114,9 +115,14 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         if (send_status){
             *sent = true;
-            messageType = Out_stub.Read_MessageType();
-            std::cout << "messageType: " << messageType << '\n';
+            Out_stub.Send_RequestVote(serverState, nodeInfo);
+        }
 
+        messageType = Out_stub.Read_MessageType();
+        std::cout << "messageType: " << messageType << '\n';
+
+        if (messageType == RESPONSE_VOTE){
+            Out_stub.Handle_ResponseVote(nodeInfo, serverState);
         }
     }
     ul.unlock();    // debugging purposes only!

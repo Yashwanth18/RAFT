@@ -15,8 +15,10 @@ public:
     int Read_MessageType();     // return the messageType
 
 
+    void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
     int Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
-    void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo, VoteRequest *VoteRequest);
+    void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
+                         VoteRequest *VoteRequest);
 
     /* ------------------------Leader Helper Functions----------------------------*/
     int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
