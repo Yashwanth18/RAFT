@@ -2,7 +2,7 @@
 
 #include "ServerMain.h"
 #include "ServerSocket.h"
-#include "ServerCandidateStub.h"
+#include "ServerOutStub.h"
 #include "ServerThread.h"
 
 
@@ -56,7 +56,14 @@ int main(int argc, char *argv[]) {
     }
 
     else if (serverState.role == LEADER) {
+        bool sent = false;
+        while (true) {
+            std::thread candidate_thread(&Election::CandidateThread, &election,
+                                         0, &PeerServerInfo, &nodeInfo,
+                                         &serverState, &sent);
 
+            thread_vector.push_back(std::move(candidate_thread));
+        }
     }
 
     else {
