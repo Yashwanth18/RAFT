@@ -4,6 +4,21 @@
 #include "ServerFollowerStub.h"
 #include "ServerOutStub.h"
 
+void Election::
+Follower_ListeningThread(ServerSocket *serverSocket, NodeInfo *nodeInfo,
+                         ServerState *serverState,
+                         std::vector<std::thread> *thread_vector){
+    while (true) {
+        std::unique_ptr<ServerSocket> new_socket;
+        new_socket = serverSocket -> Accept();
+        std::cout << "\nAccepted Connection from peer server" << '\n';
+
+        std::thread follower_thread(&Election::FollowerThread, this,
+                                    std::move(new_socket), nodeInfo, serverState);
+
+        thread_vector -> push_back(std::move(follower_thread));
+    }
+}
 
 void Election::
 FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
