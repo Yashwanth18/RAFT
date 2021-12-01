@@ -22,7 +22,6 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
     nodeInfo -> num_peers = atoi(argv[4]);
-    nodeInfo -> leader_id = -1;
     return 1;
 }
 
@@ -33,17 +32,19 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     LogEntry logEntry {-1, -1, -1, -1};
     serverState -> smr_log.push_back(logEntry);
 
-    /* volatile state on all servers */
-    serverState -> commitIndex = 0;
-    serverState -> last_applied = 0;
-
     /* volatile state on leaders (Reinitialized after Raft) */
     for (int i = 0; i < num_peers; i++){
         serverState -> matchIndex.push_back(0);
         serverState -> nextIndex.push_back(1);
     }
 
+    /* volatile state on all servers */
+    serverState -> commitIndex = 0;
+    serverState -> last_applied = 0;
+
+
     serverState -> num_votes = 0;
+    serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
 

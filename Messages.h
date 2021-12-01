@@ -46,12 +46,11 @@ struct ServerState{
     /* */
     int role;
     int num_votes;
+    int leader_id;
 };
 
 struct NodeInfo{
     int node_id;
-    int leader_id;
-
     int num_peers;
     int server_port;
     int client_port;

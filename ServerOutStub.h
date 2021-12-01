@@ -15,7 +15,7 @@ public:
     int Read_MessageType();     // return the messageType
 
 
-    bool Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
+    bool Handle_ResponseVote(ServerState *serverState, std::mutex *lock_serverState);
     bool Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                          VoteRequest *VoteRequest);
@@ -28,5 +28,5 @@ public:
                                 AppendEntryRequest *appendEntryRequest,  int peer_index,
                                 int heartbeat);
 
-    void Handle_ResponseAppendEntry(ServerState *serverState, int peer_index);
+    bool Handle_ResponseAppendEntry(ServerState *serverState, int peer_index);
 };

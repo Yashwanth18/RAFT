@@ -59,7 +59,8 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
     VoteRequest -> Set(term, candidateId, lastLogIndex, lastLogTerm);
 }
 
-bool ServerOutStub::Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
+bool ServerOutStub::
+Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
 
     ResponseVote responseVote;
     char buf[sizeof (ResponseVote)];
@@ -76,12 +77,16 @@ bool ServerOutStub::Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverS
 
 
     if (responseVote.Get_voteGranted()) { /* vote granted */
-         serverState -> num_votes ++;
+        lk_serverState -> lock();
+        serverState -> num_votes ++;
+        lk_serverState -> unlock();
     }
 
     else {  /* vote got rejected */
         if (responseVote.Get_term() > serverState -> currentTerm){ // we are stale
+            lk_serverState->lock();
             serverState -> currentTerm = responseVote.Get_term();
+            lk_serverState -> unlock();
         }
     }
 
@@ -140,18 +145,23 @@ void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo *
                               &logEntry, leaderCommit);
 }
 
-void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int peer_index) {
+bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int peer_index) {
     char buf[sizeof (ResponseAppendEntry)];
     ResponseAppendEntry responseAppendEntry;
     int remote_term;
     int local_term;
+    bool socket_status;
 
-    if (!socket.Recv(buf, sizeof(ResponseAppendEntry), 0)){
+    socket_status = socket.Recv(buf, sizeof(ResponseAppendEntry), 0);
+
+    if (!socket_status){
         perror("Handle_ResponseAppendEntry: Recv"); // to-do: handle error gracefully here
+        return false;
     }
 
     responseAppendEntry.Unmarshal(buf);
     remote_term = responseAppendEntry.Get_term();
+
     local_term = serverState -> currentTerm;
 
     if (remote_term > local_term){   // check if we are stale
@@ -164,12 +174,10 @@ void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
     }
 
     if (responseAppendEntry.Get_Heartbeat()){
-        std::cout << "Leader received heartbeat ack "<< '\n';
         responseAppendEntry.Print();
     }
 
     else{   // if response from proper log replication request
-        std::cout << "Leader received ResponseAppendEntry" << '\n';
         responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {
@@ -177,10 +185,13 @@ void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
             // set match index
             // set commit index based on the majority of matchIndex[]
         }
+
         else {  /* rejected: the follower node lags behind */
             serverState -> nextIndex[peer_index] --;
         }
     }
+
+    return socket_status;
 
 }
 

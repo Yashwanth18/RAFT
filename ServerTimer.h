@@ -6,18 +6,18 @@
 using namespace std::chrono;
 
 class ServerTimer {
+private:
+    std::mutex lock_timer;
+    time_point<std::chrono::high_resolution_clock> start_time;
+    duration<double, std::milli> elapsed_time;
+    duration<double, std::milli> election_timeout;
+
 public:
-	time_point<std::chrono::high_resolution_clock> start_time;
-	duration<double, std::milli> elapsed_time;
-	duration<double, std::milli> election_timeout;
-
 	ServerTimer();
-
 	void Start();
-	void Restart();
+	void Atomic_Restart();              // restart with mutex protection
 
 	int Check_Election_timeout();		//return 1 if Election_timeout and 0 otherwise
-
 	void Print_elapsed_time();
 };
 

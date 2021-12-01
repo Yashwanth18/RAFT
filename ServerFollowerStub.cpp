@@ -35,7 +35,7 @@ bool ServerFollowerStub::Send_MessageType(int messageType) {
 
 /*------------------------Responding to Leader------------------------*/
 int ServerFollowerStub::
-Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo) {
+Handle_AppendEntryRequest(ServerState *serverState) {
     ResponseAppendEntry responseAppendEntry;
     AppendEntryRequest appendEntryRequest;
 
@@ -53,7 +53,7 @@ Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo) {
 
     Send_MessageType(RESPONSE_APPEND_ENTRY);    // to-do: handle error gracefully here
 
-    Set_Leader(&appendEntryRequest, serverState, nodeInfo);
+    Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
 
@@ -80,13 +80,13 @@ int ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAp
 
 // ******* to-do: everytime nodeInfo or serverstate is accessed, make sure to use mutex lock!
 void ServerFollowerStub::
-Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState, NodeInfo *nodeInfo){
+Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
 
     int remote_term = appendEntryRequest -> Get_sender_term();
     int localTerm = serverState -> currentTerm;
 
     if (remote_term >= localTerm) {
-        nodeInfo -> leader_id = appendEntryRequest -> Get_sender_term();
+        serverState -> leader_id = appendEntryRequest -> Get_sender_term();
         serverState -> role =  FOLLOWER;
         serverState -> votedFor = -1;
         serverState -> currentTerm = remote_term;

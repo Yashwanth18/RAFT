@@ -16,11 +16,10 @@ class Raft {
 
 private:
     std::mutex lock_serverState;
-    std::mutex lock_timer;
-    std::mutex lock_nodeInfo;
+    std::mutex lock_print;
 public:
     Raft(){}
-	void FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
+	void FollowerThread(std::unique_ptr<ServerSocket> socket,
                         ServerState *serverState, ServerTimer *timer);
 
     void CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
@@ -29,8 +28,7 @@ public:
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                       NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
 
-    void Follower_ListeningThread(ServerSocket *serverSocket, NodeInfo *nodeInfo,
-                                  ServerState *serverState,
+    void Follower_ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
                                   std::vector<std::thread> *thread_vector,
                                   ServerTimer *timer);
 

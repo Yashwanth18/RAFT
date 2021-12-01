@@ -30,14 +30,17 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    bool sent_received[nodeInfo.num_peers];
 
     while(true){
         if (serverState.role == FOLLOWER) {
-            std::this_thread::sleep_for (std::chrono::seconds(2));
+            /* log replication: read from external file 2 */
+
+            std::this_thread::sleep_for (std::chrono::seconds(1));
 
             timer.Start();
             std::thread Listen_thread(&Raft::Follower_ListeningThread, &Raft,
-                                      &serverSocket, &nodeInfo, &serverState,
+                                      &serverSocket, &serverState,
                                       &thread_vector, &timer);
 
             thread_vector.push_back(std::move(Listen_thread));
@@ -55,15 +58,16 @@ int main(int argc, char *argv[]) {
         else if (serverState.role == CANDIDATE) {
 
             serverState.currentTerm ++;
-            bool sent[nodeInfo.num_peers];
+
+
             for (int i = 0; i < nodeInfo.num_peers; i++){
-                sent[i] = false;
+                sent_received[i] = false;
             }
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread candidate_thread(&Raft::CandidateThread, &Raft,
                                              i, &PeerServerInfo, &nodeInfo,
-                                             &serverState, &sent[i]);
+                                             &serverState, &sent_received[i]);
 
                 thread_vector.push_back(std::move(candidate_thread));
             }
@@ -73,7 +77,7 @@ int main(int argc, char *argv[]) {
                 int num_votes = serverState.num_votes;
                 int majority = nodeInfo.num_peers / 2;
 
-                std::cout << "num_votes: " << serverState.num_votes << '\n';
+                // std::cout << "num_votes: " << serverState.num_votes << '\n';
                 if (num_votes > majority){
                     // serverState.role = LEADER;
                     // std::cout << "I'm a leader now!" << '\n';
@@ -84,15 +88,16 @@ int main(int argc, char *argv[]) {
         }
 
         else if (serverState.role == LEADER) {
-            bool sent[nodeInfo.num_peers];
+            /* log replication: read from external file 1*/
+
             for (int i = 0; i < nodeInfo.num_peers; i++){
-                sent[i] = false;
+                sent_received[i] = false;
             }
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread leader_thread(&Raft::LeaderThread, &Raft,
                                           i, &PeerServerInfo, &nodeInfo,
-                                          &serverState, &sent[i]);
+                                          &serverState, &sent_received[i]);
 
                 thread_vector.push_back(std::move(leader_thread));
             }
