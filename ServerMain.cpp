@@ -47,10 +47,24 @@ int main(int argc, char *argv[]) {
     }
 
     else if (serverState.role == CANDIDATE) {
-        for (int i = 0; i < nodeInfo.num_peers; i++){
-            std::thread candidate_thread(&Election::CandidateThread, &election,
-                                         i, &PeerServerInfo, &nodeInfo, &serverState);
-            thread_vector.push_back(std::move(candidate_thread));
+      int sent  = false;
+        while(true){
+            if (!sent){
+              ServerOutStub Out_stub;
+
+              std::string peer_IP = PeerServerInfo[0].IP;
+              int peer_port = PeerServerInfo[0].port;
+
+              Out_stub.Init(peer_IP, peer_port);
+              int send_status = Out_stub.Send_RequestVote(&serverState, &nodeInfo);
+              std::cout<< "send_status: " << send_status << '\n';
+
+              if (send_status > 0){
+                sent = true;
+                char buf[1];
+                Out_stub.Read(buf, 1);
+              }
+            }
         }
     }
 
@@ -65,5 +79,3 @@ int main(int argc, char *argv[]) {
 }
 
 /* -------------------------------End: Main Function------------------------------------ */
-
-

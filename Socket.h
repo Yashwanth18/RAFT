@@ -29,7 +29,7 @@ public:
 	int Send(char *buffer, int size, int flags = 0);
 	int Recv(char *buffer, int size, int flags = 0);
 
-    int Unmarshal_MessageType(char *buf); // return the messageType
+  
 
 	int NagleOn(bool on_off);
 	bool IsNagleOn();

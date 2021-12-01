@@ -8,19 +8,36 @@
 void Election::
 FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
 
-    ServerFollowerStub serverFollowerStub;
-    serverFollowerStub.Init(std::move(socket));
+    // ServerFollowerStub serverFollowerStub;
+    // serverFollowerStub.Init(std::move(socket));
 
     int max_data_size = sizeof(AppendEntryRequest) + sizeof(ResponseAppendEntry) +
                         sizeof(VoteRequest) + sizeof(ResponseVote);
     char buf[max_data_size];
-    int messageType;
+    int read_status = socket -> Recv(buf, sizeof(VoteRequest), 0);
 
-    messageType = serverFollowerStub.Get_MessageType(buf, max_data_size);
+    std::cout<< "read_status: " << read_status << '\n';
 
-    if (messageType == VOTE_REQUEST){ // main functionality
-        serverFollowerStub.Handle_VoteRequest(serverState, nodeInfo, buf);
+    if (read_status > 0){
+      int messageType;
+      int net_messageType;
+      memcpy(&net_messageType, buf, sizeof(net_messageType));
+      messageType = ntohl(net_messageType);
+
+
+      if (messageType == VOTE_REQUEST){ // main functionality
+        VoteRequest voteRequest;
+        voteRequest.Unmarshal(buf);
+        voteRequest.Print();
+      }
+      char buf[1];
+      int ack = htonl(messageType);
+      memcpy(buf, &ack, sizeof(ack));
+      socket -> Send(buf, 1, 0);
     }
+
+
+
 
 }
 
@@ -28,17 +45,6 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerS
 void Election::
 CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 NodeInfo *nodeInfo, ServerState *serverState) {
-
-    bool socket_status;
-    ServerOutStub Out_stub;
-    std::string peer_IP = (*PeerServerInfo)[peer_index].IP;
-    int peer_port = (*PeerServerInfo)[peer_index].port;
-
-    socket_status = Out_stub.Init(peer_IP, peer_port);
-    std::cout << "Socket_Status: " << socket_status << '\n';
-
-    socket_status = Out_stub.Send_RequestVote(serverState, nodeInfo);
-    std::cout << "Socket_Status: " << socket_status << '\n';
 }
 
 

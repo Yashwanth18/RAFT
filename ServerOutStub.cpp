@@ -10,6 +10,11 @@ bool ServerOutStub::Init(std::string ip, int port) {
 	return socket.Init(ip, port);
 }
 
+int ServerOutStub::Read(char *buf, int size){
+		int socket_status = socket.Recv(buf, size);
+		return socket_status;
+}
+
 /* */
 int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;

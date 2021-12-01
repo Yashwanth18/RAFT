@@ -65,14 +65,6 @@ int Socket::Recv(char *buffer, int size, int flags) {
 	return 1;
 }
 
-int Socket::Unmarshal_MessageType(char *buf) {
-    int net_messageType;
-    int messageType;
-
-    memcpy(&net_messageType, buf, sizeof(net_messageType));
-    messageType = ntohl(net_messageType);
-    return messageType;
-}
 
 void Socket::Close() {
 	close(fd_);
@@ -83,7 +75,7 @@ int Socket::NagleOn(bool on_off) {
 	nagle_ = (on_off ? NAGLE_ON : NAGLE_OFF);
 	int result = setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY,
 				(void *) &nagle_, sizeof(int));
-				
+
 	if (result < 0) {
 		perror("ERROR: setsockopt failed");
 		return 0;

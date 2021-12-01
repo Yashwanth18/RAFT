@@ -11,4 +11,5 @@ public:
 	~ServerOutSocket() {}
 
 	bool Init(std::string ip, int port);
+	
 };
