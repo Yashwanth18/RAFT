@@ -16,12 +16,12 @@ public:
 
 
     void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
-    int Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
+    bool Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                          VoteRequest *VoteRequest);
 
     /* ------------------------Leader Helper Functions----------------------------*/
-    int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
+    bool SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
                                int peer_index, int heartbeat);
 
     void FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,

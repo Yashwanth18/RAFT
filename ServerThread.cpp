@@ -29,7 +29,7 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
 
     int messageType;
     ServerFollowerStub serverFollowerStub;
-    std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
+    std::unique_lock<std::mutex> ul(lock_timer, std::defer_lock);
 
     serverFollowerStub.Init(std::move(socket));
 
@@ -59,7 +59,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
              NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
     ServerOutStub Out_stub;
-    std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
+    std::unique_lock<std::mutex> ul(lock_serverState, std::defer_lock);
     std::string peer_IP;
     int peer_port;
     int messageType;
@@ -98,22 +98,23 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
     ServerOutStub Out_stub;
-    std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
+    std::unique_lock<std::mutex> ul(lock_serverState, std::defer_lock);
     std::string peer_IP;
     int peer_port;
     int messageType;
+    bool socket_status;
 
     ul.lock();  // debugging purposes only!
 
-    if (!*sent){
+    if (!*sent){        // to-do: while true and break when remote socket closed
 
         peer_IP = (*PeerServerInfo)[peer_index].IP;
         peer_port = (*PeerServerInfo)[peer_index].port;
-        Out_stub.Init(peer_IP, peer_port);
+        socket_status = Out_stub.Init(peer_IP, peer_port);
 
-        int send_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+        socket_status = Out_stub.Send_MessageType(VOTE_REQUEST);
 
-        if (send_status){
+        if (socket_status){
             *sent = true;
             Out_stub.Send_RequestVote(serverState, nodeInfo);
         }

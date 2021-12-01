@@ -208,7 +208,7 @@ Handle_VoteRequest(ServerState *serverState) {
 
     success = Decide_Vote(serverState, &voteRequest);
     responseVote.Set(serverState -> currentTerm, success);
-    responseVote.Print();
+
 
     Send_MessageType(RESPONSE_VOTE);
     send_status = SendResponseVote(&responseVote);

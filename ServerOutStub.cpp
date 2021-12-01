@@ -35,9 +35,9 @@ bool ServerOutStub::Send_MessageType(int messageType) {
 
 /*--------------------------Candidate Helper Functions---------------------------- */
 
-int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
+bool ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;
-    int send_status;
+    bool send_status;
     int size = VoteRequest.Size();
     char buf[size];
 
@@ -94,11 +94,11 @@ void ServerOutStub::Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverS
 /*--------------------------Leader Helper Functions---------------------------- */
 
 
-int ServerOutStub::
+bool ServerOutStub::
 SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int heartbeat) {
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
-    int send_status;
+    bool send_status;
 
     FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, heartbeat);
 
@@ -158,7 +158,7 @@ void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
     local_term = serverState -> currentTerm;
 
     if (remote_term > local_term){   // check if we are stale
-        std::cout << "remote_term: " << remote_term << '\n';
+        std::cout << "\nremote_term: " << remote_term << '\n';
         std::cout << "local_term: " << local_term << '\n';
         std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
 

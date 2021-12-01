@@ -67,8 +67,17 @@ int main(int argc, char *argv[]) {
 
                 thread_vector.push_back(std::move(candidate_thread));
             }
+
             while (true) {
 
+                int num_votes = serverState.num_votes;
+                int majority = nodeInfo.num_peers / 2;
+
+                if (num_votes > majority){
+                    // serverState.role = LEADER;
+                    std::cout << "I'm a leader now!" << '\n';
+                    // break;
+                }
             }
 
         }

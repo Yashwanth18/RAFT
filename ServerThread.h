@@ -15,7 +15,9 @@
 class Raft {
 
 private:
-    std::mutex lock_state;
+    std::mutex lock_serverState;
+    std::mutex lock_timer;
+    std::mutex lock_nodeInfo;
 public:
     Raft(){}
 	void FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
