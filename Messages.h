@@ -62,7 +62,6 @@ struct NodeInfo{
 /* ----------------Request Vote Class-----------------*/
 class VoteRequest {
 private:
-    int messageType;
     int term;
     int candidateId;
     int lastLogIndex;
@@ -70,14 +69,12 @@ private:
 
 public:
     VoteRequest();
-    void Set(int _messageType, int _term, int _candidateId,
-             int _lastLogIndex, int _lastLogTerm);
+    void Set(int _term, int _candidateId, int _lastLogIndex, int _lastLogTerm);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
 
     /* get private variable function */
-    int Get_message_type();
     int Get_term();
     int Get_candidateId();
     int Get_last_log_index();
@@ -86,19 +83,16 @@ public:
 
     int Size();
     void Print();
-    void Print_MessageType();
 };
 
 /* -----------------Response Vote Class -----------------*/
 class ResponseVote{
 private:
-    int messageType;
     int term;
     int voteGranted;
-    int node_id;
 public:
     ResponseVote();
-    void Set(int _messageType, int _term, int _voteGranted, int _node_id);
+    void Set(int _term, int _voteGranted);
 
     void Marshal(char *buffer);
     void Unmarshal(char *buffer);
@@ -107,9 +101,7 @@ public:
     void Print();
 
     /* get private variable function */
-    int Get_messageType();
     int Get_voteGranted();
-    int Get_nodeID();
     int Get_term();
 
 };
@@ -119,7 +111,6 @@ public:
 /* -----AppendEntryRequest Class-----*/
 class AppendEntryRequest{
 private:
-    int messageType;
     int sender_term;     // term of the server that sent the request
     int leaderId;        // so follower can redirect clients
     int leaderCommit;    // leader’s commitIndex
@@ -129,13 +120,12 @@ private:
     int prevLogIndex;    // index of log entry immediately preceding new ones
 
     LogEntry logEntry;
-    int LogRep_RequestID;
+    int logRep_ID;
 
 public:
     AppendEntryRequest();
-    void Set(int _messageType, int _sender_term, int _leaderId,
-             int _prevLogTerm, int _prevLogIndex,
-             LogEntry * _logEntry, int _leaderCommit, int _LogRep_RequestID);
+    void Set(int _sender_term, int _leaderId, int _prevLogTerm, int _prevLogIndex,
+             LogEntry * _logEntry, int _leaderCommit, int _logRep_ID);
 
     void Marshal(char *buffer);
     void Unmarshal(char * buffer);
@@ -143,14 +133,13 @@ public:
     int Size();
 
     /* Get private variables */
-    int Get_messageType();
-    int Get_term();
-    int Get_nodeID();
+    int Get_sender_term();
+    int Get_leaderId();
     int Get_prevLogTerm();
     int  Get_prevLogIndex();
     LogEntry Get_LogEntry();
     int  Get_leaderCommit();
-    int Get_LogRep_RequestID();
+    int Get_logRep_ID();
 
     void Print();
 };
@@ -158,15 +147,12 @@ public:
 /* -----ResponseAppendEntry Class-----*/
 class ResponseAppendEntry{
 private:
-    int messageType;
     int term;     // currentTerm of the follower, for leader to update itself
     int success;  // true if follower contained entry matching prevLogIndex and prevLogTerm
-    int nodeID;   // for the leader to keep track of which follower node has replicated the log
     int ResponseID;
-
 public:
     ResponseAppendEntry();
-    void Set(int _messageType, int _term, int _success, int _nodeID, int _LogRep_RequestID);
+    void Set(int _term, int _success, int _ResponseID);
 
     void Marshal(char *buffer);
     void Unmarshal(char * buffer);
@@ -174,12 +160,9 @@ public:
     int Size();
 
     /* Get private variables */
-    int Get_messageType();
     int Get_term();
     int Get_success();
-    int Get_nodeID();
     int Get_ResponseID();
-
 
     void Print();
 };

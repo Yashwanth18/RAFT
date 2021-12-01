@@ -45,7 +45,7 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf) {
     voteRequest.Print();
 
     success = Decide_Vote(serverState, &voteRequest);
-    ResponseVote.Set(RESPONSE_VOTE, serverState -> currentTerm, success, nodeInfo -> node_id);
+    ResponseVote.Set(serverState -> currentTerm, success);
     send_status = SendResponseVote(&ResponseVote);
 
     return send_status;

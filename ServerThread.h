@@ -23,7 +23,8 @@ public:
     void CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                          NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
 
-    void LeaderThread();
+    void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
+                      NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
 
 };
 #endif // end of #ifndef __SERVERTHREAD_H__
