@@ -16,16 +16,19 @@ FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerS
 
     if (messageType == VOTE_REQUEST) { // main functionality
         /* handle vote request */
-
         serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
+    }
+    else if (messageType == APPEND_ENTRY_REQUEST){
+
+        serverFollowerStub.Handle_AppendEntryRequest(serverState, nodeInfo);
+
     }
 
 }
 
-
 void Election::
-CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
+LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
+             NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
     ServerOutStub Out_stub;
     std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
@@ -41,14 +44,20 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         peer_port = (*PeerServerInfo)[peer_index].port;
         Out_stub.Init(peer_IP, peer_port);
 
-        int send_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+        int send_status = Out_stub.Send_MessageType(APPEND_ENTRY_REQUEST);
 
         if (send_status){
             *sent = true;
-            messageType = Out_stub.Read_MessageType();
-            std::cout << "messageType: " << messageType << '\n';
-
+            Out_stub.SendAppendEntryRequest(serverState, nodeInfo, peer_index, -1);
         }
+
+        messageType = Out_stub.Read_MessageType();
+        std::cout << "messageType: " << messageType << '\n';
+
+        if (messageType == RESPONSE_APPEND_ENTRY){
+            Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
+        }
+
     }
     ul.unlock();    // debugging purposes only!
 }
@@ -56,8 +65,8 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
 
 void Election::
-LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-             NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
+CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
+                NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
     ServerOutStub Out_stub;
     std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);

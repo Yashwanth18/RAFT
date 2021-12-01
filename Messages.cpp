@@ -161,13 +161,13 @@ AppendEntryRequest::AppendEntryRequest()  {
     logEntry.arg1 = -1;
     logEntry.arg2 = -1;
     leaderCommit = -1;
-    logRep_ID = -1;
+    logRepID = -1;
 }
 
 
 void AppendEntryRequest:: Set( int _sender_term, int _leaderId,
                               int _prevLogTerm, int _prevLogIndex,
-                              LogEntry * _logEntry, int _leaderCommit, int _logRep_ID){
+                              LogEntry * _logEntry, int _leaderCommit, int _logRepID){
 
     sender_term = _sender_term;
     leaderId = _leaderId;
@@ -175,7 +175,7 @@ void AppendEntryRequest:: Set( int _sender_term, int _leaderId,
     prevLogIndex = _prevLogIndex;
     logEntry = *_logEntry;
     leaderCommit = _leaderCommit;
-    logRep_ID = _logRep_ID;
+    logRepID = _logRepID;
 }
 
 
@@ -189,7 +189,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     int net_arg1;
     int net_arg2;
     int net_leaderCommit;
-    int net_logRep_ID;
+    int net_logRepID;
 
     int offset = 0;
 
@@ -220,7 +220,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     memcpy(&net_leaderCommit, buffer + offset, sizeof(net_leaderCommit));
     offset += sizeof(net_leaderCommit);
 
-    memcpy(&net_logRep_ID, buffer + offset, sizeof(net_logRep_ID));
+    memcpy(&net_logRepID, buffer + offset, sizeof(net_logRepID));
 
     sender_term = ntohl(net_sender_term);
     leaderId = ntohl(net_leaderId);
@@ -231,7 +231,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     logEntry.arg1 = ntohl(net_arg1);
     logEntry.arg2 = ntohl(net_arg2);
     leaderCommit = ntohl(net_leaderCommit);
-    logRep_ID = ntohl(net_logRep_ID);
+    logRepID = ntohl(net_logRepID);
 }
 
 void AppendEntryRequest::Marshal(char *buffer){
@@ -247,7 +247,7 @@ void AppendEntryRequest::Marshal(char *buffer){
 
     int net_arg2 = htonl(logEntry.arg2);
     int net_leaderCommit = htonl(leaderCommit);
-    int net_logRep_ID = htonl(logRep_ID);
+    int net_logRepID = htonl(logRepID);
 
     int offset = 0;
 
@@ -278,13 +278,13 @@ void AppendEntryRequest::Marshal(char *buffer){
     memcpy(buffer + offset, &net_leaderCommit, sizeof(net_leaderCommit));
     offset += sizeof(net_leaderCommit);
 
-    memcpy(buffer + offset, &net_logRep_ID, sizeof(net_logRep_ID));
+    memcpy(buffer + offset, &net_logRepID, sizeof(net_logRepID));
 }
 
 int AppendEntryRequest::Size() {
     return  sizeof(sender_term) + sizeof(leaderId) +
             sizeof(prevLogTerm) + sizeof(prevLogIndex) +
-           sizeof(logEntry )+ sizeof (leaderCommit) + sizeof (logRep_ID);
+           sizeof(logEntry )+ sizeof (leaderCommit) + sizeof (logRepID);
 }
 
 void AppendEntryRequest::Print(){
@@ -304,7 +304,7 @@ void AppendEntryRequest::Print(){
         std::cout << "arg1 : " << logEntry.arg1 << '\n';
         std::cout << "arg2 : " << logEntry.arg2 << '\n';
         std::cout << "leaderCommit : " << leaderCommit << '\n';
-        std::cout << "logRep_ID : " << logRep_ID << '\n';
+        std::cout << "logRepID : " << logRepID << '\n';
         std::cout << "" << '\n';
     }
 }
@@ -334,8 +334,8 @@ int AppendEntryRequest:: Get_leaderCommit(){
     return leaderCommit;
 }
 
-int AppendEntryRequest::Get_logRep_ID() {
-    return logRep_ID;
+int AppendEntryRequest::Get_logRepID() {
+    return logRepID;
 }
 
 
@@ -356,22 +356,19 @@ Set( int _term, int _success, int _ResponseID){
 
 
 void ResponseAppendEntry::Unmarshal(char *buffer){
-    int net_;
+
     int net_term;
     int net_success;
-    int net_nodeID;
+
     int net_ResponseID;
 
     int offset = 0;
 
-    memcpy(&net_, buffer + offset, sizeof(net_));
-    offset += sizeof(net_);
+
     memcpy(&net_term, buffer + offset, sizeof(net_term));
     offset += sizeof(net_term);
     memcpy(&net_success, buffer + offset, sizeof(net_success));
     offset += sizeof(net_success);
-    memcpy(&net_nodeID, buffer + offset, sizeof(net_nodeID));
-    offset += sizeof(net_nodeID);
     memcpy(&net_ResponseID, buffer + offset, sizeof(net_ResponseID));
 
     term = ntohl(net_term);
@@ -406,7 +403,6 @@ int ResponseAppendEntry::Get_term(){
 int ResponseAppendEntry::Get_success(){
     return success;
 }
-
 
 int ResponseAppendEntry::Get_ResponseID() {
     return ResponseID;

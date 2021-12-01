@@ -11,7 +11,7 @@ local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 
-port_server_root=1010
+port_server_root=1011
 port_client=101080
 IP_root="10.200.125."
 IP_local="127.0.0.1"

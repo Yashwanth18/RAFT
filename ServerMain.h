@@ -22,7 +22,7 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     nodeInfo -> client_port = atoi(argv[2]);
     nodeInfo -> node_id = atoi(argv[3]);
     nodeInfo -> num_peers = atoi(argv[4]);
-    nodeInfo -> num_votes = 0;
+    nodeInfo -> leader_id = -1;
     return 1;
 }
 
@@ -43,7 +43,7 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
         serverState -> nextIndex.push_back(1);
     }
 
-    serverState -> leader_id = -1;
+    serverState -> num_votes = 0;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
 

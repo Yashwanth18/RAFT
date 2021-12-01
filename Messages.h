@@ -13,7 +13,6 @@
 #define RESPONSE_VOTE 2
 #define APPEND_ENTRY_REQUEST 3
 #define RESPONSE_APPEND_ENTRY 4
-#define HEARTBEAT 0
 
 
 struct Peer_Info{
@@ -46,16 +45,16 @@ struct ServerState{
 
     /* */
     int role;
-    int leader_id;
+    int num_votes;
 };
 
 struct NodeInfo{
     int node_id;
-    int num_peers;
+    int leader_id;
 
+    int num_peers;
     int server_port;
     int client_port;
-    int num_votes;
 };
 /*-----------------------------------Leader Election----------------------------------*/
 
@@ -120,12 +119,12 @@ private:
     int prevLogIndex;    // index of log entry immediately preceding new ones
 
     LogEntry logEntry;
-    int logRep_ID;
+    int logRepID;
 
 public:
     AppendEntryRequest();
     void Set(int _sender_term, int _leaderId, int _prevLogTerm, int _prevLogIndex,
-             LogEntry * _logEntry, int _leaderCommit, int _logRep_ID);
+             LogEntry * _logEntry, int _leaderCommit, int _logRepID);
 
     void Marshal(char *buffer);
     void Unmarshal(char * buffer);
@@ -136,10 +135,10 @@ public:
     int Get_sender_term();
     int Get_leaderId();
     int Get_prevLogTerm();
-    int  Get_prevLogIndex();
+    int Get_prevLogIndex();
     LogEntry Get_LogEntry();
-    int  Get_leaderCommit();
-    int Get_logRep_ID();
+    int Get_leaderCommit();
+    int Get_logRepID();
 
     void Print();
 };
