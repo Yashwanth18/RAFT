@@ -37,7 +37,7 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> commitIndex = 0;
     serverState -> last_applied = 0;
 
-    /* volatile state on leaders (Reinitialized after election) */
+    /* volatile state on leaders (Reinitialized after Raft) */
     for (int i = 0; i < num_peers; i++){
         serverState -> matchIndex.push_back(0);
         serverState -> nextIndex.push_back(1);

@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
 
     std::vector <std::thread> thread_vector;
-    Election election;
+    Raft Raft;
 
     // Each server has a listening port for peer servers
     if (!serverSocket.Init(nodeInfo.server_port)) {
@@ -30,55 +30,59 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    timer.Start();
 
-    if (serverState.role == FOLLOWER) {
-        std::thread Listen_thread(&Election::Follower_ListeningThread, &election,
-                                  &serverSocket, &nodeInfo, &serverState,
-                                  &thread_vector);
-        thread_vector.push_back(std::move(Listen_thread));
+    while(true){
+        if (serverState.role == FOLLOWER) {
+            std::this_thread::sleep_for (std::chrono::seconds(2));
 
-        while (true) {
-//            if (timer.Check_election_timeout()){
-//                serverState.role = CANDIDATE;
-//                break;
-//            }
-            timer.Print_elapsed_time();
-        }
-    }
+            timer.Start();
+            std::thread Listen_thread(&Raft::Follower_ListeningThread, &Raft,
+                                      &serverSocket, &nodeInfo, &serverState,
+                                      &thread_vector, &timer);
+            thread_vector.push_back(std::move(Listen_thread));
 
-    else if (serverState.role == CANDIDATE) {
-        bool sent = false;
-        while (true) {
-            std::thread candidate_thread(&Election::CandidateThread, &election,
-                                         0, &PeerServerInfo, &nodeInfo,
-                                         &serverState, &sent);
-
-            thread_vector.push_back(std::move(candidate_thread));
-        }
-    }
-
-    else if (serverState.role == LEADER) {
-        bool sent[nodeInfo.num_peers];
-        for (int i = 0; i < nodeInfo.num_peers; i++){
-            sent[i] = false;
-        }
-
-        while (true) {
-            for (int i = 0; i < nodeInfo.num_peers; i++){
-                std::thread leader_thread(&Election::LeaderThread, &election,
-                                          i, &PeerServerInfo, &nodeInfo,
-                                          &serverState, &sent[i]);
-
-                thread_vector.push_back(std::move(leader_thread));
+            while (true) {
+                if (timer.Check_Election_timeout()){
+                    // serverState.role = CANDIDATE;
+                    std::cout << "I'm a candidate now!" << '\n';
+                    break;
+                }
+                timer.Print_elapsed_time();
             }
         }
-    }
 
-    else {
-        std::cout << "Undefined Server Role Initialization" << '\n';
-    }
+        else if (serverState.role == CANDIDATE) {
+            bool sent = false;
+            while (true) {
+                std::thread candidate_thread(&Raft::CandidateThread, &Raft,
+                                             0, &PeerServerInfo, &nodeInfo,
+                                             &serverState, &sent);
 
+                thread_vector.push_back(std::move(candidate_thread));
+            }
+        }
+
+        else if (serverState.role == LEADER) {
+            bool sent[nodeInfo.num_peers];
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                sent[i] = false;
+            }
+
+            while (true) {
+                for (int i = 0; i < nodeInfo.num_peers; i++){
+                    std::thread leader_thread(&Raft::LeaderThread, &Raft,
+                                              i, &PeerServerInfo, &nodeInfo,
+                                              &serverState, &sent[i]);
+
+                    thread_vector.push_back(std::move(leader_thread));
+                }
+            }
+        }
+
+        else {
+            std::cout << "Undefined Server Role Initialization" << '\n';
+        }
+    }
 }
 
 /* -------------------------------End: Main Function------------------------------------ */

@@ -4,44 +4,56 @@
 #include "ServerFollowerStub.h"
 #include "ServerOutStub.h"
 
-void Election::
+/* Massive to-do: check all race condition. Timer, serverState, nodeInfo */
+
+void Raft::
 Follower_ListeningThread(ServerSocket *serverSocket, NodeInfo *nodeInfo,
                          ServerState *serverState,
-                         std::vector<std::thread> *thread_vector){
+                         std::vector<std::thread> *thread_vector, ServerTimer *timer){
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
         new_socket = serverSocket -> Accept();
         std::cout << "\nAccepted Connection from peer server" << '\n';
 
-        std::thread follower_thread(&Election::FollowerThread, this,
-                                    std::move(new_socket), nodeInfo, serverState);
+        std::thread follower_thread(&Raft::FollowerThread, this,
+                                    std::move(new_socket), nodeInfo,
+                                    serverState, timer);
 
         thread_vector -> push_back(std::move(follower_thread));
     }
 }
 
-void Election::
-FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo, ServerState *serverState) {
+void Raft::
+FollowerThread(std::unique_ptr<ServerSocket> socket, NodeInfo *nodeInfo,
+               ServerState *serverState, ServerTimer *timer) {
+
     int messageType;
     ServerFollowerStub serverFollowerStub;
+    std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
+
     serverFollowerStub.Init(std::move(socket));
 
-    messageType = serverFollowerStub.Read_MessageType();
-    std::cout << "messageType: " << messageType << '\n';
+    while(true){    // break if connection closed by the other sides
+        ul.lock();
+        timer->Restart(); // debug only!
+        ul.unlock();
 
-    if (messageType == VOTE_REQUEST) { // main functionality
-        /* handle vote request */
-        serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
+        messageType = serverFollowerStub.Read_MessageType();
+        std::cout << "messageType: " << messageType << '\n';
+
+        if (messageType == VOTE_REQUEST) { // main functionality
+            /* handle vote request */
+            serverFollowerStub.Send_MessageType(RESPONSE_VOTE);
+        }
+        else if (messageType == APPEND_ENTRY_REQUEST){
+            timer->Restart();
+            serverFollowerStub.Handle_AppendEntryRequest(serverState, nodeInfo);
+
+        }
     }
-    else if (messageType == APPEND_ENTRY_REQUEST){
-
-        serverFollowerStub.Handle_AppendEntryRequest(serverState, nodeInfo);
-
-    }
-
 }
 
-void Election::
+void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
              NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
@@ -80,7 +92,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
 
 
-void Election::
+void Raft::
 CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 

@@ -39,7 +39,7 @@ struct ServerState{
     int commitIndex;
     int last_applied;
 
-    /* volatile state on leaders (Reinitialized after election) */
+    /* volatile state on leaders (Reinitialized after Raft) */
     std::vector<int> nextIndex;     // size = num_peers
     std::vector<int> matchIndex;    // size = num_peers
 
@@ -56,7 +56,7 @@ struct NodeInfo{
     int server_port;
     int client_port;
 };
-/*-----------------------------------Leader Election----------------------------------*/
+/*-----------------------------------Leader Raft----------------------------------*/
 
 /* ----------------Request Vote Class-----------------*/
 class VoteRequest {

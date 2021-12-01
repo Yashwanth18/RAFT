@@ -18,7 +18,7 @@ public:
     int Read_MessageType();
     bool Send_MessageType(int messageType);
 
-    /* Election */
+    /* Raft */
     int Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo, char *buf);
     int SendResponseVote(ResponseVote *ResponseVote);
     bool Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest);

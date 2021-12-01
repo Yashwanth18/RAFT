@@ -16,12 +16,8 @@ void ServerTimer::Restart() {
 	start_time = high_resolution_clock::now();
 }
 
-/* poll timeout small compared to election_timeout */
-int ServerTimer::Poll_timeout(){
-	return election_timeout.count() / 3; // Balance between jamming the receiver and preventing election timeout
-}
 
-int ServerTimer::Check_election_timeout() {
+int ServerTimer::Check_Election_timeout() {
 	elapsed_time = high_resolution_clock::now() - start_time;
 	return (elapsed_time > election_timeout);
 }
