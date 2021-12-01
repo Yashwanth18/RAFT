@@ -26,5 +26,9 @@ public:
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                       NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
 
+    void Follower_ListeningThread(ServerSocket *serverSocket, NodeInfo *nodeInfo,
+                                  ServerState *serverState,
+                                  std::vector<std::thread> *thread_vector);
+
 };
 #endif // end of #ifndef __SERVERTHREAD_H__

@@ -212,6 +212,7 @@ Handle_VoteRequest(ServerState *serverState, NodeInfo *nodeInfo) {
     return send_status;
 }
 
+
 int ServerFollowerStub::SendResponseVote(ResponseVote *ResponseVote) {
     int size = ResponseVote -> Size();
     char buf[size];

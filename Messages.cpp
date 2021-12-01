@@ -101,16 +101,16 @@ void ResponseVote::Set( int _term, int _voteGranted){
 }
 
 void ResponseVote::Unmarshal(char *buffer){
-    int net_term;
-    int net_vote_granted;
+  int net_term;
+  int net_vote_granted;
 
-    int offset = 0; // first 4 bytes are for  field
-    memcpy(&net_term, buffer + offset, sizeof(net_term));
-    offset += sizeof(net_term);
-    memcpy(&net_vote_granted, buffer + offset, sizeof(net_vote_granted));
+  int offset = 0; // first 4 bytes are for  field
+  memcpy(&net_term, buffer + offset, sizeof(net_term));
+  offset += sizeof(net_term);
+  memcpy(&net_vote_granted, buffer + offset, sizeof(net_vote_granted));
 
-    term = ntohl(net_term);
-    voteGranted = ntohl(net_vote_granted);
+  term = ntohl(net_term);
+  voteGranted = ntohl(net_vote_granted);
 }
 
 void ResponseVote::Marshal(char *buffer){

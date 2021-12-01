@@ -14,7 +14,6 @@ public:
     bool Send_MessageType(int messageType);
     int Read_MessageType();     // return the messageType
 
-    /*----------------------- Candidate ------------------------------- */
     void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
     int Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo, VoteRequest *VoteRequest);

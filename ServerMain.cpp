@@ -19,50 +19,64 @@ int main(int argc, char *argv[]) {
     Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
 
     ServerSocket serverSocket;
-    std::unique_ptr<ServerSocket> new_socket;
 
-    std::vector<std::thread> thread_vector;
+
+    std::vector <std::thread> thread_vector;
     Election election;
+
+    // Each server has a listening port for peer servers
+    if (!serverSocket.Init(nodeInfo.server_port)) {
+        std::cout << "Socket initialization failed" << std::endl;
+        return 0;
+    }
 
     timer.Start();
 
     if (serverState.role == FOLLOWER) {
-
-        if (!serverSocket.Init(nodeInfo.server_port)) {
-            std::cout << "Socket initialization failed" << std::endl;
-            return 0;
-        }
+        std::thread Listen_thread(&Election::Follower_ListeningThread, &election,
+                                  &serverSocket, &nodeInfo, &serverState,
+                                  &thread_vector);
+        thread_vector.push_back(std::move(Listen_thread));
 
         while (true) {
-            new_socket = serverSocket.Accept();
-            std::cout << "\nAccepted Connection from peer server" << '\n';
-
-            std::thread follower_thread(&Election::FollowerThread, &election,
-                                        std::move(new_socket), &nodeInfo, &serverState);
-
-            thread_vector.push_back(std::move(follower_thread));
+//            if (timer.Check_election_timeout()){
+//                serverState.role = CANDIDATE;
+//                break;
+//            }
+            timer.Print_elapsed_time();
         }
     }
 
     else if (serverState.role == CANDIDATE) {
-        bool sent = false;
+      bool sent[nodeInfo.num_peers];
+      for (int i = 0; i < nodeInfo.num_peers; i++){
+        sent[i] = false;
+      }
         while (true) {
+          for (int i = 0; i < nodeInfo.num_peers; i++) {
             std::thread candidate_thread(&Election::CandidateThread, &election,
                                          0, &PeerServerInfo, &nodeInfo,
-                                         &serverState, &sent);
+                                         &serverState, &sent[i]);
 
             thread_vector.push_back(std::move(candidate_thread));
+          }
         }
     }
 
     else if (serverState.role == LEADER) {
-        bool sent = false;
-        while (true) {
-            std::thread leader_thread(&Election::LeaderThread, &election,
-                                         0, &PeerServerInfo, &nodeInfo,
-                                         &serverState, &sent);
+        bool sent[nodeInfo.num_peers];
+        for (int i = 0; i < nodeInfo.num_peers; i++){
+            sent[i] = false;
+        }
 
-            thread_vector.push_back(std::move(leader_thread));
+        while (true) {
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                std::thread leader_thread(&Election::LeaderThread, &election,
+                                          i, &PeerServerInfo, &nodeInfo,
+                                          &serverState, &sent[i]);
+
+                thread_vector.push_back(std::move(leader_thread));
+            }
         }
     }
 

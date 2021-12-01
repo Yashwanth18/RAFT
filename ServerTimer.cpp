@@ -27,6 +27,7 @@ int ServerTimer::Check_election_timeout() {
 }
 
 void ServerTimer::Print_elapsed_time() {
+    elapsed_time = high_resolution_clock::now() - start_time;
 	std::cout << std::fixed << std::setprecision(3);
 	std::cout << "elapsed_time: " << elapsed_time.count() << std::endl;
 }
