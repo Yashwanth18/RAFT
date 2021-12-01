@@ -1,28 +1,20 @@
-#include <thread>
-
 #include "ServerMain.h"
-#include "ServerSocket.h"
-#include "ServerOutStub.h"
-#include "ServerThread.h"
+
 
 
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo nodeInfo;
     ServerState serverState;
-
-    std::vector<Peer_Info> PeerServerInfo;
-    std::map <int,int> PeerIdIndexMap;
-
-    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap))      { return 0; }
-    if (!Init_NodeInfo(&nodeInfo, argc, argv))                                  { return 0; }
-    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
-
     ServerSocket serverSocket;
-
+    std::vector<Peer_Info> PeerServerInfo;
 
     std::vector <std::thread> thread_vector;
-    Raft Raft;
+    Raft raft;
+
+    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
+    if (!Init_NodeInfo(&nodeInfo, argc, argv))                      { return 0; }
+    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
 
     // Each server has a listening port for peer servers
     if (!serverSocket.Init(nodeInfo.server_port)) {
@@ -30,20 +22,19 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    bool sent_received[nodeInfo.num_peers];
-
     while(true){
+
         if (serverState.role == FOLLOWER) {
             /* log replication: read from external file 2 */
 
             std::this_thread::sleep_for (std::chrono::seconds(1));
 
             timer.Start();
-            std::thread Listen_thread(&Raft::Follower_ListeningThread, &Raft,
+            std::thread follower_listenThread(&Raft::Follower_ListeningThread, &raft,
                                       &serverSocket, &serverState,
                                       &thread_vector, &timer);
 
-            thread_vector.push_back(std::move(Listen_thread));
+            thread_vector.push_back(std::move(follower_listenThread));
 
             while (true) {
 //                if (timer.Check_Election_timeout()){
@@ -56,54 +47,21 @@ int main(int argc, char *argv[]) {
         }
 
         else if (serverState.role == CANDIDATE) {
-
-            serverState.currentTerm ++;
-
-
-            for (int i = 0; i < nodeInfo.num_peers; i++){
-                sent_received[i] = false;
-            }
-
-            for (int i = 0; i < nodeInfo.num_peers; i++){
-                std::thread candidate_thread(&Raft::CandidateThread, &Raft,
-                                             i, &PeerServerInfo, &nodeInfo,
-                                             &serverState, &sent_received[i]);
-
-                thread_vector.push_back(std::move(candidate_thread));
-            }
-
-            while (true) {
-
-                int num_votes = serverState.num_votes;
-                int majority = nodeInfo.num_peers / 2;
-
-                // std::cout << "num_votes: " << serverState.num_votes << '\n';
-                if (num_votes > majority){
-                    // serverState.role = LEADER;
-                    // std::cout << "I'm a leader now!" << '\n';
-                    // break;
-                }
-            }
-
+            Candidate_Role(&serverState, &nodeInfo, &PeerServerInfo, &thread_vector, &raft);
         }
 
         else if (serverState.role == LEADER) {
-            /* log replication: read from external file 1*/
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
-                sent_received[i] = false;
-            }
-
-            for (int i = 0; i < nodeInfo.num_peers; i++){
-                std::thread leader_thread(&Raft::LeaderThread, &Raft,
-                                          i, &PeerServerInfo, &nodeInfo,
-                                          &serverState, &sent_received[i]);
-
+                std::thread leader_thread(&Raft::LeaderThread, &raft, i, &PeerServerInfo,
+                                          &nodeInfo,&serverState);
                 thread_vector.push_back(std::move(leader_thread));
             }
-            while (true) {
 
+            while (true) {
+                // just so that we do not spin infinite number of threads
             }
+
         }
 
         else {
@@ -113,3 +71,37 @@ int main(int argc, char *argv[]) {
 }
 
 /* -------------------------------End: Main Function------------------------------------ */
+
+void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
+                    std::vector<Peer_Info> *PeerServerInfo,
+                    std::vector <std::thread> *thread_vector, Raft *raft){
+
+    int num_votes;
+    int majority;
+    std::mutex lk_State;
+
+    serverState -> currentTerm ++;
+    majority = nodeInfo -> num_peers / 2;
+
+
+    for (int i = 0; i < nodeInfo -> num_peers; i++){
+        std::thread candidate_thread(&Raft::CandidateThread, raft,
+                                     i, PeerServerInfo, nodeInfo,
+                                     serverState);
+
+        thread_vector -> push_back(std::move(candidate_thread));
+    }
+
+    while (true) {
+        lk_State.lock();
+        num_votes = serverState -> num_votes;
+        std::cout << "num_votes: " << num_votes << '\n';
+        lk_State.unlock();
+
+        if (num_votes > majority){
+            serverState -> role = LEADER;
+            std::cout << "I'm a leader now!" << '\n';
+            break;
+        }
+    }
+}

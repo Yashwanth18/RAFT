@@ -21,34 +21,29 @@ Follower_ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
     }
 }
 
-void Raft::
-FollowerThread(std::unique_ptr<ServerSocket> socket,
-               ServerState *serverState, ServerTimer *timer) {
+void Raft::FollowerThread(std::unique_ptr<ServerSocket> socket,
+                          ServerState *serverState, ServerTimer *timer) {
 
     int messageType;
     ServerFollowerStub serverFollowerStub;
-    std::unique_lock<std::mutex> ul_serverState(lock_serverState, std::defer_lock);
-
     serverFollowerStub.Init(std::move(socket));
 
     messageType = serverFollowerStub.Read_MessageType();
 
     if (messageType == VOTE_REQUEST) { // main functionality
-        /* handle vote request */
+        timer -> Atomic_Restart();
         serverFollowerStub.Handle_VoteRequest(serverState);
     }
 
     else if (messageType == APPEND_ENTRY_REQUEST){
         timer -> Atomic_Restart();
         serverFollowerStub.Handle_AppendEntryRequest(serverState);
-
     }
 
 }
 
-void Raft::
-CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                NodeInfo *nodeInfo, ServerState *serverState, bool *sent_received) {
+void Raft::CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
+                           NodeInfo *nodeInfo, ServerState *serverState) {
 
     ServerOutStub Out_stub;
     std::string peer_IP;
@@ -59,7 +54,8 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
 
-    while (!*sent_received){        // to-do: while true and break when remote socket closed
+    bool job_done = false;
+    while (!job_done){        // to-do: while true and break when remote socket closed
 
         socket_status = Out_stub.Init(peer_IP, peer_port);
 
@@ -82,7 +78,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         }
 
         if (socket_status){
-            *sent_received = true;
+            job_done = true;
         }
 
     }
@@ -91,7 +87,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
 void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-             NodeInfo *nodeInfo, ServerState *serverState, bool *sent_received) {
+             NodeInfo *nodeInfo, ServerState *serverState) {
 
     ServerOutStub Out_stub;
     std::string peer_IP;
@@ -103,7 +99,8 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
 
-    while (!*sent_received){
+    bool job_done = false;
+    while (!job_done){       // to-do: this is really an infinite loop
 
         socket_status = Out_stub.Init(peer_IP, peer_port);
 
@@ -118,7 +115,6 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         if (socket_status){
             messageType = Out_stub.Read_MessageType();
-            std::cout << "messageType: " << messageType << '\n';
 
             if (messageType == RESPONSE_APPEND_ENTRY){
                 socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
@@ -126,7 +122,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         }
 
         if (socket_status){
-            *sent_received = true;
+            job_done = true;
         }
     }
 }

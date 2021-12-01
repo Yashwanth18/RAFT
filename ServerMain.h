@@ -5,7 +5,11 @@
 #include <sys/ioctl.h>
 #include <iomanip>
 #include <map>
+#include <thread>
 
+#include "ServerSocket.h"
+#include "ServerOutStub.h"
+#include "ServerThread.h"
 #include "Messages.h"
 #include "ServerTimer.h"
 
@@ -43,15 +47,14 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> last_applied = 0;
 
 
-    serverState -> num_votes = 0;
+    serverState -> num_votes = 1;
     serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
 
 
 /* return 0 on failure and 1 on success */
-int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServerInfo,
-                       std::map<int,int> *PeerIdIndexMap){
+int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServerInfo){
 
     int num_peers = atoi(argv[4]);
 
@@ -71,9 +74,13 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
 
             Peer_Info peer_server_info {unique_id, IP, server_port};
             PeerServerInfo -> push_back(peer_server_info);
-            (*PeerIdIndexMap)[unique_id] = i-1;
         }
 
     } // END: for loop
     return 1;
 }
+
+
+void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
+                    std::vector<Peer_Info> *PeerServerInfo,
+                    std::vector <std::thread> *thread_vector, Raft *raft);

@@ -23,10 +23,10 @@ public:
                         ServerState *serverState, ServerTimer *timer);
 
     void CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                         NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
+                         NodeInfo *nodeInfo, ServerState *serverState);
 
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                      NodeInfo *nodeInfo, ServerState *serverState, bool *sent);
+                      NodeInfo *nodeInfo, ServerState *serverState);
 
     void Follower_ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
                                   std::vector<std::thread> *thread_vector,
