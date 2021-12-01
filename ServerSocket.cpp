@@ -34,6 +34,10 @@ bool ServerSocket::Init(int port) {
 	addr.sin_addr.s_addr = INADDR_ANY;
 	addr.sin_port = htons(port);
 
+    // Lose the pesky "address already in use" error message
+    int yes = 1;
+    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
 	if ((bind(fd_, (struct sockaddr *) &addr, sizeof(addr))) < 0) {
 		perror("ERROR: failed to bind");
 		return false;

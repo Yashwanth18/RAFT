@@ -104,9 +104,10 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int messageType = 0;
     bool socket_status = false;
 
-    ul.lock();  // debugging purposes only!
+
 
     while(true){
+        ul.lock();  // debugging purposes only!
         if (!*sent){        // to-do: while true and break when remote socket closed
 
             peer_IP = (*PeerServerInfo)[peer_index].IP;
@@ -131,6 +132,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 socket_status = Out_stub.Handle_ResponseVote(nodeInfo, serverState);
             }
         }
+        ul.unlock();    // debugging purposes only!
     }
-    ul.unlock();    // debugging purposes only!
+
 }

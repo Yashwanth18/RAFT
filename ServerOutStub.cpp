@@ -174,6 +174,8 @@ void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
 
         if (responseAppendEntry.Get_success()) {
             serverState -> nextIndex[peer_index] ++;
+            // set match index
+            // set commit index based on the majority of matchIndex[]
         }
         else {  /* rejected: the follower node lags behind */
             serverState -> nextIndex[peer_index] --;

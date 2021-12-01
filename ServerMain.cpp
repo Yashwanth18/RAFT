@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread candidate_thread(&Raft::CandidateThread, &Raft,
-                                             0, &PeerServerInfo, &nodeInfo,
+                                             i, &PeerServerInfo, &nodeInfo,
                                              &serverState, &sent[i]);
 
                 thread_vector.push_back(std::move(candidate_thread));
