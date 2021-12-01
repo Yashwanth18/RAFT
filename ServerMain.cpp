@@ -94,7 +94,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo, ServerStub *se
         if (timer -> Check_election_timeout()){
             // std::cout << "Candidate timeout: Candidate Resigning to be a follower "<< '\n';
             // nodeInfo -> role = FOLLOWER;     // to-do: for when follower can time out
-            break;
+            // break;
         }
 
         Try_Connect(nodeInfo, serverStub, PeerServerInfo, Socket, Is_Init, Socket_Status);

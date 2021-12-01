@@ -6,11 +6,11 @@
 
 #------------user's configuration before running this script---------
 num_peers=2
-local=0     # 0: run on VDI, 1: run on local machines
+local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 
-port_server_root=2021
+port_server_root=1010
 port_client=101080
 run_location=0
 IP_root="10.200.125."
@@ -42,8 +42,8 @@ if [ $num_peers -eq 2 ]; then      # number of servers = 3
       ip_peer1="${IP_root}${ID_Peer1}"
       ip_peer2="${IP_root}${ID_Peer2}"
     elif [ $local -eq 1 ]; then
-      ip_peer1=IP_local
-      ip_peer2=IP_local
+      ip_peer1=$IP_local
+      ip_peer2=$IP_local
     fi
 
     echo $ip_peer1
