@@ -64,12 +64,12 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
 
 
 int ServerOutStub::
-SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int logRepID) {
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int heartbeat) {
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
     int send_status;
 
-    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, logRepID);
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, heartbeat);
 
     appendEntryRequest.Marshal(buf);
     send_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
@@ -78,7 +78,8 @@ SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_i
 }
 
 void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                                              AppendEntryRequest *appendEntryRequest,  int peer_index, int logRepID) {
+                                              AppendEntryRequest *appendEntryRequest,
+                                              int peer_index, int heartbeat) {
 
     int sender_term = serverState -> currentTerm;
     int leaderId = nodeInfo -> node_id;
@@ -92,7 +93,7 @@ void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo *
     int nextIndexPeer = serverState -> nextIndex[peer_index];
 
     /* to-do: break this into smaller functions: Set_LogEntry() or something*/
-    if (logRepID == -1){           // heartbeat
+    if (heartbeat){           // heartbeat
         logEntry = LogEntry{-1, -1, -1, -1};
     }
     else{
@@ -108,7 +109,7 @@ void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo *
     }
 
     appendEntryRequest -> Set(sender_term, leaderId, prevLogTerm, prevLogIndex,
-                              &logEntry, leaderCommit, logRepID);
+                              &logEntry, leaderCommit);
 }
 
 void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int peer_index) {
@@ -134,7 +135,7 @@ void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
         serverState -> currentTerm = responseAppendEntry.Get_term();
     }
 
-    if (responseAppendEntry.Get_ResponseID() == 0){ // HEARTBEAT defined as 0
+    if (responseAppendEntry.Get_Heartbeat()){
         std::cout << "Leader received heartbeat ack "<< '\n';
         responseAppendEntry.Print();
     }

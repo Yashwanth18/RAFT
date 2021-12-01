@@ -161,13 +161,13 @@ AppendEntryRequest::AppendEntryRequest()  {
     logEntry.arg1 = -1;
     logEntry.arg2 = -1;
     leaderCommit = -1;
-    logRepID = -1;
+
 }
 
 
 void AppendEntryRequest:: Set( int _sender_term, int _leaderId,
                               int _prevLogTerm, int _prevLogIndex,
-                              LogEntry * _logEntry, int _leaderCommit, int _logRepID){
+                              LogEntry * _logEntry, int _leaderCommit){
 
     sender_term = _sender_term;
     leaderId = _leaderId;
@@ -175,7 +175,7 @@ void AppendEntryRequest:: Set( int _sender_term, int _leaderId,
     prevLogIndex = _prevLogIndex;
     logEntry = *_logEntry;
     leaderCommit = _leaderCommit;
-    logRepID = _logRepID;
+
 }
 
 
@@ -189,7 +189,6 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     int net_arg1;
     int net_arg2;
     int net_leaderCommit;
-    int net_logRepID;
 
     int offset = 0;
 
@@ -218,9 +217,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     offset += sizeof(net_arg2);
 
     memcpy(&net_leaderCommit, buffer + offset, sizeof(net_leaderCommit));
-    offset += sizeof(net_leaderCommit);
 
-    memcpy(&net_logRepID, buffer + offset, sizeof(net_logRepID));
 
     sender_term = ntohl(net_sender_term);
     leaderId = ntohl(net_leaderId);
@@ -231,7 +228,7 @@ void AppendEntryRequest::Unmarshal(char *buffer){
     logEntry.arg1 = ntohl(net_arg1);
     logEntry.arg2 = ntohl(net_arg2);
     leaderCommit = ntohl(net_leaderCommit);
-    logRepID = ntohl(net_logRepID);
+
 }
 
 void AppendEntryRequest::Marshal(char *buffer){
@@ -247,7 +244,7 @@ void AppendEntryRequest::Marshal(char *buffer){
 
     int net_arg2 = htonl(logEntry.arg2);
     int net_leaderCommit = htonl(leaderCommit);
-    int net_logRepID = htonl(logRepID);
+
 
     int offset = 0;
 
@@ -276,15 +273,13 @@ void AppendEntryRequest::Marshal(char *buffer){
     offset += sizeof(net_arg2);
 
     memcpy(buffer + offset, &net_leaderCommit, sizeof(net_leaderCommit));
-    offset += sizeof(net_leaderCommit);
 
-    memcpy(buffer + offset, &net_logRepID, sizeof(net_logRepID));
 }
 
 int AppendEntryRequest::Size() {
     return  sizeof(sender_term) + sizeof(leaderId) +
             sizeof(prevLogTerm) + sizeof(prevLogIndex) +
-           sizeof(logEntry )+ sizeof (leaderCommit) + sizeof (logRepID);
+           sizeof(logEntry )+ sizeof (leaderCommit);
 }
 
 void AppendEntryRequest::Print(){
@@ -304,7 +299,6 @@ void AppendEntryRequest::Print(){
         std::cout << "arg1 : " << logEntry.arg1 << '\n';
         std::cout << "arg2 : " << logEntry.arg2 << '\n';
         std::cout << "leaderCommit : " << leaderCommit << '\n';
-        std::cout << "logRepID : " << logRepID << '\n';
         std::cout << "" << '\n';
     }
 }
@@ -334,24 +328,21 @@ int AppendEntryRequest:: Get_leaderCommit(){
     return leaderCommit;
 }
 
-int AppendEntryRequest::Get_logRepID() {
-    return logRepID;
-}
 
 
 /*----------------------------ResponseAppendEntry class------------------*/
 ResponseAppendEntry::ResponseAppendEntry()  {
     term = -1;
     success = -1;
-    ResponseID = -1;
+    Heartbeat = -1;
 }
 
 
 void ResponseAppendEntry::
-Set( int _term, int _success, int _ResponseID){
+Set( int _term, int _success, int _Heartbeat){
     term = _term;
     success = _success;
-    ResponseID = _ResponseID;
+    Heartbeat = _Heartbeat;
 }
 
 
@@ -360,7 +351,7 @@ void ResponseAppendEntry::Unmarshal(char *buffer){
     int net_term;
     int net_success;
 
-    int net_ResponseID;
+    int net_Heartbeat;
 
     int offset = 0;
 
@@ -369,18 +360,18 @@ void ResponseAppendEntry::Unmarshal(char *buffer){
     offset += sizeof(net_term);
     memcpy(&net_success, buffer + offset, sizeof(net_success));
     offset += sizeof(net_success);
-    memcpy(&net_ResponseID, buffer + offset, sizeof(net_ResponseID));
+    memcpy(&net_Heartbeat, buffer + offset, sizeof(net_Heartbeat));
 
     term = ntohl(net_term);
     success = ntohl(net_success);
-    ResponseID = ntohl(net_ResponseID);
+    Heartbeat = ntohl(net_Heartbeat);
 
 }
 
 void ResponseAppendEntry::Marshal(char *buffer){
     int net_term = htonl(term);
     int net_success = htonl(success);
-    int net_ResponseID = htonl(ResponseID);
+    int net_Heartbeat = htonl(Heartbeat);
     int offset = 0;
 
 
@@ -388,11 +379,11 @@ void ResponseAppendEntry::Marshal(char *buffer){
     offset += sizeof(net_term);
     memcpy(buffer + offset, &net_success, sizeof(net_success));
     offset += sizeof(net_success);
-    memcpy(buffer + offset, &net_ResponseID, sizeof(net_ResponseID));
+    memcpy(buffer + offset, &net_Heartbeat, sizeof(net_Heartbeat));
 }
 
 int ResponseAppendEntry::Size() {
-    return sizeof(term) + sizeof(success) + sizeof (ResponseID);
+    return sizeof(term) + sizeof(success) + sizeof (Heartbeat);
 }
 
 /* ----------------------Get private variables --------------------*/
@@ -404,14 +395,14 @@ int ResponseAppendEntry::Get_success(){
     return success;
 }
 
-int ResponseAppendEntry::Get_ResponseID() {
-    return ResponseID;
+int ResponseAppendEntry::Get_Heartbeat() {
+    return Heartbeat;
 }
 
 void ResponseAppendEntry::Print(){
 
     std::cout << "\nterm : " << term << '\n';
     std::cout << "success : " << success << '\n';
-    std::cout << "ResponseID : " << ResponseID << "" << '\n';
+    std::cout << "Heartbeat : " << Heartbeat << "" << '\n';
     std::cout << "" << '\n';
 }

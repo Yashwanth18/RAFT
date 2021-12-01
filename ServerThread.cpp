@@ -35,6 +35,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     std::string peer_IP;
     int peer_port;
     int messageType;
+    int heartbeat = 1;
 
     ul.lock();  // debugging purposes only!
 
@@ -48,7 +49,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         if (send_status){
             *sent = true;
-            Out_stub.SendAppendEntryRequest(serverState, nodeInfo, peer_index, -1);
+            Out_stub.SendAppendEntryRequest(serverState, nodeInfo, peer_index, heartbeat);
         }
 
         messageType = Out_stub.Read_MessageType();

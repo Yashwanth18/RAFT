@@ -20,11 +20,11 @@ public:
 
     /* ------------------------Leader Helper Functions----------------------------*/
     int SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                               int peer_index, int logRepID);
+                               int peer_index, int heartbeat);
 
     void FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                 AppendEntryRequest *appendEntryRequest,  int peer_index,
-                                int logRepID);
+                                int heartbeat);
 
     void Handle_ResponseAppendEntry(ServerState *serverState, int peer_index);
 };

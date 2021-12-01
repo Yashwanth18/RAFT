@@ -40,7 +40,7 @@ Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo) {
     AppendEntryRequest appendEntryRequest;
 
     int success;
-    int ResponseID;
+    int Heartbeat;
     char buf[sizeof (AppendEntryRequest)];
     int send_status;
 
@@ -57,14 +57,14 @@ Handle_AppendEntryRequest(ServerState *serverState, NodeInfo *nodeInfo) {
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
 
-    ResponseID = appendEntryRequest.Get_logRepID() + 1;
-    responseAppendEntry.Set(serverState -> currentTerm, success, ResponseID);
+
+    Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
+    responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
     responseAppendEntry.Print();
 
     /* to-do: error checking send here */
     send_status = Send_ResponseAppendEntry(&responseAppendEntry);
     return send_status;
-    //return 1;
 }
 
 
@@ -133,7 +133,8 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
         return false;
     }
 
-    if (appendEntryRequest -> Get_logRepID() == -1){      // heartbeat message
+    /* heartbeat message */
+    if (appendEntryRequest -> Get_LogEntry().logTerm == -1){
         return true;
     }
 
