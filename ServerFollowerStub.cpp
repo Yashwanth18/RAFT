@@ -3,6 +3,7 @@
 
 ServerFollowerStub::ServerFollowerStub() {}
 
+
 void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
 	this->socket = std::move(socket);
 }
