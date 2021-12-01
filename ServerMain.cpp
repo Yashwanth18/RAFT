@@ -56,13 +56,19 @@ int main(int argc, char *argv[]) {
     }
 
     else if (serverState.role == LEADER) {
-        bool sent = false;
-        while (true) {
-            std::thread leader_thread(&Election::LeaderThread, &election,
-                                         0, &PeerServerInfo, &nodeInfo,
-                                         &serverState, &sent);
+        bool sent[nodeInfo.num_peers];
+        for (int i = 0; i < nodeInfo.num_peers; i++){
+            sent[i] = false;
+        }
 
-            thread_vector.push_back(std::move(leader_thread));
+        while (true) {
+            for (int i = 0; i < nodeInfo.num_peers; i++){
+                std::thread leader_thread(&Election::LeaderThread, &election,
+                                          i, &PeerServerInfo, &nodeInfo,
+                                          &serverState, &sent[i]);
+
+                thread_vector.push_back(std::move(leader_thread));
+            }
         }
     }
 
