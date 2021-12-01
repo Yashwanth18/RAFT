@@ -15,7 +15,7 @@ public:
     int Read_MessageType();     // return the messageType
 
 
-    void Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
+    bool Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState);
     bool Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                          VoteRequest *VoteRequest);

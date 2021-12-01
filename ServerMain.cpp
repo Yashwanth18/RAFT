@@ -73,9 +73,10 @@ int main(int argc, char *argv[]) {
                 int num_votes = serverState.num_votes;
                 int majority = nodeInfo.num_peers / 2;
 
+                std::cout << "num_votes: " << serverState.num_votes << '\n';
                 if (num_votes > majority){
                     // serverState.role = LEADER;
-                    std::cout << "I'm a leader now!" << '\n';
+                    // std::cout << "I'm a leader now!" << '\n';
                     // break;
                 }
             }

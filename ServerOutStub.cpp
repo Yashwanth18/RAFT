@@ -59,36 +59,33 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
     VoteRequest -> Set(term, candidateId, lastLogIndex, lastLogTerm);
 }
 
-void ServerOutStub::Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
+bool ServerOutStub::Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
 
-    ResponseVote ResponseVote;
-    //  int peer_index;
-    char buf[ResponseVote.Size()];
+    ResponseVote responseVote;
+    char buf[sizeof (ResponseVote)];
+    bool socket_status;
 
+    socket_status = socket.Recv(buf, sizeof(ResponseVote), 0);
 
-    if (!socket.Recv(buf, sizeof(ResponseVote), 0)){
+    if (!socket_status){
         perror("Read_MessageType");
     }
 
-    ResponseVote.Unmarshal(buf);
-    ResponseVote.Print();
+    responseVote.Unmarshal(buf);
+    responseVote.Print();
 
-    //  peer_index = (*PeerIdIndexMap)[ResponseVote.Get_nodeID()];
-    //
-    //  // in case we get multiple response for the same request
-    //  if (!VoteRequest_Completed[peer_index]){
-    //
-    //    if (ResponseVote.Get_voteGranted()) { // vote granted
-    //      nodeInfo -> num_votes ++;
-    //    }
-    //
-    //    else {  // vote got rejected
-    //      if (ResponseVote.Get_term() > serverState -> currentTerm){ // we are stale
-    //        serverState -> currentTerm = ResponseVote.Get_term();
-    //      }
-    //    }
-    //    VoteRequest_Completed[peer_index] = true;
-    //  }
+
+    if (responseVote.Get_voteGranted()) { /* vote granted */
+         serverState -> num_votes ++;
+    }
+
+    else {  /* vote got rejected */
+        if (responseVote.Get_term() > serverState -> currentTerm){ // we are stale
+            serverState -> currentTerm = responseVote.Get_term();
+        }
+    }
+
+    return socket_status;
 }
 
 /*--------------------------Leader Helper Functions---------------------------- */

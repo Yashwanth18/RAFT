@@ -22,7 +22,9 @@ bool ServerSocket::Init(int port) {
 
 	struct sockaddr_in addr;
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+
 	if (fd_ < 0) {
+        close(fd_);
 		perror("ERROR: failed to create a socket");
 		return false;
 	}

@@ -101,29 +101,35 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     std::unique_lock<std::mutex> ul(lock_serverState, std::defer_lock);
     std::string peer_IP;
     int peer_port;
-    int messageType;
-    bool socket_status;
+    int messageType = 0;
+    bool socket_status = false;
 
     ul.lock();  // debugging purposes only!
 
-    if (!*sent){        // to-do: while true and break when remote socket closed
+    while(true){
+        if (!*sent){        // to-do: while true and break when remote socket closed
 
-        peer_IP = (*PeerServerInfo)[peer_index].IP;
-        peer_port = (*PeerServerInfo)[peer_index].port;
-        socket_status = Out_stub.Init(peer_IP, peer_port);
+            peer_IP = (*PeerServerInfo)[peer_index].IP;
+            peer_port = (*PeerServerInfo)[peer_index].port;
+            socket_status = Out_stub.Init(peer_IP, peer_port);
 
-        socket_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+            if (socket_status){
+                socket_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+            }
 
-        if (socket_status){
-            *sent = true;
-            Out_stub.Send_RequestVote(serverState, nodeInfo);
-        }
+            if (socket_status){
+                *sent = true;
+                socket_status = Out_stub.Send_RequestVote(serverState, nodeInfo);
+            }
 
-        messageType = Out_stub.Read_MessageType();
-        std::cout << "messageType: " << messageType << '\n';
+            if (socket_status){
+                messageType = Out_stub.Read_MessageType();
+                std::cout << "messageType: " << messageType << '\n';
+            }
 
-        if (messageType == RESPONSE_VOTE){
-            Out_stub.Handle_ResponseVote(nodeInfo, serverState);
+            if (messageType == RESPONSE_VOTE){
+                socket_status = Out_stub.Handle_ResponseVote(nodeInfo, serverState);
+            }
         }
     }
     ul.unlock();    // debugging purposes only!

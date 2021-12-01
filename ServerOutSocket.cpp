@@ -11,17 +11,20 @@
  * return 0 if failure, and 1 if success */
 bool ServerOutSocket::Init(std::string ip, int port) {
 	int status;
+    int fd;
 
 	if (is_initialized_) {
 		return true;
 	}
 
 	struct sockaddr_in addr;
-	fd_ = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd_ < 0) {
-		perror("ERROR: failed to create a socket");
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (fd < 0) {
+		perror("ERROR: ServerOutSocket failed to create a socket");
 		return false;
 	}
+
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -30,16 +33,18 @@ bool ServerOutSocket::Init(std::string ip, int port) {
 
 	/*BE CAREFUL: connect return 0 on success*/
 	try{
-		status = connect(fd_, (struct sockaddr *) &addr, sizeof(addr));
+		status = connect(fd, (struct sockaddr *) &addr, sizeof(addr));
 		if (status < 0){
 			throw status;
 		}
 	}
 	catch(int stat){
+        close(fd);
 		return false;
 	}
 
 	is_initialized_ = true;
+    fd_ = fd;
 	return true;
 
 }
