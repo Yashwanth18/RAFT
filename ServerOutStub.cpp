@@ -59,21 +59,20 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
     VoteRequest -> Set(term, candidateId, lastLogIndex, lastLogTerm);
 }
 
-
 void ServerOutStub::
 Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
 
-  ResponseVote ResponseVote;
-//  int peer_index;
-  char buf[ResponseVote.Size()];
+    ResponseVote ResponseVote;
+  //  int peer_index;
+    char buf[ResponseVote.Size()];
 
 
-  if (!socket.Recv(buf, sizeof(ResponseVote), 0)){
-    perror("Read_MessageType");
-  }
+    if (!socket.Recv(buf, sizeof(ResponseVote), 0)){
+      perror("Read_MessageType");
+    }
 
-  ResponseVote.Unmarshal(buf);
-  ResponseVote.Print();
+    ResponseVote.Unmarshal(buf);
+    ResponseVote.Print();
 
 //  peer_index = (*PeerIdIndexMap)[ResponseVote.Get_nodeID()];
 //
@@ -94,16 +93,17 @@ Handle_ResponseVote(NodeInfo *nodeInfo, ServerState *serverState){
 }
 
 
+
 /*--------------------------Leader Helper Functions---------------------------- */
 
 
 int ServerOutStub::
-SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, int peer_index, int logRep_ID) {
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int heartbeat) {
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
     int send_status;
 
-    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, logRep_ID);
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, heartbeat);
 
     appendEntryRequest.Marshal(buf);
     send_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
@@ -112,39 +112,81 @@ SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int fd, in
 }
 
 void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                                              AppendEntryRequest *appendEntryRequest,  int peer_index, int logRep_ID) {
+                                              AppendEntryRequest *appendEntryRequest,
+                                              int peer_index, int heartbeat) {
 
-    int _sender_term = serverState -> currentTerm;
-    int _leaderId = nodeInfo -> node_id;
-    int _leaderCommit = serverState -> commitIndex;
+    int sender_term = serverState -> currentTerm;
+    int leaderId = nodeInfo -> node_id;
+    int leaderCommit = serverState -> commitIndex;
 
-    int _prevLogIndex = serverState -> nextIndex[peer_index] - 1;
-    int _prevLogTerm = -1;
+    int prevLogIndex = serverState -> nextIndex[peer_index] - 1;
+    int prevLogTerm = -1;
     LogEntry logEntry;
 
     int last_log_index = serverState -> smr_log.size() -1;
     int nextIndexPeer = serverState -> nextIndex[peer_index];
 
-    if (nextIndexPeer > last_log_index){
-        perror("nextIndexPeer out of range");
-    }
-
-    if (logRep_ID == -1){
+    /* to-do: break this into smaller functions: Set_LogEntry() or something*/
+    if (heartbeat){           // heartbeat
         logEntry = LogEntry{-1, -1, -1, -1};
     }
     else{
+
+        if (nextIndexPeer > last_log_index){
+            perror("nextIndexPeer out of range");
+        }
         logEntry = serverState -> smr_log.at(nextIndexPeer);
     }
 
-    if (_prevLogIndex >= 0){
-        _prevLogTerm = serverState -> smr_log.at(_prevLogIndex).logTerm;
+    if (prevLogIndex >= 0){
+        prevLogTerm = serverState -> smr_log.at(prevLogIndex).logTerm;
     }
 
-    appendEntryRequest -> Set(_sender_term, _leaderId, _prevLogTerm, _prevLogIndex,
-                              &logEntry, _leaderCommit, logRep_ID);
+    appendEntryRequest -> Set(sender_term, leaderId, prevLogTerm, prevLogIndex,
+                              &logEntry, leaderCommit);
 }
 
+void ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int peer_index) {
+    char buf[sizeof (ResponseAppendEntry)];
+    ResponseAppendEntry responseAppendEntry;
+    int remote_term;
+    int local_term;
 
+    if (!socket.Recv(buf, sizeof(ResponseAppendEntry), 0)){
+        perror("Handle_ResponseAppendEntry: Recv"); // to-do: handle error gracefully here
+    }
+
+    responseAppendEntry.Unmarshal(buf);
+    remote_term = responseAppendEntry.Get_term();
+    local_term = serverState -> currentTerm;
+
+    if (remote_term > local_term){   // check if we are stale
+        std::cout << "remote_term: " << remote_term << '\n';
+        std::cout << "local_term: " << local_term << '\n';
+        std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
+
+        serverState -> role = FOLLOWER;
+        serverState -> currentTerm = responseAppendEntry.Get_term();
+    }
+
+    if (responseAppendEntry.Get_Heartbeat()){
+        std::cout << "Leader received heartbeat ack "<< '\n';
+        responseAppendEntry.Print();
+    }
+
+    else{   // if response from proper log replication request
+        std::cout << "Leader received ResponseAppendEntry" << '\n';
+        responseAppendEntry.Print();
+
+        if (responseAppendEntry.Get_success()) {
+            serverState -> nextIndex[peer_index] ++;
+        }
+        else {  /* rejected: the follower node lags behind */
+            serverState -> nextIndex[peer_index] --;
+        }
+    }
+
+}
 
 
 

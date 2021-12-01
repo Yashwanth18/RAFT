@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
         while (true) {
             new_socket = serverSocket.Accept();
-            std::cout << "Accepted Connection from peer server" << '\n';
+            std::cout << "\nAccepted Connection from peer server" << '\n';
 
             std::thread follower_thread(&Election::FollowerThread, &election,
                                         std::move(new_socket), &nodeInfo, &serverState);
@@ -58,11 +58,11 @@ int main(int argc, char *argv[]) {
     else if (serverState.role == LEADER) {
         bool sent = false;
         while (true) {
-            std::thread candidate_thread(&Election::CandidateThread, &election,
+            std::thread leader_thread(&Election::LeaderThread, &election,
                                          0, &PeerServerInfo, &nodeInfo,
                                          &serverState, &sent);
 
-            thread_vector.push_back(std::move(candidate_thread));
+            thread_vector.push_back(std::move(leader_thread));
         }
     }
 
