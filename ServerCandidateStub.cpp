@@ -1,18 +1,18 @@
-#include "ServerOutStub.h"
+#include "ServerCandidateStub.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 
-ServerOutStub::ServerOutStub() {}
+ServerCandidateStub::ServerCandidateStub() {}
 
 /* return value: 0 on failure and 1 on success */
-bool ServerOutStub::Init(std::string ip, int port) {
+bool ServerCandidateStub::Init(std::string ip, int port) {
 	return socket.Init(ip, port);
 }
 
 
 
-int ServerOutStub::Read_MessageType() {
+int ServerCandidateStub::Read_MessageType() {
     int net_messageType;
     int messageType;
     char buf[sizeof (int)];
@@ -27,7 +27,7 @@ int ServerOutStub::Read_MessageType() {
     return messageType;
 }
 
-bool ServerOutStub::Send_MessageType(int messageType) {
+bool ServerCandidateStub::Send_MessageType(int messageType) {
     char buf[sizeof (int)];
     int send_status;
     int net_messageType = htonl(messageType);
@@ -37,7 +37,7 @@ bool ServerOutStub::Send_MessageType(int messageType) {
     return send_status;
 }
 
-int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
+int ServerCandidateStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;
     int send_status;
     int size = VoteRequest.Size();
@@ -51,7 +51,7 @@ int ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo
     return send_status;
 }
 
-void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
+void ServerCandidateStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                       VoteRequest *VoteRequest) {
     int messageType = VOTE_REQUEST;
     int term = serverState -> currentTerm;

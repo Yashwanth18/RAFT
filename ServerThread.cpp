@@ -2,7 +2,7 @@
 #include <memory>
 #include "ServerThread.h"
 #include "ServerFollowerStub.h"
-#include "ServerOutStub.h"
+#include "ServerCandidateStub.h"
 
 
 void Election::
@@ -25,7 +25,7 @@ void Election::
 CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 NodeInfo *nodeInfo, ServerState *serverState, bool *sent) {
 
-    ServerOutStub Out_stub;
+    ServerCandidateStub Candidate_stub;
     std::unique_lock<std::mutex> ul(lock_state, std::defer_lock);
     std::string peer_IP;
     int peer_port;
@@ -37,13 +37,13 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         peer_IP = (*PeerServerInfo)[peer_index].IP;
         peer_port = (*PeerServerInfo)[peer_index].port;
-        Out_stub.Init(peer_IP, peer_port);
+        Candidate_stub.Init(peer_IP, peer_port);
 
-        int send_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+        int send_status = Candidate_stub.Send_MessageType(VOTE_REQUEST);
 
         if (send_status){
             *sent = true;
-            messageType = Out_stub.Read_MessageType();
+            messageType = Candidate_stub.Read_MessageType();
             std::cout << "messageType: " << messageType << '\n';
 
         }

@@ -2,11 +2,11 @@
 #include "ServerOutSocket.h"
 #include "Messages.h"
 
-class ServerOutStub {
+class ServerCandidateStub {
 private:
 	ServerOutSocket socket;
 public:
-	ServerOutStub();
+	ServerCandidateStub();
 
 	bool Init(std::string ip, int port);
     int Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
