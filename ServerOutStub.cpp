@@ -12,9 +12,10 @@ int ServerOutStub::Read_MessageType() {
     int net_messageType;
     int messageType;
     char buf[sizeof (int)];
+    int socket_status;
 
-    if (!socket.Recv(buf, sizeof(int), 0)){
-        perror("Read_MessageType");
+    socket_status = socket.Recv(buf, sizeof(int), 0);
+    if (!socket_status){
         return 0;
     }
 
@@ -25,28 +26,28 @@ int ServerOutStub::Read_MessageType() {
 
 bool ServerOutStub::Send_MessageType(int messageType) {
     char buf[sizeof (int)];
-    int send_status;
+    int socket_status;
     int net_messageType = htonl(messageType);
 
     memcpy(buf, &net_messageType, sizeof(net_messageType));
-    send_status = socket.Send(buf, sizeof (int), 0);
-    return send_status;
+    socket_status = socket.Send(buf, sizeof (int), 0);
+    return socket_status;
 }
 
 /*--------------------------Candidate Helper Functions---------------------------- */
 
 bool ServerOutStub::Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo) {
     VoteRequest VoteRequest;
-    bool send_status;
+    bool socket_status;
     int size = VoteRequest.Size();
     char buf[size];
 
     FillVoteRequest(serverState, nodeInfo, &VoteRequest);
 
     VoteRequest.Marshal(buf);
-    send_status = socket.Send(buf, size, 0);
+    socket_status = socket.Send(buf, size, 0);
 
-    return send_status;
+    return socket_status;
 }
 
 void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
@@ -69,7 +70,7 @@ Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
     socket_status = socket.Recv(buf, sizeof(ResponseVote), 0);
 
     if (!socket_status){
-        perror("Read_MessageType");
+        return false;
     }
 
     responseVote.Unmarshal(buf);
@@ -100,14 +101,14 @@ bool ServerOutStub::
 SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int heartbeat) {
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
-    bool send_status;
+    bool socket_status;
 
     FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, heartbeat);
 
     appendEntryRequest.Marshal(buf);
-    send_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
+    socket_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
 
-    return send_status;
+    return socket_status;
 }
 
 void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,

@@ -47,7 +47,7 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> last_applied = 0;
 
 
-    serverState -> num_votes = 1;
+    serverState -> num_votes = 1;            /* 1 because always vote for oneself */
     serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
@@ -80,7 +80,9 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
     return 1;
 }
 
+/* --------------------------Functions Declaration-------------------------*/
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     std::vector<Peer_Info> *PeerServerInfo,
-                    std::vector <std::thread> *thread_vector, Raft *raft);
+                    std::vector <std::thread> *thread_vector,
+                    Raft *raft, std::mutex *lk_serverState);

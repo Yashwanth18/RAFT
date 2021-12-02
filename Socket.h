@@ -26,8 +26,8 @@ public:
 	Socket();
 	virtual ~Socket();
 
-	int Send(char *buffer, int size, int flags = 0);
-	int Recv(char *buffer, int size, int flags = 0);
+	bool Send(char *buffer, int size, int flags = 0);
+	bool Recv(char *buffer, int size, int flags = 0);
 
   
 
