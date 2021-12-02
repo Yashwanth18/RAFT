@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
             /* election timeout */
             lk_serverState.lock();          // lock
             serverState.role = CANDIDATE;
+            serverState.num_votes = 1; // to initialize the number of votes to 1 in the new term
             std::cout << "\nI'm a candidate now!" << '\n';
             lk_serverState.unlock();        // unlock
 
