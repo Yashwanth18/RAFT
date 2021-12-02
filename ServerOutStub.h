@@ -29,4 +29,6 @@ public:
                                 int heartbeat);
 
     bool Handle_ResponseAppendEntry(ServerState *serverState, int peer_index);
+
+    void Update_CommitIndex(ServerState * server_state);
 };

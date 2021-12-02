@@ -94,7 +94,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int peer_port;
     int socket_status;
     int messageType;
-    int heartbeat = 1;
+    int heartbeat = 0;
 
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;

@@ -22,10 +22,21 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    if (serverState.role == LEADER) { // for testing log replication
+      Read_Logs_From_File(&serverState);
+
+      for (int i = 0; i < nodeInfo.num_peers ; i++){
+
+        serverState.nextIndex.push_back(serverState.smr_log.size()-1);
+      }
+      std::cout << "server state next index size is : " << serverState.nextIndex[0] << '\n';
+    }
+
     while(true){
 
         if (serverState.role == FOLLOWER) {
             /* log replication: read from external file 2 */
+
 
             std::this_thread::sleep_for (std::chrono::seconds(1));
 
@@ -100,6 +111,14 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
 
         if (num_votes > majority){
             serverState -> role = LEADER;
+
+            // initialize next index
+            for (int i = 0; i < nodeInfo->num_peers; i++){
+
+              serverState -> nextIndex.push_back(serverState -> smr_log.size() - 1); // initializing next index to be last
+                                                                               // log index of leader
+            }
+
             std::cout << "I'm a leader now!" << '\n';
             break;
         }

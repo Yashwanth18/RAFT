@@ -181,13 +181,23 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
         responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {
+
             serverState -> nextIndex[peer_index] ++;
+
             // set match index
+            serverState -> matchIndex[peer_index] ++;
+
             // set commit index based on the majority of matchIndex[]
+            Update_CommitIndex(serverState);
+
+            std::cout << "commit index of leader is : " << serverState -> commitIndex << '\n';
+
         }
 
         else {  /* rejected: the follower node lags behind */
+
             serverState -> nextIndex[peer_index] --;
+            std::cout << "next index value is : " << serverState -> nextIndex[peer_index] << '\n';
         }
     }
 
@@ -195,6 +205,24 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
 
 }
 
+void ServerOutStub::Update_CommitIndex(ServerState *serverState) {
+
+  int majority = 0;
+
+
+  for (int i = 0; i < serverState -> matchIndex.size(); i++){
+
+    if (serverState -> matchIndex[i] > serverState -> commitIndex){
+
+      majority ++;
+      if (majority > serverState -> matchIndex.size() / 2) {
+
+        serverState -> commitIndex ++;
+      }
+    }
+  }
+
+}
 
 
 
