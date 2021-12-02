@@ -94,36 +94,67 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int peer_port;
     int socket_status;
     int messageType;
-    int heartbeat = 0;
+    //int heartbeat = 0;
 
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
 
-    bool job_done = false;
-    while (!job_done){       // to-do: this is really an infinite loop
+    //bool job_done = false;
+//    while (!job_done){       // to-do: this is really an infinite loop
+//
+//        socket_status = Out_stub.Init(peer_IP, peer_port);
+//
+//        if (socket_status){
+//            socket_status = Out_stub.Send_MessageType(APPEND_ENTRY_REQUEST);
+//        }
+//
+//        if (socket_status){
+//            socket_status = Out_stub.SendAppendEntryRequest(
+//                                serverState, nodeInfo, peer_index, heartbeat);
+//        }
+//
+//        if (socket_status){
+//            messageType = Out_stub.Read_MessageType();
+//
+//            if (messageType == RESPONSE_APPEND_ENTRY){
+//                socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
+//            }
+//        }
+//
+//        if (socket_status){
+//            job_done = true;
+//        }
+//    }
+    while (true){
+      // to-do: wait for client's request
+      bool job_done = false;
+      int heartbeat = 0;
 
+      while(!job_done) {
         socket_status = Out_stub.Init(peer_IP, peer_port);
 
-        if (socket_status){
-            socket_status = Out_stub.Send_MessageType(APPEND_ENTRY_REQUEST);
+        if (socket_status) {
+          socket_status = Out_stub.Send_MessageType(APPEND_ENTRY_REQUEST);
         }
 
-        if (socket_status){
-            socket_status = Out_stub.SendAppendEntryRequest(
-                                serverState, nodeInfo, peer_index, heartbeat);
+        if (socket_status) {
+          socket_status = Out_stub.SendAppendEntryRequest(
+              serverState, nodeInfo, peer_index, heartbeat);
         }
 
-        if (socket_status){
-            messageType = Out_stub.Read_MessageType();
+        if (socket_status) {
+          messageType = Out_stub.Read_MessageType();
+          std::cout << "messageType: " << messageType << '\n';
 
-            if (messageType == RESPONSE_APPEND_ENTRY){
-                socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
+          if (messageType == RESPONSE_APPEND_ENTRY) {
+            socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
+
+            if (socket_status) {
+              job_done = true;
             }
+          }
         }
-
-        if (socket_status){
-            job_done = true;
-        }
+      }
     }
 }
 

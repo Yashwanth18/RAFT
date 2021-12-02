@@ -99,7 +99,9 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
 
     /* local state */
     int local_commitIndex = serverState -> commitIndex;
+
     int local_log_length = serverState -> smr_log.size();
+    std::cout << "log length of the follower is : " << local_log_length << '\n';
 
     /* from the remote side */
     int leaderCommit = appendEntryRequest -> Get_leaderCommit();
@@ -112,17 +114,18 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
             serverState -> commitIndex = leaderCommit;
         }
     }
+  std::cout << "commit index of the follower is : " << serverState -> commitIndex << '\n';
 }
 
 /* to-do: Clean this up */
 bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
-    /* local state */
+    /* local state */ // follower state
     int local_term = serverState -> currentTerm;
     int local_log_length = serverState -> smr_log.size();
     int local_prevLogTerm;
     std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
 
-    /* from the remote side */
+    /* from the remote side */ // leader state
     int remote_term = appendEntryRequest -> Get_sender_term();
     int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
     int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
@@ -142,6 +145,7 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
 
         /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
         if (local_log_length - 1 < remote_prevLogIndex) {
+            std::cout << "local log length is less than remote previous log index " << '\n';
             return false; // no element in local smr_log
         }
 
@@ -160,11 +164,17 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
 
             else {
                 // check for conflicting entry at the last index of local smr_log
-                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
-                    return true;     // Already in the smr_log !
-                }
+//                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
+//                    return true;     // Already in the smr_log ! // I think we need to change this to
+                                                                   // checking both the log entries, rather
+                                                                   // than just checking the term because
+                                                                   // if we have entries like 0,1,2,3
+                                                                   // and 0,2,3,4, it won't push 0,1,2,3 to the
+                                                                   // followers log
+//                }
 
                 serverState->smr_log.push_back(remote_logEntry);
+
                 return true;
             }
         }

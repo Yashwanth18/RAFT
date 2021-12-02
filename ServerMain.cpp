@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
         serverState.nextIndex.push_back(serverState.smr_log.size()-1);
       }
-      std::cout << "server state next index size is : " << serverState.nextIndex[0] << '\n';
+      //std::cout << "server state next index size is : " << serverState.nextIndex[0] << '\n';
     }
 
     while(true){
