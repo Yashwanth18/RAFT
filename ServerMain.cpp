@@ -20,27 +20,19 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket, &serverState,
+                             &thread_vector, &lk_serverState, &timer);
+    thread_vector.push_back(std::move(listenThread));
 
     while(true){
-        timer.Start();
+        timer.Atomic_Restart();
 
         if (serverState.role == FOLLOWER) {
-            std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket,
-                                     &serverState, &thread_vector, &lk_serverState,
-                                     &timer);
 
-            thread_vector.push_back(std::move(listenThread));
-
-            while(!timer.Check_Election_timeout()){
-
-            }
+            while(!timer.Check_Election_timeout()){}
 
             /* election timeout */
-            lk_serverState.lock();          // lock
-            serverState.role = CANDIDATE;
-            serverState.num_votes = 1; // to initialize the number of votes to 1 in the new term
-            std::cout << "\nI'm a candidate now!" << '\n';
-            lk_serverState.unlock();        // unlock
+            SetRole_Atomic(&serverState, &lk_serverState, CANDIDATE);
 
         }
 
@@ -71,6 +63,17 @@ int main(int argc, char *argv[]) {
 /* -------------------------------End: Main Function------------------------------------ */
 
 /* ------------------Candidate Helper Functions  ------------------*/
+void NewElection_Atomic(ServerState *serverState, std::mutex *lk_serverState,
+                        NodeInfo *nodeInfo){
+    lk_serverState -> lock();
+    serverState -> currentTerm ++;
+    serverState -> num_votes = 1;
+    serverState -> votedFor = nodeInfo -> node_id; // vote for itself
+    lk_serverState -> unlock();
+}
+
+
+
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     std::vector<Peer_Info> *PeerServerInfo,
                     std::vector <std::thread> *thread_vector,
@@ -80,12 +83,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
     int num_votes;
     ServerTimer _timer;
 
-    lk_serverState -> lock();
-    serverState -> currentTerm ++;
-    std::cout << "currentTerm: " << serverState -> currentTerm << '\n';
-    lk_serverState -> unlock();
-
-
+    NewElection_Atomic(serverState, lk_serverState, nodeInfo);
 
     for (int i = 0; i < nodeInfo -> num_peers; i++){
         std::thread candidate_thread(&Raft::CandidateThread, raft, i, PeerServerInfo,
@@ -101,11 +99,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
         lk_serverState -> unlock();   // lock
 
         if (num_votes > half_peers){
-            lk_serverState -> lock();   // lock
-            serverState -> role = LEADER;
-            std::cout << "I'm a leader now!" << '\n';
-            lk_serverState -> unlock();   // lock
-
+            SetRole_Atomic(serverState, lk_serverState, LEADER);
             break;
         }
     }
