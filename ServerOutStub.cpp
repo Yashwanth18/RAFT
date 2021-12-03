@@ -2,6 +2,8 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
+#include "ServerConfiguration.h"
+#include <fstream>
 
 /* return value: 0 on failure and 1 on success */
 bool ServerOutStub::Init(std::string ip, int port) {
@@ -185,6 +187,9 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
             serverState -> nextIndex[peer_index] ++;
             // set match index
             // set commit index based on the majority of matchIndex[]
+
+          Write_ServerLogToAStorage(serverState);
+          return true;
         }
 
         else {  /* rejected: the follower node lags behind */
@@ -196,7 +201,17 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
 
 }
 
-
+void ServerOutStub::Write_ServerLogToAStorage(ServerState *server_state) {
+  if(configMap.count(server_state -> nodeId)){
+    std::vector<std::string> vector_file  = configMap.at(server_state -> nodeId);
+    std::string log_smr_file = vector_file.front();
+    std::ofstream write_smr_log (log_smr_file, std::ios::app);
+    LogEntry committingLogEntry = server_state -> smr_log[server_state -> commitIndex -1 ];
+    write_smr_log << committingLogEntry.logTerm << "," << committingLogEntry.opcode <<
+                  committingLogEntry.arg1 << "," << committingLogEntry.arg1;
+    write_smr_log.close();
+  }
+}
 
 
 

@@ -1,6 +1,6 @@
 #include "ServerFollowerStub.h"
 #include <iostream>
-
+#include <fstream>
 ServerFollowerStub::ServerFollowerStub() {}
 
 void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
@@ -94,6 +94,7 @@ Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
         serverState -> role =  FOLLOWER;
         serverState -> votedFor = -1;
         serverState -> currentTerm = remote_term;
+        Write_ServerStateToAStorage(serverState);
     }
 }
 
@@ -169,11 +170,27 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState,
                     return true;     // Already in the smr_log !
                 }
 
-                serverState->smr_log.push_back(remote_logEntry);
+                serverState -> smr_log.push_back(remote_logEntry); //writing to the file storage
+
+                Write_ServerLogToAStorage(serverState);
+
                 return true;
             }
         }
     }
+}
+
+
+void ServerFollowerStub::Write_ServerLogToAStorage(ServerState *server_state) {
+  if(configMap.count(server_state -> nodeId)){
+    std::vector<std::string> vector_file  = configMap.at(server_state -> nodeId);
+    std::string log_smr_file = vector_file.front();
+    std::ofstream write_smr_log (log_smr_file, std::ios::app);
+    LogEntry committingLogEntry = server_state -> smr_log[server_state -> commitIndex -1 ];
+    write_smr_log << committingLogEntry.logTerm << "," << committingLogEntry.opcode <<
+                  committingLogEntry.arg1 << "," << committingLogEntry.arg1;
+    write_smr_log.close();
+  }
 }
 
 
@@ -220,6 +237,9 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
     lk_serverState->unlock();
 
     Send_MessageType(RESPONSE_VOTE);
+
+
+
     socket_status = SendResponseVote(&responseVote);
 
     return socket_status;
@@ -258,6 +278,8 @@ Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
     if (result){
         serverState -> votedFor = VoteRequest -> Get_candidateId();
         serverState -> currentTerm = VoteRequest -> Get_term();
+
+        Write_ServerStateToAStorage(serverState);
     }
 
     return result;
@@ -285,4 +307,17 @@ bool ServerFollowerStub::Compare_Log(ServerState *serverState, VoteRequest * Vot
         return check_last_log_index;
     }
     return result;
+}
+
+
+/* ---------------- writing server state to a store ----------- */
+
+void ServerFollowerStub::Write_ServerStateToAStorage(ServerState *serverState) {
+  if(configMap.count(serverState -> nodeId)){
+    std::vector<std::string> vector_file  = configMap.at(serverState -> nodeId);
+    std::string server_state_file = vector_file.back();
+    std::ofstream write_server_state (server_state_file);
+    write_server_state << serverState -> currentTerm << "," << serverState -> votedFor;
+    write_server_state.close();
+  }
 }

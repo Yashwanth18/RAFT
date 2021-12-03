@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include "ServerSocket.h"
 #include "Messages.h"
+#include "ServerConfiguration.h"
 
 
 class ServerFollowerStub {
@@ -32,6 +33,12 @@ public:
     bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
 
     void Print_Log(ServerState *serverState);
+
+    /* -------------------------- writing server state to a storage ---------- */
+
+    void Write_ServerStateToAStorage(ServerState * serverState);
+
+    void Write_ServerLogToAStorage(ServerState * serverState);
 };
 
 #endif // end of #ifndef __SERVER_STUB_H__

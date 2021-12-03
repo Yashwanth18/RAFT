@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
     if (!Init_NodeInfo(&nodeInfo, argc, argv))                      { return 0; }
-    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
+    Init_ServerState(&serverState, &nodeInfo, argc, argv);
 
     /* init a listening port to listen to peer servers */
     if (!serverSocket.Init(nodeInfo.server_port)) {
@@ -69,6 +69,7 @@ void NewElection_Atomic(ServerState *serverState, std::mutex *lk_serverState,
     serverState -> currentTerm ++;
     serverState -> num_votes = 1;
     serverState -> votedFor = nodeInfo -> node_id; // vote for itself
+    Write_ServerStateToAStorage(serverState);
     lk_serverState -> unlock();
 }
 

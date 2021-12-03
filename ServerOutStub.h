@@ -29,4 +29,7 @@ public:
                                 int heartbeat);
 
     bool Handle_ResponseAppendEntry(ServerState *serverState, int peer_index);
+
+    /* ----------------------- helper for persistent storage ---------------------*/
+    void Write_ServerLogToAStorage(ServerState * serverState);
 };

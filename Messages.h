@@ -47,6 +47,9 @@ struct ServerState{
     int role;
     int num_votes;
     int leader_id;
+
+    /*node id*/
+    int nodeId;
 };
 
 struct NodeInfo{
