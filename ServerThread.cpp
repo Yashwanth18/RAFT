@@ -178,7 +178,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
                 if (messageType == RESPONSE_APPEND_ENTRY) {
                     socket_status = Out_stub.Handle_ResponseAppendEntry(
-                                serverState, peer_index, lk_serverState);
+                                serverState, peer_index, nodeInfo, lk_serverState);
 
                     if (socket_status) {
                         job_done = true;

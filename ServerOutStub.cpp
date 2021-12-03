@@ -157,7 +157,7 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
 
 bool ServerOutStub::
 Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
-                           std::mutex *lk_serverState) {
+                           NodeInfo *nodeInfo, std::mutex *lk_serverState) {
 
     char buf[sizeof (ResponseAppendEntry)];
     ResponseAppendEntry responseAppendEntry;
@@ -199,9 +199,9 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
 
         if (responseAppendEntry.Get_success()) {
             lk_serverState -> lock(); // lock
+            serverState -> matchIndex[peer_index] = serverState -> nextIndex[peer_index];
             serverState -> nextIndex[peer_index] ++;
-            // set match index
-            // set commit index based on the majority of matchIndex[]
+            Update_CommitIndex(serverState, nodeInfo);
             lk_serverState -> unlock(); // unlock
         }
 
@@ -214,6 +214,32 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
 
     return socket_status;
 
+}
+
+void ServerOutStub::Update_CommitIndex(ServerState *serverState, NodeInfo *nodeInfo) {
+    int half_peers = nodeInfo -> num_peers / 2;
+    int current_commitIndex = serverState -> commitIndex;
+    int logSize = serverState -> smr_log.size();
+    int nodeTerm = serverState -> currentTerm;
+
+    int count;
+    for (int N = current_commitIndex + 1; N < logSize; N++){
+        count = 0;
+
+        for (int j = 0; j < nodeInfo -> num_peers; j ++){
+            if (serverState -> matchIndex[j] >= N){
+                count++;
+            }
+        }
+
+        if (count >= half_peers){
+
+            /* Raft does not commit entry from previous term */
+            if (serverState -> smr_log.at(N).logTerm == nodeTerm){
+                serverState -> commitIndex = N;
+            }
+        }
+    }
 }
 
 

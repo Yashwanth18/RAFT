@@ -29,5 +29,7 @@ public:
                                 int heartbeat, std::mutex *lk_serverState);
 
     bool Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
-                                    std::mutex *lk_serverState);
+                                    NodeInfo *nodeInfo, std::mutex *lk_serverState);
+
+    void Update_CommitIndex(ServerState *serverState, NodeInfo *nodeInfo);
 };
