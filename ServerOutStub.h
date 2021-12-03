@@ -15,7 +15,7 @@ public:
     int Read_MessageType();     // return the messageType
 
 
-    bool Handle_ResponseVote(ServerState *serverState, std::mutex *lock_serverState);
+    bool Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState);
     bool Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                          VoteRequest *VoteRequest);

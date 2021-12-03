@@ -31,7 +31,6 @@ int Init_NodeInfo(NodeInfo * nodeInfo, int argc, char *argv[]){
     return 1;
 }
 
-
 void Read_Logs_From_File(ServerState * serverState)
 {
 
@@ -71,6 +70,7 @@ void Read_Logs_From_File(ServerState * serverState)
   }
 }
 
+
 void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *argv[]){
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     serverState -> currentTerm = 0;
@@ -81,7 +81,7 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     /* volatile state on leaders (Reinitialized after Raft) */
     for (int i = 0; i < num_peers; i++){
         serverState -> matchIndex.push_back(0);
-        //serverState -> nextIndex.push_back(1);
+        serverState -> nextIndex.push_back(1);
     }
 
     /* volatile state on all servers */
@@ -89,7 +89,7 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> last_applied = 0;
 
 
-    serverState -> num_votes = 1;
+    serverState -> num_votes = 1;            /* 1 because always vote for oneself */
     serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
@@ -122,7 +122,28 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
     return 1;
 }
 
+void SetRole_Atomic(ServerState *serverState, std::mutex *lk_serverState, int _role){
+    lk_serverState -> lock();        // lock
+
+    serverState -> role = _role;
+    if (_role == LEADER){
+        std::cout << "Becoming a leader now!" << '\n';
+    }
+
+    else if (_role == FOLLOWER){
+        std::cout << "num_votes: " << serverState -> num_votes << '\n';
+        std::cout << "Resigning to be a follower now!" << '\n';
+    }
+    else if (_role == CANDIDATE){
+        std::cout << "Becoming a candidate now!" << '\n';
+    }
+
+    lk_serverState -> unlock();     // unlock
+}
+
+/* --------------------------Functions Declaration-------------------------*/
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     std::vector<Peer_Info> *PeerServerInfo,
-                    std::vector <std::thread> *thread_vector, Raft *raft);
+                    std::vector <std::thread> *thread_vector,
+                    Raft *raft, std::mutex *lk_serverState);

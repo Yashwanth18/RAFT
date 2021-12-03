@@ -12,9 +12,11 @@ int ServerFollowerStub::Read_MessageType() {
     int net_messageType;
     int messageType;
     char buf[sizeof (int)];
+    int socket_status;
 
-    if (!socket -> Recv(buf, sizeof(int), 0)){
-        perror("Read_MessageType"); // to-do: handle error gracefully here
+    socket_status = socket -> Recv(buf, sizeof(int), 0);
+
+    if (!socket_status){
         return 0;
     }
 
@@ -25,56 +27,58 @@ int ServerFollowerStub::Read_MessageType() {
 
 bool ServerFollowerStub::Send_MessageType(int messageType) {
     char buf[sizeof (int)];
-    int send_status;
+    int socket_status;
     int net_messageType = htonl(messageType);
 
     memcpy(buf, &net_messageType, sizeof(net_messageType));
-    send_status = socket -> Send(buf, sizeof (int), 0);
-    return send_status;
+    socket_status = socket -> Send(buf, sizeof (int), 0);
+    return socket_status;
 }
 
 /*------------------------Responding to Leader------------------------*/
-int ServerFollowerStub::
-Handle_AppendEntryRequest(ServerState *serverState) {
+bool ServerFollowerStub::
+Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) {
     ResponseAppendEntry responseAppendEntry;
     AppendEntryRequest appendEntryRequest;
 
     int success;
     int Heartbeat;
     char buf[sizeof (AppendEntryRequest)];
-    int send_status;
+    bool socket_status;
 
-    if (!socket -> Recv(buf, sizeof(AppendEntryRequest), 0)){
-        perror("Read_MessageType"); // to-do: handle error gracefully here
+    socket_status = socket -> Recv(buf, sizeof(AppendEntryRequest), 0);
+    if (!socket_status){
+        return socket_status;
     }
 
     appendEntryRequest.Unmarshal(buf);
     appendEntryRequest.Print();
 
     Send_MessageType(RESPONSE_APPEND_ENTRY);    // to-do: handle error gracefully here
+    Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
+
+    lk_serverState -> lock();
 
     Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
-
-
-    Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
     responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
-    responseAppendEntry.Print();
+
+    lk_serverState ->unlock();
 
     /* to-do: error checking send here */
-    send_status = Send_ResponseAppendEntry(&responseAppendEntry);
-    return send_status;
+    socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
+    return socket_status;
 }
 
 
-int ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
+bool ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
     char buf[sizeof (ResponseAppendEntry)];
-    int send_status;
+    bool socket_status;
 
     responseAppendEntry -> Marshal(buf);
-    send_status = socket -> Send(buf, sizeof (ResponseAppendEntry), 0);
-    return send_status;
+    socket_status = socket -> Send(buf, sizeof (ResponseAppendEntry), 0);
+    return socket_status;
 }
 
 
@@ -99,9 +103,7 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
 
     /* local state */
     int local_commitIndex = serverState -> commitIndex;
-
     int local_log_length = serverState -> smr_log.size();
-    std::cout << "log length of the follower is : " << local_log_length << '\n';
 
     /* from the remote side */
     int leaderCommit = appendEntryRequest -> Get_leaderCommit();
@@ -114,18 +116,18 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
             serverState -> commitIndex = leaderCommit;
         }
     }
-  std::cout << "commit index of the follower is : " << serverState -> commitIndex << '\n';
 }
 
 /* to-do: Clean this up */
-bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest){
-    /* local state */ // follower state
+bool ServerFollowerStub::Set_Result(ServerState *serverState,
+                                    AppendEntryRequest *appendEntryRequest){
+    /* local state */
     int local_term = serverState -> currentTerm;
     int local_log_length = serverState -> smr_log.size();
     int local_prevLogTerm;
     std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
 
-    /* from the remote side */ // leader state
+    /* from the remote side */
     int remote_term = appendEntryRequest -> Get_sender_term();
     int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
     int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
@@ -145,7 +147,6 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
 
         /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
         if (local_log_length - 1 < remote_prevLogIndex) {
-            std::cout << "local log length is less than remote previous log index " << '\n';
             return false; // no element in local smr_log
         }
 
@@ -165,16 +166,16 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState, AppendEntryRequest
             else {
                 // check for conflicting entry at the last index of local smr_log
 //                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
-//                    return true;     // Already in the smr_log ! // I think we need to change this to
-                                                                   // checking both the log entries, rather
-                                                                   // than just checking the term because
-                                                                   // if we have entries like 0,1,2,3
-                                                                   // and 0,2,3,4, it won't push 0,1,2,3 to the
-                                                                   // followers log
+//                    return true;     // Already in the smr_log !
 //                }
+                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm &&
+                    remote_logEntry.opcode == serverState -> smr_log.back().opcode &&
+                    remote_logEntry.arg1 == serverState -> smr_log.back().arg1 &&
+                    remote_logEntry.arg2 == serverState -> smr_log.back().arg2){
+                  return true;
+                }
 
                 serverState->smr_log.push_back(remote_logEntry);
-
                 return true;
             }
         }
@@ -199,42 +200,46 @@ void ServerFollowerStub::Print_Log(ServerState *serverState){
 
 
 /*-----------------------Responding to Candidate--------------------------------*/
-int ServerFollowerStub::
-Handle_VoteRequest(ServerState *serverState) {
+bool ServerFollowerStub::
+Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
 
     VoteRequest voteRequest;
     ResponseVote responseVote;
     char buf[voteRequest.Size()];
     int success;
-    int send_status;
+    bool socket_status;
 
-    if (!socket -> Recv(buf, sizeof(voteRequest), 0)){
-        perror("Read_MessageType");
-        return 0;
+    socket_status = socket -> Recv(buf, sizeof(voteRequest), 0);
+
+    if (!socket_status){
+        return socket_status;
     }
 
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
+    lk_serverState->lock();
+
     success = Decide_Vote(serverState, &voteRequest);
     responseVote.Set(serverState -> currentTerm, success);
 
+    lk_serverState->unlock();
 
     Send_MessageType(RESPONSE_VOTE);
-    send_status = SendResponseVote(&responseVote);
+    socket_status = SendResponseVote(&responseVote);
 
-    return send_status;
+    return socket_status;
 }
 
 
-int ServerFollowerStub::SendResponseVote(ResponseVote *responseVote) {
+bool ServerFollowerStub::SendResponseVote(ResponseVote *responseVote) {
     char buf[sizeof (ResponseVote)];
-    int send_status;
+    bool socket_status;
 
     responseVote -> Marshal(buf);
-    send_status = socket -> Send(buf, sizeof (ResponseVote), 0);
+    socket_status = socket -> Send(buf, sizeof (ResponseVote), 0);
 
-    return send_status;
+    return socket_status;
 }
 
 
