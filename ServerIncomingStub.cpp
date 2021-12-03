@@ -303,7 +303,7 @@ bool ServerIncomingStub::Compare_Log(ServerState *serverState, VoteRequest * Vot
     return result;
 }
 
-/*----Client Interface---------*/
+/*------------------Client Interface--------------------------------------*/
 
 CustomerRequest ServerIncomingStub::ReceiveOrder() {
     char buffer[32];
@@ -323,4 +323,10 @@ bool ServerIncomingStub::Send_LeaderID(int leaderID) {
     memcpy(buf, &net_leaderID, sizeof(net_leaderID));
     socket_status = socket -> Send(buf, sizeof (int), 0);
     return socket_status;
+}
+
+bool ServerIncomingStub::ReturnRecord(CustomerRecord record){
+    char buffer[sizeof (CustomerRecord)];
+    record.Marshal(buffer);
+    return socket->Send(buffer, record.Size(), 0);
 }

@@ -11,6 +11,7 @@
 class ServerIncomingStub {
 private:
 	std::unique_ptr<ServerSocket> socket;
+
 public:
 	ServerIncomingStub();
 	void Init(std::unique_ptr<ServerSocket> socket);
@@ -38,6 +39,8 @@ public:
     /*----Client Interface---------*/
     CustomerRequest ReceiveOrder();
     bool Send_LeaderID(int leaderID); // return socket_status;
+    bool ReturnRecord(CustomerRecord record);
+
 };
 
 #endif // end of #ifndef __SERVER_STUB_H__

@@ -20,9 +20,15 @@ public:
     Interface(){}
 
     void Listening_Client(ServerSocket *clientSocket,ServerState *serverState,
-                          std::mutex *lk_serverState, std::vector<std::thread> *thread_vector);
+                          std::mutex *lk_serverState, std::vector<std::thread> *thread_vector,
+                          std::map<int, int> *MapCustomerRecord, std::mutex *lk_MapRecord);
 
     void NewThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-                   std::mutex *lk_serverState);
+                   std::mutex *lk_serverState, std::map<int, int> *MapCustomerRecord,
+                   std::mutex *lk_MapRecord);
+
+    void Fill_Customer_Record(CustomerRequest * request, CustomerRecord * record,
+                              std::map<int, int> *MapCustomerRecord, std::mutex *lk_MapRecord);
+
 };
 #endif // end of #ifndef __SERVERCLIENTTHREAD_H__

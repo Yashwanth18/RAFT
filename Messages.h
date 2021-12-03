@@ -13,6 +13,9 @@
 #define APPEND_ENTRY_REQUEST 3
 #define RESPONSE_APPEND_ENTRY 4
 
+#define WRITE_REQUEST 1
+#define READ_REQUEST 2
+#define READ_ALL_REQUEST 3
 #define LEADER_ID_REQUEST 4
 
 
@@ -191,5 +194,33 @@ public:
     int Size();
     void Print();
 };
+
+/*-------------------------Class: CustomerRecord-------------------------------*/
+class CustomerRecord {
+private:
+    int customer_id;    /* -1 if customer_id is not found in the map  */
+    int last_order;     /* -1 if customer_id is not found in the map  */
+
+public:
+    CustomerRecord();
+    void operator = (const CustomerRecord &record) {
+        customer_id = record.customer_id;
+        last_order = record.last_order;
+    }
+
+    void SetCustomerId(int customer_id);
+    void SetLastOrder(int last_order);
+
+    int GetCustomerId();
+    int GetLastOrder();
+
+    void Marshal(char *buffer);
+    void Unmarshal(char *buffer);
+
+    int Size();
+    bool IsValid();
+    void Print();
+};
+
 
 #endif // #ifndef __MESSAGES_H__

@@ -16,6 +16,8 @@ public:
 
     // Fill leaderID and return socket_status
 	int Order_LeaderID(CustomerRequest order, int *LeaderID);
+    bool ReadRecord (CustomerRequest order, CustomerRecord * record);
+
 };
 
 

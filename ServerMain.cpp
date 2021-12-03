@@ -3,14 +3,16 @@
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo nodeInfo;
-    ServerState serverState;
     ServerSocket serverSocket;
     ServerSocket clientSocket;
     std::vector<Peer_Info> PeerServerInfo;
     std::vector <std::thread> thread_vector;
-    std::mutex lk_serverState;
     Raft raft;
     Interface interface;
+    ServerState serverState;
+    std::map<int, int> MapCustomerRecord;
+    std::mutex lk_serverState;
+    std::mutex lk_MapRecord;
 
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
@@ -31,8 +33,9 @@ int main(int argc, char *argv[]) {
 
     std::thread listen_clientThread(&Interface::Listening_Client, &interface,
                                     &clientSocket, &serverState, &lk_serverState,
-                                    &thread_vector);
+                                    &thread_vector, &MapCustomerRecord, &lk_MapRecord);
     thread_vector.push_back(std::move(listen_clientThread));
+
 
     std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket, &serverState,
                              &thread_vector, &lk_serverState, &timer);

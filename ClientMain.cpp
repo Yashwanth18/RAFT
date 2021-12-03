@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
     num_customers = 1;
     num_orders = 1;
     request_type = LEADER_ID_REQUEST;
+    //request_type = READ_REQUEST;
 
     std::string ip = PeerServerInfo.at(0).IP;
     int port = PeerServerInfo.at(0).port;

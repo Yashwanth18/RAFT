@@ -27,3 +27,22 @@ int ClientStub::Order_LeaderID(CustomerRequest order, int *LeaderID) {
     }
     return socket_status;
 }
+
+
+bool ClientStub::
+ReadRecord (CustomerRequest customerRequest, CustomerRecord * record){
+    char buffer[32];
+    bool socket_status;
+
+    customerRequest.Marshal(buffer);
+    socket_status = socket.Send(buffer, sizeof(CustomerRequest), 0);
+
+    if (socket_status) {
+        socket_status = socket.Recv(buffer, sizeof(CustomerRecord), 0);
+
+        if (socket_status) {
+            record -> Unmarshal(buffer);
+        }
+    }
+    return socket_status;
+}
