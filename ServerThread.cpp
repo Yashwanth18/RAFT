@@ -16,7 +16,6 @@ ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
         new_socket = serverSocket -> Accept();
         std::cout << "Accepted Connection from peer server" << '\n';
 
-
         std::thread follower_thread(&Raft::FollowerThread, this,
                                     std::move(new_socket), serverState,
                                     lk_serverState, timer);
@@ -41,10 +40,6 @@ FollowerThread(std::unique_ptr<ServerSocket> socket,
     while(!timer -> Check_Election_timeout()){
         timer -> Atomic_Restart(); // debugging only! for candidate becoming follower
 
-        lk_serverState->lock();         // lock
-        if (serverState -> role == CANDIDATE)   { break; }
-        lk_serverState -> unlock();       // unlock
-
         messageType = serverFollowerStub.Read_MessageType();
 
         if (messageType == 0){
@@ -60,6 +55,7 @@ FollowerThread(std::unique_ptr<ServerSocket> socket,
 
         else if (messageType == APPEND_ENTRY_REQUEST){
             timer -> Atomic_Restart();
+            // to-do: handle for when role = candidate too
             socket_status = serverFollowerStub.Handle_AppendEntryRequest(
                                                 serverState, lk_serverState);
         }
@@ -173,7 +169,6 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
             if (socket_status) {
                 messageType = Out_stub.Read_MessageType();
-                std::cout << "messageType: " << messageType << '\n';
 
                 if (messageType == RESPONSE_APPEND_ENTRY) {
                     socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);

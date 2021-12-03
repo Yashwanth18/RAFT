@@ -80,6 +80,25 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
     return 1;
 }
 
+void SetRole_Atomic(ServerState *serverState, std::mutex *lk_serverState, int _role){
+    lk_serverState -> lock();        // lock
+
+    serverState -> role = _role;
+    if (_role == LEADER){
+        std::cout << "Becoming a leader now!" << '\n';
+    }
+
+    else if (_role == FOLLOWER){
+        std::cout << "num_votes: " << serverState -> num_votes << '\n';
+        std::cout << "Resigning to be a follower now!" << '\n';
+    }
+    else if (_role == CANDIDATE){
+        std::cout << "Becoming a candidate now!" << '\n';
+    }
+
+    lk_serverState -> unlock();     // unlock
+}
+
 /* --------------------------Functions Declaration-------------------------*/
 
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
