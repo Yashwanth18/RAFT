@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include "ServerThread.h"
-#include "ServerFollowerStub.h"
+#include "ServerIncomingStub.h"
 #include "ServerOutStub.h"
 #include "ServerTimer.h"
 
@@ -16,55 +16,60 @@ ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
         new_socket = serverSocket -> Accept();
         std::cout << "Accepted Connection from peer server" << '\n';
 
-        std::thread follower_thread(&Raft::FollowerThread, this,
+        std::thread incoming_thread(&Raft::IncomingThread, this,
                                     std::move(new_socket), serverState,
                                     lk_serverState, timer);
 
-        thread_vector -> push_back(std::move(follower_thread));
+        thread_vector -> push_back(std::move(incoming_thread));
     }
 }
 
 void Raft::
-FollowerThread(std::unique_ptr<ServerSocket> socket,
+IncomingThread(std::unique_ptr<ServerSocket> socket,
                ServerState *serverState, std::mutex *lk_serverState,
                ServerTimer *timer) {
 
     int messageType;
     int socket_status;
-    ServerFollowerStub serverFollowerStub;
+    int _role;
+    ServerIncomingStub In_Stub;
     ServerTimer _timer;
-    serverFollowerStub.Init(std::move(socket));
+    In_Stub.Init(std::move(socket));
 
     timer -> Atomic_Restart();
 
-    while(!timer -> Check_Election_timeout()){
-        timer -> Atomic_Restart(); // debugging only! for candidate becoming follower
+    while(!timer -> Check_Election_timeout()){      // for follower thread
 
-        messageType = serverFollowerStub.Read_MessageType();
+        messageType = In_Stub.Read_MessageType();
 
         if (messageType == 0){
             break;
         }
 
-
         if (messageType == VOTE_REQUEST) { // main functionality
             timer -> Atomic_Restart();
-            socket_status = serverFollowerStub.Handle_VoteRequest(
-                                            serverState, lk_serverState);
+            socket_status = In_Stub.Handle_VoteRequest(serverState, lk_serverState);
         }
 
         else if (messageType == APPEND_ENTRY_REQUEST){
             timer -> Atomic_Restart();
-            // to-do: handle for when role = candidate too
-            socket_status = serverFollowerStub.Handle_AppendEntryRequest(
+            socket_status = In_Stub.Handle_AppendEntryRequest(
                                                 serverState, lk_serverState);
+        }
+
+        lk_serverState -> lock();       // lock
+        _role = serverState -> role;
+        lk_serverState -> unlock();     // unlock
+
+        if (_role == CANDIDATE){        // for candidate thread receiving AppendEntryRequest from leader
+            break;
         }
 
         if(!socket_status){
             break;
         }
     }
-    std::cout << "Exiting Follower Thread\n" << '\n';
+    std::cout << "Exiting IncomingThread\n" << '\n';
 
 }
 
@@ -87,7 +92,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         lk_serverState->unlock();       // unlock
 
         still_trying = Candidate_Quest(peer_index, PeerServerInfo, nodeInfo,
-                                   serverState, lk_serverState);
+                                       serverState, lk_serverState);
         if (still_trying != 1){
             break;
         }
@@ -138,7 +143,7 @@ int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo
 
 void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-             NodeInfo *nodeInfo, ServerState *serverState) {
+             NodeInfo *nodeInfo, ServerState *serverState, std::mutex *lk_serverState) {
 
     ServerOutStub Out_stub;
     std::string peer_IP;
@@ -164,14 +169,15 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
             if (socket_status) {
                 socket_status = Out_stub.SendAppendEntryRequest(
-                        serverState, nodeInfo, peer_index, heartbeat);
+                        serverState, nodeInfo, peer_index, heartbeat, lk_serverState);
             }
 
             if (socket_status) {
                 messageType = Out_stub.Read_MessageType();
 
                 if (messageType == RESPONSE_APPEND_ENTRY) {
-                    socket_status = Out_stub.Handle_ResponseAppendEntry(serverState, peer_index);
+                    socket_status = Out_stub.Handle_ResponseAppendEntry(
+                                serverState, peer_index, lk_serverState);
 
                     if (socket_status) {
                         job_done = true;

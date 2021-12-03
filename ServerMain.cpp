@@ -28,12 +28,9 @@ int main(int argc, char *argv[]) {
         timer.Atomic_Restart();
 
         if (serverState.role == FOLLOWER) {
-
-            while(!timer.Check_Election_timeout()){}
-
-            /* election timeout */
+            while(!timer.Check_Election_timeout()){}    // do nothing
+            /* if election timeout */
             SetRole_Atomic(&serverState, &lk_serverState, CANDIDATE);
-
         }
 
         else if (serverState.role == CANDIDATE) {
@@ -45,7 +42,7 @@ int main(int argc, char *argv[]) {
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread leader_thread(&Raft::LeaderThread, &raft, i, &PeerServerInfo,
-                                          &nodeInfo,&serverState);
+                                          &nodeInfo,&serverState, &lk_serverState);
                 thread_vector.push_back(std::move(leader_thread));
             }
 
@@ -94,9 +91,10 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
     _timer.Start();
 
     while(!_timer.Check_Election_timeout()){
+
         lk_serverState -> lock();   // lock
         num_votes = serverState -> num_votes;
-        lk_serverState -> unlock();   // lock
+        lk_serverState -> unlock();   // unlock
 
         if (num_votes > half_peers){
             SetRole_Atomic(serverState, lk_serverState, LEADER);
@@ -104,8 +102,11 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
         }
     }
 
+    lk_serverState -> lock();   // lock
     if (serverState -> role != LEADER) {
         std::cout << "Candidate timeout: resigning to be a follower" << '\n';
         serverState -> role = FOLLOWER;
     }
+    lk_serverState -> unlock();   // unlock
+
 }

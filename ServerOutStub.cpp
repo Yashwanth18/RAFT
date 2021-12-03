@@ -96,14 +96,16 @@ Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
 
 /*--------------------------Leader Helper Functions---------------------------- */
 
-
 bool ServerOutStub::
-SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index, int heartbeat) {
+SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index,
+                       int heartbeat, std::mutex *lk_serverState) {
+
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
     bool socket_status;
 
-    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index, heartbeat);
+    FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index,
+                           heartbeat, lk_serverState);
 
     appendEntryRequest.Marshal(buf);
     socket_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
@@ -111,42 +113,52 @@ SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_i
     return socket_status;
 }
 
-void ServerOutStub::FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
-                                              AppendEntryRequest *appendEntryRequest,
-                                              int peer_index, int heartbeat) {
+void ServerOutStub::
+FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
+                       AppendEntryRequest *appendEntryRequest,
+                       int peer_index, int heartbeat, std::mutex *lk_serverState) {
 
-    int sender_term = serverState -> currentTerm;
     int leaderId = nodeInfo -> node_id;
-    int leaderCommit = serverState -> commitIndex;
-
-    int prevLogIndex = serverState -> nextIndex[peer_index] - 1;
     int prevLogTerm = -1;
-    LogEntry logEntry;
+
+    lk_serverState -> lock();       // lock
+    int sender_term = serverState -> currentTerm;
+    int leaderCommit = serverState -> commitIndex;
+    int prevLogIndex = serverState -> nextIndex[peer_index] - 1;
 
     int last_log_index = serverState -> smr_log.size() -1;
     int nextIndexPeer = serverState -> nextIndex[peer_index];
+    lk_serverState -> unlock();     // unlock
 
-    /* to-do: break this into smaller functions: Set_LogEntry() or something*/
-    if (heartbeat){           // heartbeat
+    LogEntry logEntry;
+    if (heartbeat){
         logEntry = LogEntry{-1, -1, -1, -1};
     }
-    else{
 
-        if (nextIndexPeer > last_log_index){
+    else{   // if not heartbeat
+        if (nextIndexPeer > last_log_index){        // error checking
             perror("nextIndexPeer out of range");
         }
+
+        lk_serverState -> lock();       // lock
         logEntry = serverState -> smr_log.at(nextIndexPeer);
+        lk_serverState -> unlock();     // unlock
     }
 
     if (prevLogIndex >= 0){
+        lk_serverState -> lock();     // lock
         prevLogTerm = serverState -> smr_log.at(prevLogIndex).logTerm;
+        lk_serverState -> unlock();  // unlock
     }
 
     appendEntryRequest -> Set(sender_term, leaderId, prevLogTerm, prevLogIndex,
                               &logEntry, leaderCommit);
 }
 
-bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int peer_index) {
+bool ServerOutStub::
+Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
+                           std::mutex *lk_serverState) {
+
     char buf[sizeof (ResponseAppendEntry)];
     ResponseAppendEntry responseAppendEntry;
     int remote_term;
@@ -163,15 +175,19 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
     responseAppendEntry.Unmarshal(buf);
     remote_term = responseAppendEntry.Get_term();
 
+    lk_serverState -> lock(); // lock
     local_term = serverState -> currentTerm;
+    lk_serverState -> unlock(); //unlock
 
     if (remote_term > local_term){   // check if we are stale
         std::cout << "\nremote_term: " << remote_term << '\n';
         std::cout << "local_term: " << local_term << '\n';
         std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
 
+        lk_serverState -> lock(); // lock
         serverState -> role = FOLLOWER;
         serverState -> currentTerm = responseAppendEntry.Get_term();
+        lk_serverState -> unlock(); // unlock
     }
 
     if (responseAppendEntry.Get_Heartbeat()){
@@ -182,13 +198,17 @@ bool ServerOutStub::Handle_ResponseAppendEntry(ServerState *serverState, int pee
         responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {
+            lk_serverState -> lock(); // lock
             serverState -> nextIndex[peer_index] ++;
             // set match index
             // set commit index based on the majority of matchIndex[]
+            lk_serverState -> unlock(); // unlock
         }
 
         else {  /* rejected: the follower node lags behind */
+            lk_serverState -> lock(); // lock
             serverState -> nextIndex[peer_index] --;
+            lk_serverState -> unlock(); // unlock
         }
     }
 

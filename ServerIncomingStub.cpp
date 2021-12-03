@@ -1,14 +1,14 @@
-#include "ServerFollowerStub.h"
+#include "ServerIncomingStub.h"
 #include <iostream>
 
-ServerFollowerStub::ServerFollowerStub() {}
+ServerIncomingStub::ServerIncomingStub() {}
 
-void ServerFollowerStub::Init(std::unique_ptr<ServerSocket> socket) {
+void ServerIncomingStub::Init(std::unique_ptr<ServerSocket> socket) {
 	this->socket = std::move(socket);
 }
 
 /* return 0 on failure */
-int ServerFollowerStub::Read_MessageType() {
+int ServerIncomingStub::Read_MessageType() {
     int net_messageType;
     int messageType;
     char buf[sizeof (int)];
@@ -25,7 +25,7 @@ int ServerFollowerStub::Read_MessageType() {
     return messageType;
 }
 
-bool ServerFollowerStub::Send_MessageType(int messageType) {
+bool ServerIncomingStub::Send_MessageType(int messageType) {
     char buf[sizeof (int)];
     int socket_status;
     int net_messageType = htonl(messageType);
@@ -36,7 +36,7 @@ bool ServerFollowerStub::Send_MessageType(int messageType) {
 }
 
 /*------------------------Responding to Leader------------------------*/
-bool ServerFollowerStub::
+bool ServerIncomingStub::
 Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) {
     ResponseAppendEntry responseAppendEntry;
     AppendEntryRequest appendEntryRequest;
@@ -57,14 +57,14 @@ Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) 
     Send_MessageType(RESPONSE_APPEND_ENTRY);    // to-do: handle error gracefully here
     Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
 
-    lk_serverState -> lock();
+    lk_serverState -> lock();       // lock
 
     Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
     responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
 
-    lk_serverState ->unlock();
+    lk_serverState -> unlock();         // unlock
 
     /* to-do: error checking send here */
     socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
@@ -72,7 +72,7 @@ Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) 
 }
 
 
-bool ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
+bool ServerIncomingStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
     char buf[sizeof (ResponseAppendEntry)];
     bool socket_status;
 
@@ -81,9 +81,7 @@ bool ServerFollowerStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseA
     return socket_status;
 }
 
-
-// ******* to-do: everytime nodeInfo or serverstate is accessed, make sure to use mutex lock!
-void ServerFollowerStub::
+void ServerIncomingStub::
 Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
 
     int remote_term = appendEntryRequest -> Get_sender_term();
@@ -99,14 +97,15 @@ Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
 
 /* If leaderCommit > commitIndex,
  * Set commitIndex = min(leaderCommit, index of last new entry) */
-void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState) {
+void ServerIncomingStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
+                                         ServerState * serverState) {
+
+    /* from the remote side */
+    int leaderCommit = appendEntryRequest -> Get_leaderCommit();
 
     /* local state */
     int local_commitIndex = serverState -> commitIndex;
     int local_log_length = serverState -> smr_log.size();
-
-    /* from the remote side */
-    int leaderCommit = appendEntryRequest -> Get_leaderCommit();
 
     if (leaderCommit > local_commitIndex){
         if (leaderCommit > local_log_length){
@@ -119,19 +118,17 @@ void ServerFollowerStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
 }
 
 /* to-do: Clean this up */
-bool ServerFollowerStub::Set_Result(ServerState *serverState,
+bool ServerIncomingStub::Set_Result(ServerState *serverState,
                                     AppendEntryRequest *appendEntryRequest){
-    /* local state */
-    int local_term = serverState -> currentTerm;
-    int local_log_length = serverState -> smr_log.size();
-    int local_prevLogTerm;
-    std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
 
     /* from the remote side */
     int remote_term = appendEntryRequest -> Get_sender_term();
     int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
-    int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
-    LogEntry remote_logEntry = appendEntryRequest -> Get_LogEntry();
+
+
+    /* local state */
+    int local_term = serverState -> currentTerm;
+    int local_log_length = serverState -> smr_log.size();
 
     /* Reply false the remote node is stale */
     if (remote_term < local_term){
@@ -143,41 +140,61 @@ bool ServerFollowerStub::Set_Result(ServerState *serverState,
         return true;
     }
 
-    else {  // real log replication message
+    else {  /* real log replication message */
 
         /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
         if (local_log_length - 1 < remote_prevLogIndex) {
-            return false; // no element in local smr_log
+            return false;
         }
 
         else {   // if there is an entry in the local log at remote_prevLogIndex
-            local_prevLogTerm = serverState -> smr_log.at(remote_prevLogIndex).logTerm;
-
-            if (local_prevLogTerm != remote_prevLogTerm) { // check if conflicting prev log entry
-
-                if (local_log_length > 1) {  // keep first log to prevent index out of bound error
-                    /* erase conflicting log */
-                    serverState -> smr_log.erase(iter + remote_prevLogIndex, iter + local_log_length);
-                }
-
-                return false;
-            }
-
-            else {
-                // check for conflicting entry at the last index of local smr_log
-                if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
-                    return true;     // Already in the smr_log !
-                }
-
-                serverState->smr_log.push_back(remote_logEntry);
-                return true;
-            }
+            return Check_ConflictingLog(serverState, appendEntryRequest);
         }
     }
 }
 
+/* Reply false if log does not contain an entry at prevLogIndex whose term
+ * matches prevLogTerm */
+bool ServerIncomingStub::Check_ConflictingLog(ServerState *serverState,
+                                   AppendEntryRequest *appendEntryRequest){
 
-void ServerFollowerStub::Print_Log(ServerState *serverState){
+    int local_prevLogTerm;
+    int local_log_length = serverState -> smr_log.size();
+    std::vector<LogEntry>::iterator iter = serverState -> smr_log.begin();
+
+    int remote_prevLogIndex = appendEntryRequest -> Get_prevLogIndex();
+    int remote_prevLogTerm = appendEntryRequest -> Get_prevLogTerm();
+    LogEntry remote_logEntry = appendEntryRequest -> Get_LogEntry();
+
+    local_prevLogTerm = serverState -> smr_log.at(remote_prevLogIndex).logTerm;
+
+    /* if prev log entry does not match */
+    if (local_prevLogTerm != remote_prevLogTerm) {
+
+        if (local_log_length > 1) {
+            /* erase conflicting log except the root log */
+            serverState -> smr_log.erase(iter + remote_prevLogIndex,
+                                         iter + local_log_length);
+        }
+
+        return false;
+    }
+
+    else {  /* if prev log entry matches */
+
+        if (remote_logEntry.logTerm == serverState -> smr_log.back().logTerm) {
+            return true;     // Already in the smr_log !
+        }
+
+        serverState -> smr_log.push_back(remote_logEntry);
+        return true;
+    }
+}
+
+
+
+
+void ServerIncomingStub::Print_Log(ServerState *serverState){
     LogEntry logEntry;
     int log_size = serverState -> smr_log.size();
 
@@ -194,7 +211,7 @@ void ServerFollowerStub::Print_Log(ServerState *serverState){
 
 
 /*-----------------------Responding to Candidate--------------------------------*/
-bool ServerFollowerStub::
+bool ServerIncomingStub::
 Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
 
     VoteRequest voteRequest;
@@ -212,12 +229,12 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
-    lk_serverState->lock();
+    lk_serverState -> lock();     // lock
 
     success = Decide_Vote(serverState, &voteRequest);
     responseVote.Set(serverState -> currentTerm, success);
 
-    lk_serverState->unlock();
+    lk_serverState -> unlock();     // unlock
 
     Send_MessageType(RESPONSE_VOTE);
     socket_status = SendResponseVote(&responseVote);
@@ -226,7 +243,7 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
 }
 
 
-bool ServerFollowerStub::SendResponseVote(ResponseVote *responseVote) {
+bool ServerIncomingStub::SendResponseVote(ResponseVote *responseVote) {
     char buf[sizeof (ResponseVote)];
     bool socket_status;
 
@@ -237,7 +254,7 @@ bool ServerFollowerStub::SendResponseVote(ResponseVote *responseVote) {
 }
 
 
-bool ServerFollowerStub::
+bool ServerIncomingStub::
 Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
 
     int result = false;
@@ -264,7 +281,7 @@ Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
 }
 
 /* Comparing the last_term and log length for the candidate node and the follower node */
-bool ServerFollowerStub::Compare_Log(ServerState *serverState, VoteRequest * VoteRequest) {
+bool ServerIncomingStub::Compare_Log(ServerState *serverState, VoteRequest * VoteRequest) {
 
     int candidate_last_log_term = VoteRequest -> Get_last_log_term();
     int candidate_last_log_index = VoteRequest -> Get_last_log_index();

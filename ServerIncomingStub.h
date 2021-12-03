@@ -8,11 +8,11 @@
 #include "Messages.h"
 
 
-class ServerFollowerStub {
+class ServerIncomingStub {
 private:
 	std::unique_ptr<ServerSocket> socket;
 public:
-	ServerFollowerStub();
+	ServerIncomingStub();
 	void Init(std::unique_ptr<ServerSocket> socket);
 
     int Read_MessageType();
@@ -30,6 +30,7 @@ public:
     void Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState);
     void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
     bool Set_Result(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
+    bool Check_ConflictingLog(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
 
     void Print_Log(ServerState *serverState);
 };

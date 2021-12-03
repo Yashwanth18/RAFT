@@ -23,7 +23,7 @@ public:
                                   std::vector<std::thread> *thread_vector,
                                   std::mutex *lk_serverState, ServerTimer *timer);
 
-	void FollowerThread(std::unique_ptr<ServerSocket> socket,
+	void IncomingThread(std::unique_ptr<ServerSocket> socket,
                         ServerState *serverState,
                         std::mutex *lk_serverState, ServerTimer *timer);
 
@@ -36,7 +36,9 @@ public:
                     std::mutex *lk_serverState);
 
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                      NodeInfo *nodeInfo, ServerState *serverState);
+                      NodeInfo *nodeInfo, ServerState *serverState,
+                      std::mutex *lk_serverState);
+
 
 };
 #endif // end of #ifndef __SERVERTHREAD_H__
