@@ -151,6 +151,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int socket_status;
     int messageType;
     bool job_done;
+    int _role;
 
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
@@ -184,8 +185,22 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                     }
                 }
             }
+
+            lk_serverState -> lock(); // lock
+            _role  = serverState -> role;
+            lk_serverState -> unlock(); // unlock
+
+            if (_role == FOLLOWER){
+                break;
+            }
+
+        }  // End: while (!job_done)
+
+        if (_role == FOLLOWER){
+            break;
         }
-    }
+
+    }  // End: while (true)
 }
 
 

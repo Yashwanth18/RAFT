@@ -58,13 +58,11 @@ Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) 
     Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
 
     lk_serverState -> lock();       // lock
-
     Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
     responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
-
-    lk_serverState -> unlock();         // unlock
+    lk_serverState -> unlock();     // unlock
 
     /* to-do: error checking send here */
     socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
@@ -230,10 +228,8 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
     voteRequest.Print();
 
     lk_serverState -> lock();     // lock
-
     success = Decide_Vote(serverState, &voteRequest);
     responseVote.Set(serverState -> currentTerm, success);
-
     lk_serverState -> unlock();     // unlock
 
     Send_MessageType(RESPONSE_VOTE);
@@ -265,6 +261,9 @@ Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
         return false;
     }
     else {
+        if (serverState -> role == LEADER){ // if stale leader receive vote request
+            serverState -> role = FOLLOWER;
+        }
         serverState -> votedFor = -1;
     }
 
