@@ -20,10 +20,8 @@ public:
     Raft(){}
 
     void ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
-                                  std::vector<std::thread> *thread_vector,
-                                  std::mutex *lk_serverState, ServerTimer *timer);
-
-    void Listening_ClientThread(ServerSocket *clientSocket);
+                         std::vector<std::thread> *thread_vector,
+                         std::mutex *lk_serverState, ServerTimer *timer);
 
 
 	void IncomingThread(std::unique_ptr<ServerSocket> socket,

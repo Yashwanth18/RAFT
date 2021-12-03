@@ -8,11 +8,12 @@
 #define CANDIDATE 1
 #define LEADER 2
 
-
 #define VOTE_REQUEST 1
 #define RESPONSE_VOTE 2
 #define APPEND_ENTRY_REQUEST 3
 #define RESPONSE_APPEND_ENTRY 4
+
+#define LEADER_ID_REQUEST 4
 
 
 struct Peer_Info{
@@ -160,6 +161,34 @@ public:
     int Get_success();
     int Get_Heartbeat();
 
+    void Print();
+};
+
+
+/*---------------------------Class: CustomerRequest---------------------------*/
+class CustomerRequest {
+private:
+    int customer_id;
+    int order_number;
+    int request_type;
+
+public:
+    CustomerRequest();
+    void operator = (const CustomerRequest &order) {
+        customer_id = order.customer_id;
+        order_number = order.order_number;
+        request_type = order.request_type;
+    }
+    void SetOrder(int cid, int order_num, int type);
+    int GetCustomerId();
+    int GetOrderNumber();
+    int GetRequestType();
+
+    void Marshal(char *buffer);
+    void Unmarshal(char *buffer);
+
+    bool IsValid();
+    int Size();
     void Print();
 };
 

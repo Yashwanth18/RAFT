@@ -12,7 +12,7 @@
 #include "ServerThread.h"
 #include "Messages.h"
 #include "ServerTimer.h"
-#include "Server_ClientThread.h"
+#include "Server_InterfaceThread.h"
 
 /* Usage: ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server) */
 

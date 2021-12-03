@@ -33,6 +33,11 @@ public:
     bool Check_ConflictingLog(ServerState *serverState, AppendEntryRequest *appendEntryRequest);
 
     void Print_Log(ServerState *serverState);
+
+
+    /*----Client Interface---------*/
+    CustomerRequest ReceiveOrder();
+    bool Send_LeaderID(int leaderID); // return socket_status;
 };
 
 #endif // end of #ifndef __SERVER_STUB_H__

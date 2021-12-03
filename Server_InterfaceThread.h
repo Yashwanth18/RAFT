@@ -11,6 +11,7 @@
 #include "Messages.h"
 #include "ServerSocket.h"
 #include "ServerTimer.h"
+#include "ServerIncomingStub.h"
 
 class Interface {
 private:
@@ -18,6 +19,10 @@ private:
 public:
     Interface(){}
 
-    void Listening_Client(ServerSocket *clientSocket);
+    void Listening_Client(ServerSocket *clientSocket,ServerState *serverState,
+                          std::mutex *lk_serverState, std::vector<std::thread> *thread_vector);
+
+    void NewThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
+                   std::mutex *lk_serverState);
 };
 #endif // end of #ifndef __SERVERCLIENTTHREAD_H__

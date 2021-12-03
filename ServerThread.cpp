@@ -7,8 +7,8 @@
 
 void Raft::
 ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
-                         std::vector<std::thread> *thread_vector,
-                         std::mutex *lk_serverState, ServerTimer *timer){
+                std::vector<std::thread> *thread_vector,
+                std::mutex *lk_serverState, ServerTimer *timer){
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
         new_socket = serverSocket -> Accept();

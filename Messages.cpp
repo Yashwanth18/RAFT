@@ -401,3 +401,65 @@ void ResponseAppendEntry::Print(){
     std::cout << "Heartbeat : " << Heartbeat << "" << '\n';
     std::cout << "" << '\n';
 }
+
+
+
+/*---------------------------Class: CustomerRequest---------------------------------*/
+CustomerRequest::CustomerRequest() {
+    customer_id = -1;
+    order_number = -1;
+    request_type = -1;
+}
+
+void CustomerRequest::SetOrder(int id, int number, int type) {
+    customer_id = id;
+    order_number = number;
+    request_type = type;
+}
+
+int CustomerRequest::GetCustomerId() { return customer_id; }
+int CustomerRequest::GetOrderNumber() { return order_number; }
+int CustomerRequest::GetRequestType() { return request_type; }
+
+int CustomerRequest::Size() {
+    return sizeof(customer_id) + sizeof(order_number) + sizeof(request_type);
+}
+
+void CustomerRequest::Marshal(char *buffer) {
+    int net_customer_id = htonl(customer_id);
+    int net_order_number = htonl(order_number);
+    int net_request_type = htonl(request_type);
+    int offset = 0;
+
+    memcpy(buffer + offset, &net_customer_id, sizeof(net_customer_id));
+    offset += sizeof(net_customer_id);
+    memcpy(buffer + offset, &net_order_number, sizeof(net_order_number));
+    offset += sizeof(net_order_number);
+    memcpy(buffer + offset, &net_request_type, sizeof(net_request_type));
+}
+
+void CustomerRequest::Unmarshal(char *buffer) {
+    int net_customer_id;
+    int net_order_number;
+    int net_request_type;
+    int offset = 0;
+    memcpy(&net_customer_id, buffer + offset, sizeof(net_customer_id));
+    offset += sizeof(net_customer_id);
+    memcpy(&net_order_number, buffer + offset, sizeof(net_order_number));
+    offset += sizeof(net_order_number);
+    memcpy(&net_request_type, buffer + offset, sizeof(net_request_type));
+
+    customer_id = ntohl(net_customer_id);
+    order_number = ntohl(net_order_number);
+    request_type = ntohl(net_request_type);
+}
+
+bool CustomerRequest::IsValid() {
+    return (customer_id != -1);
+}
+
+void CustomerRequest::Print() {
+    std::cout << "customer_id: " << customer_id << " ";
+    std::cout << "order_number: " << order_number << " ";
+    std::cout << "request_type: " << request_type << std::endl;
+}

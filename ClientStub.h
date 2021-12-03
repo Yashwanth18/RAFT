@@ -13,7 +13,9 @@ private:
 public:
 	ClientStub();
 	int Init(std::string ip, int port);
-	int Send_Connection_Descriptor();
+
+    // Fill leaderID and return socket_status
+	int Order_LeaderID(CustomerRequest order, int *LeaderID);
 };
 
 

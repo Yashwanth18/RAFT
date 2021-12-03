@@ -302,3 +302,25 @@ bool ServerIncomingStub::Compare_Log(ServerState *serverState, VoteRequest * Vot
     }
     return result;
 }
+
+/*----Client Interface---------*/
+
+CustomerRequest ServerIncomingStub::ReceiveOrder() {
+    char buffer[32];
+    CustomerRequest order;
+
+    if (socket -> Recv(buffer, order.Size(), 0)) {
+        order.Unmarshal(buffer);
+    }
+    return order;
+}
+
+bool ServerIncomingStub::Send_LeaderID(int leaderID) {
+    char buf[sizeof (int)];
+    int socket_status;
+    int net_leaderID = htonl(leaderID);
+
+    memcpy(buf, &net_leaderID, sizeof(net_leaderID));
+    socket_status = socket -> Send(buf, sizeof (int), 0);
+    return socket_status;
+}

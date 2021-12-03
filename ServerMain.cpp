@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::thread listen_clientThread(&Interface::Listening_Client, &interface,
-                                    &clientSocket);
+                                    &clientSocket, &serverState, &lk_serverState,
+                                    &thread_vector);
     thread_vector.push_back(std::move(listen_clientThread));
 
     std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket, &serverState,

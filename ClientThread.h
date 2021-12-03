@@ -4,12 +4,20 @@
 #include <chrono>
 #include <ctime>
 #include <string>
+#include "ClientStub.h"
+#include "ClientTimer.h"
+#include "Messages.h"
 
 class ClientThreadClass {
-
+    int customer_id;
+    int num_orders;
+    int request_type;
+    ClientStub stub;
+    ClientTimer timer;
 public:
 	ClientThreadClass();
-	void ThreadBody();
+	void ThreadBody(std::string ip, int port, int id, int orders, int type);
+    ClientTimer GetTimer();
 
 };
 
