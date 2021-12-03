@@ -3,82 +3,128 @@
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo nodeInfo;
-    ServerStub serverStub;
     ServerState serverState;
+    ServerSocket serverSocket;
+    ServerSocket clientSocket;
     std::vector<Peer_Info> PeerServerInfo;
-    std::map<int,int> PeerIdIndexMap;
-    ServerTimer serverTimer;
-    int poll_timeout = timer.Poll_timeout();
+    std::vector <std::thread> thread_vector;
+    std::mutex lk_serverState;
+    Raft raft;
+    Interface interface;
 
-    if (!Init_NodeInfo(&nodeInfo, argc, argv)){
+
+    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
+    if (!Init_NodeInfo(&nodeInfo, argc, argv))                      { return 0; }
+    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
+
+    /* init a listening port to listen to peer servers */
+    if (!serverSocket.Init(nodeInfo.server_port)) {
+        std::cout << "Socket initialization failed" << '\n';
         return 0;
     }
 
-    if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap)){
+    /* init a listening port to listen to customer */
+    if (!clientSocket.Init(nodeInfo.client_port)) {
+        std::cout << "Socket initialization failed" << '\n';
         return 0;
     }
 
-    Init_ServerState(&serverState, nodeInfo.num_peers);
+    std::thread listen_clientThread(&Interface::Listening_Client, &interface,
+                                    &clientSocket);
+    thread_vector.push_back(std::move(listen_clientThread));
 
-    /* variables for error handling related to Socket*/
-    int Socket[nodeInfo.num_peers];
-    bool Socket_Status[nodeInfo.num_peers];  /* 0: Dead, 1: Alive */
-    bool Is_Init[nodeInfo.num_peers];
-    bool Request_Completed[nodeInfo.num_peers];
+    std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket, &serverState,
+                             &thread_vector, &lk_serverState, &timer);
+    thread_vector.push_back(std::move(listenThread));
 
-    serverStub.Init(&nodeInfo);
-    Init_Socket(&serverStub, nodeInfo.num_peers, Socket, Is_Init, Socket_Status);
-
-    timer.Start();
     while(true){
 
-        if (nodeInfo.role == CANDIDATE){
-            Setup_New_Election(&serverState, &timer, &nodeInfo, Request_Completed);
+    }
 
-            /* While (not time out and vote has not been rejected) */
-            while (!timer.Check_election_timeout() && nodeInfo.role == CANDIDATE){
+//    while(true){
+//        timer.Atomic_Restart();
+//
+//        if (serverState.role == FOLLOWER) {
+//            while(!timer.Check_Election_timeout()){}    // do nothing
+//            /* if election timeout */
+//            SetRole_Atomic(&serverState, &lk_serverState, CANDIDATE);
+//        }
+//
+//        else if (serverState.role == CANDIDATE) {
+//            Candidate_Role(&serverState, &nodeInfo, &PeerServerInfo,
+//                           &thread_vector, &raft, &lk_serverState);
+//        }
+//
+//        else if (serverState.role == LEADER) {
+//
+//            for (int i = 0; i < nodeInfo.num_peers; i++){
+//                std::thread leader_thread(&Raft::LeaderThread, &raft, i, &PeerServerInfo,
+//                                          &nodeInfo,&serverState, &lk_serverState);
+//                thread_vector.push_back(std::move(leader_thread));
+//            }
+//
+//            while (true) {
+//                // just so that we do not spin infinite number of threads
+//            }
+//        }
+//
+//        else {
+//            std::cout << "Undefined Server Role Initialization" << '\n';
+//        }
+//    }
 
-                Try_Connect_Election(&nodeInfo, &serverStub, &PeerServerInfo,
-                            Socket, Is_Init, Socket_Status, Request_Completed);
+}  // End: Main
 
-                BroadCast_RequestVote(&serverState, &nodeInfo, &serverStub, Socket, Is_Init,
-                                       Socket_Status, Request_Completed);
+/* -------------------------------End: Main Function------------------------------------ */
 
-                Get_Vote(&serverState, poll_timeout, &nodeInfo, &serverStub, Request_Completed,
-                         &PeerIdIndexMap);
-
-            } /* End: While (not time out and vote has not been rejected) */
-        } // End: Candidate role
-
-        // /*--------------------------Code below is for future implementation-----------------------*/
-
-         else if (nodeInfo.role == LEADER){    //send heartbeat message
-            /* Instead of sleep, should do a wait for request like Admin in programming assignment 2 */
-            std::this_thread::sleep_for(std::chrono::milliseconds(poll_timeout / 10));
-
-         }
-
-         else if (nodeInfo.role == FOLLOWER){
-             //if (timer.Check_election_timeout()){
-              //   nodeInfo.role = CANDIDATE;
-             //}
-             //else{ // for client interaction debugging, commented this part
-
-
-
-                 serverStub.Poll(poll_timeout);
-
-                 serverStub.Handle_Poll_Follower(&PeerServerInfo, &serverState, &timer, &nodeInfo);
-
-         }
-
-
-    } // END: while(true)
+/* ------------------Candidate Helper Functions  ------------------*/
+void NewElection_Atomic(ServerState *serverState, std::mutex *lk_serverState,
+                        NodeInfo *nodeInfo){
+    lk_serverState -> lock();
+    serverState -> currentTerm ++;
+    serverState -> num_votes = 1;
+    serverState -> votedFor = nodeInfo -> node_id; // vote for itself
+    lk_serverState -> unlock();
 }
 
 
 
+void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
+                    std::vector<Peer_Info> *PeerServerInfo,
+                    std::vector <std::thread> *thread_vector,
+                    Raft *raft, std::mutex *lk_serverState){
 
+    int half_peers = nodeInfo -> num_peers / 2;
+    int num_votes;
+    ServerTimer _timer;
 
+    NewElection_Atomic(serverState, lk_serverState, nodeInfo);
 
+    for (int i = 0; i < nodeInfo -> num_peers; i++){
+        std::thread candidate_thread(&Raft::CandidateThread, raft, i, PeerServerInfo,
+                                     nodeInfo, serverState, lk_serverState);
+        thread_vector -> push_back(std::move(candidate_thread));
+    }
 
+    _timer.Start();
+
+    while(!_timer.Check_Election_timeout()){
+
+        lk_serverState -> lock();   // lock
+        num_votes = serverState -> num_votes;
+        lk_serverState -> unlock();   // unlock
+
+        if (num_votes > half_peers){
+            SetRole_Atomic(serverState, lk_serverState, LEADER);
+            break;
+        }
+    }
+
+    lk_serverState -> lock();   // lock
+    if (serverState -> role != LEADER) {
+        std::cout << "Candidate timeout: resigning to be a follower" << '\n';
+        serverState -> role = FOLLOWER;
+    }
+    lk_serverState -> unlock();   // unlock
+
+}

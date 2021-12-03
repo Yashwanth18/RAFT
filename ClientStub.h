@@ -2,22 +2,18 @@
 #define __CLIENT_STUB_H__
 
 #include <string>
-
-#include "ClientSocket.h"
+#include "OutSocket.h"
 #include "Messages.h"
 #include <cstring>
 #include <arpa/inet.h>
 
 class ClientStub {
-
- private:
-  ClientSocket socket;
-
+private:
+	 OutSocket socket;
 public:
-
 	ClientStub();
 	int Init(std::string ip, int port);
-    int WriteRequest (CustomerRequest  customer_request, ResponseToCustomer * response_to_customer);
+	int Send_Connection_Descriptor();
 };
 
 

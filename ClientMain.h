@@ -1,43 +1,38 @@
-//
-// Created by Yashwanth reddy Beeravolu on 11/25/21.
-//
-
-#ifndef RAFT__CLIENTMAIN_H_
-#define RAFT__CLIENTMAIN_H_
-
+#include <iostream>
+#include "Messages.h"
+#include "ClientThread.h"
+#include "ClientStub.h"
 
 /* return 0 on failure and 1 on success */
-int FillPeerServerInfo(int argc, char *argv[], std::vector<Peer_Info> *PeerServerInfo){
+int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServerInfo){
 
-  int num_peers = atoi(argv[5]);
+    int num_servers = atoi(argv[1]);
 
-  for (int i = 1; i <= num_peers; i++){
+    for (int i = 0; i < num_servers; i++){
 
-    if (argc <= 3*i + 5){
-      std::cout << "not enough arguments" << std::endl;
-      std::cout << "./server [port_server #] [port_client #] [unique ID] [# peers] "
-                   "(repeat [ID] [IP] [port #])	" << std::endl;
-      return 0;
+        if (argc < 3*i + 5){
+            std::cout << "not enough arguments" << std::endl;
+            std::cout << "./client [# num_servers] (repeat [ID] [IP] [port #])" << '\n';
+            return 0;
+        }
+
+        else{
+            int unique_id = atoi(argv[3*i + 2]);
+            std::string IP = argv[3*i + 3];
+            int server_port = atoi(argv[3*i + 4]);
+
+            Peer_Info peer_server_info {unique_id, IP, server_port};
+            PeerServerInfo -> push_back(peer_server_info);
+        }
+    } // END: for loop
+
+    Peer_Info peer_server_info;
+    for (int i = 0; i < num_servers; i++){
+        peer_server_info = PeerServerInfo -> at(i);
+        std::cout << "id: " << peer_server_info.unique_id <<'\n';
+        std::cout << "IP address: " << peer_server_info.IP <<'\n';
+        std::cout << "port: " << peer_server_info.port <<'\n';
     }
-
-    else{
-
-      int unique_id = atoi(argv[3*i + 3]);
-      std::string IP = argv[3*i + 4];
-      int server_port = atoi(argv[3*i + 5]);
-
-      /*
-      std::cout << "Peer_id: " << unique_id << '\n';
-      std::cout << "Ip: " << IP << '\n';
-      std::cout << "server_port: " << server_port << '\n';
-      */
-
-      Peer_Info peer_server_info {unique_id, IP, server_port};
-      PeerServerInfo -> push_back(peer_server_info);
-
-    }
-
-  } // END: for loop
-  return 1;
+        
+    return 1;
 }
-#endif //RAFT__CLIENTMAIN_H_

@@ -4,21 +4,27 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 #include <sys/types.h>
-#include "iostream"
-#include "ClientSocket.h"
+#include <iostream>
+#include "OutSocket.h"
 
-int ClientSocket::Init(std::string ip, int port) {
+/* Connect to the host with IP and port
+ * return 0 if failure, and 1 if success */
+bool OutSocket::Init(std::string ip, int port) {
 	int status;
+    int fd;
+
 	if (is_initialized_) {
-		return 0;
+		return true;
 	}
 
 	struct sockaddr_in addr;
-	fd_ = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd_ < 0) {
-		perror("ERROR: failed to create a socket");
-		return -1;
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (fd < 0) {
+		perror("ERROR: OutSocket failed to create a socket");
+		return false;
 	}
+
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -27,16 +33,18 @@ int ClientSocket::Init(std::string ip, int port) {
 
 	/*BE CAREFUL: connect return 0 on success*/
 	try{
-		status = connect(fd_, (struct sockaddr *) &addr, sizeof(addr));
+		status = connect(fd, (struct sockaddr *) &addr, sizeof(addr));
 		if (status < 0){
 			throw status;
 		}
 	}
 	catch(int stat){
-        Close();
-		return -1;
+        close(fd);
+		return false;
 	}
 
 	is_initialized_ = true;
-	return 1;
+    fd_ = fd;
+	return true;
+
 }
