@@ -1,14 +1,14 @@
-#include "ServerIncomingStub.h"
+#include "ServerInStub.h"
 #include <iostream>
 
-ServerIncomingStub::ServerIncomingStub() {}
+ServerInStub::ServerInStub() {}
 
-void ServerIncomingStub::Init(std::unique_ptr<ServerSocket> socket) {
+void ServerInStub::Init(std::unique_ptr<ServerSocket> socket) {
 	this->socket = std::move(socket);
 }
 
 /* return 0 on failure */
-int ServerIncomingStub::Read_MessageType() {
+int ServerInStub::Read_MessageType() {
     int net_messageType;
     int messageType;
     char buf[sizeof (int)];
@@ -25,7 +25,7 @@ int ServerIncomingStub::Read_MessageType() {
     return messageType;
 }
 
-bool ServerIncomingStub::Send_MessageType(int messageType) {
+bool ServerInStub::Send_MessageType(int messageType) {
     char buf[sizeof (int)];
     int socket_status;
     int net_messageType = htonl(messageType);
@@ -36,8 +36,8 @@ bool ServerIncomingStub::Send_MessageType(int messageType) {
 }
 
 /*------------------------Responding to Leader------------------------*/
-bool ServerIncomingStub::
-Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) {
+bool ServerInStub::
+Handle_AppendEntryRequest(ServerState *serverState) {
     ResponseAppendEntry responseAppendEntry;
     AppendEntryRequest appendEntryRequest;
 
@@ -52,17 +52,17 @@ Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) 
     }
 
     appendEntryRequest.Unmarshal(buf);
-    appendEntryRequest.Print();
+    // appendEntryRequest.Print();
 
     Send_MessageType(RESPONSE_APPEND_ENTRY);    // to-do: handle error gracefully here
     Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
 
-    lk_serverState -> lock();       // lock
+    serverState -> lck.lock();       // lock
     Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
     responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
-    lk_serverState -> unlock();     // unlock
+    serverState -> lck.unlock();     // unlock
 
     /* to-do: error checking send here */
     socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
@@ -70,7 +70,7 @@ Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState) 
 }
 
 
-bool ServerIncomingStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
+bool ServerInStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseAppendEntry){
     char buf[sizeof (ResponseAppendEntry)];
     bool socket_status;
 
@@ -79,14 +79,14 @@ bool ServerIncomingStub::Send_ResponseAppendEntry(ResponseAppendEntry *responseA
     return socket_status;
 }
 
-void ServerIncomingStub::
+void ServerInStub::
 Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
 
     int remote_term = appendEntryRequest -> Get_sender_term();
     int localTerm = serverState -> currentTerm;
 
     if (remote_term >= localTerm) {
-        serverState -> leader_id = appendEntryRequest -> Get_sender_term();
+        serverState -> leader_id = appendEntryRequest -> Get_leaderId();
         serverState -> role =  FOLLOWER;
         serverState -> votedFor = -1;
         serverState -> currentTerm = remote_term;
@@ -95,7 +95,7 @@ Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
 
 /* If leaderCommit > commitIndex,
  * Set commitIndex = min(leaderCommit, index of last new entry) */
-void ServerIncomingStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
+void ServerInStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
                                          ServerState * serverState) {
 
     /* from the remote side */
@@ -116,7 +116,7 @@ void ServerIncomingStub::Set_CommitIndex(AppendEntryRequest *appendEntryRequest,
 }
 
 /* to-do: Clean this up */
-bool ServerIncomingStub::Set_Result(ServerState *serverState,
+bool ServerInStub::Set_Result(ServerState *serverState,
                                     AppendEntryRequest *appendEntryRequest){
 
     /* from the remote side */
@@ -153,7 +153,7 @@ bool ServerIncomingStub::Set_Result(ServerState *serverState,
 
 /* Reply false if log does not contain an entry at prevLogIndex whose term
  * matches prevLogTerm */
-bool ServerIncomingStub::Check_ConflictingLog(ServerState *serverState,
+bool ServerInStub::Check_ConflictingLog(ServerState *serverState,
                                    AppendEntryRequest *appendEntryRequest){
 
     int local_prevLogTerm;
@@ -192,7 +192,7 @@ bool ServerIncomingStub::Check_ConflictingLog(ServerState *serverState,
 
 
 
-void ServerIncomingStub::Print_Log(ServerState *serverState){
+void ServerInStub::Print_Log(ServerState *serverState){
     LogEntry logEntry;
     int log_size = serverState -> smr_log.size();
 
@@ -209,8 +209,8 @@ void ServerIncomingStub::Print_Log(ServerState *serverState){
 
 
 /*-----------------------Responding to Candidate--------------------------------*/
-bool ServerIncomingStub::
-Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
+bool ServerInStub::
+Handle_VoteRequest(ServerState *serverState) {
 
     VoteRequest voteRequest;
     ResponseVote responseVote;
@@ -227,10 +227,10 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
     voteRequest.Unmarshal(buf);
     voteRequest.Print();
 
-    lk_serverState -> lock();     // lock
+    serverState -> lck.lock();     // lock
     success = Decide_Vote(serverState, &voteRequest);
     responseVote.Set(serverState -> currentTerm, success);
-    lk_serverState -> unlock();     // unlock
+    serverState -> lck.unlock();     // unlock
 
     Send_MessageType(RESPONSE_VOTE);
     socket_status = SendResponseVote(&responseVote);
@@ -239,7 +239,7 @@ Handle_VoteRequest(ServerState *serverState,  std::mutex *lk_serverState) {
 }
 
 
-bool ServerIncomingStub::SendResponseVote(ResponseVote *responseVote) {
+bool ServerInStub::SendResponseVote(ResponseVote *responseVote) {
     char buf[sizeof (ResponseVote)];
     bool socket_status;
 
@@ -250,7 +250,7 @@ bool ServerIncomingStub::SendResponseVote(ResponseVote *responseVote) {
 }
 
 
-bool ServerIncomingStub::
+bool ServerInStub::
 Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
 
     int result = false;
@@ -280,7 +280,7 @@ Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest) {
 }
 
 /* Comparing the last_term and log length for the candidate node and the follower node */
-bool ServerIncomingStub::Compare_Log(ServerState *serverState, VoteRequest * VoteRequest) {
+bool ServerInStub::Compare_Log(ServerState *serverState, VoteRequest * VoteRequest) {
 
     int candidate_last_log_term = VoteRequest -> Get_last_log_term();
     int candidate_last_log_index = VoteRequest -> Get_last_log_index();
@@ -305,17 +305,17 @@ bool ServerIncomingStub::Compare_Log(ServerState *serverState, VoteRequest * Vot
 
 /*------------------Client Interface--------------------------------------*/
 
-CustomerRequest ServerIncomingStub::ReceiveOrder() {
+CustomerRequest ServerInStub::ReceiveOrder() {
     char buffer[32];
-    CustomerRequest order;
+    CustomerRequest request;
 
-    if (socket -> Recv(buffer, order.Size(), 0)) {
-        order.Unmarshal(buffer);
+    if (socket -> Recv(buffer, sizeof (CustomerRequest), 0)) {
+        request.Unmarshal(buffer);
     }
-    return order;
+    return request;
 }
 
-bool ServerIncomingStub::Send_LeaderID(int leaderID) {
+bool ServerInStub::Send_LeaderID(int leaderID) {
     char buf[sizeof (int)];
     int socket_status;
     int net_leaderID = htonl(leaderID);
@@ -325,8 +325,18 @@ bool ServerIncomingStub::Send_LeaderID(int leaderID) {
     return socket_status;
 }
 
-bool ServerIncomingStub::ReturnRecord(CustomerRecord record){
+bool ServerInStub::ReturnRecord(CustomerRecord record){
     char buffer[sizeof (CustomerRecord)];
     record.Marshal(buffer);
     return socket->Send(buffer, record.Size(), 0);
+}
+
+bool ServerInStub::Send_Ack(int rep_success) {
+    char buf[sizeof (int)];
+    int socket_status;
+    int net_success = htonl(rep_success);
+
+    memcpy(buf, &net_success, sizeof(net_success));
+    socket_status = socket -> Send(buf, sizeof (int), 0);
+    return socket_status;
 }

@@ -27,8 +27,30 @@ int ClientStub::Order_LeaderID(CustomerRequest order, int *LeaderID) {
             *LeaderID = ntohl(net_LeaderID);
         }
     }
-    std::cout << "socket_status: " << socket_status << '\n';
     return socket_status;
+}
+
+int ClientStub::Order_WriteRequest(CustomerRequest *request) {
+    char buf[sizeof(CustomerRequest)];
+    int socket_status;
+    int net_success;
+    int write_success = 0;
+
+    request -> Marshal(buf);
+    socket_status = socket.Send(buf, sizeof(CustomerRequest), 0);
+
+    if (socket_status) {
+        socket_status = socket.Recv(buf, sizeof (int), 0);
+
+        if (socket_status) {
+            memcpy(&net_success, buf, sizeof(net_success));
+            write_success = ntohl(net_success);
+        }
+        else{
+            return 0;
+        }
+    }
+    return write_success;
 }
 
 

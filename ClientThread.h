@@ -24,8 +24,10 @@ public:
 
     bool Connect_ServerIndex(std::vector<Peer_Info> *PeerServerInfo,
                              int index);
+
     bool Connect_Leader(std::vector<Peer_Info> *PeerServerInfo,
                         std::map<int,int> *PeerIdIndexMap);
+
     bool Connect_ServerRandomIndex(std::vector<Peer_Info> *PeerServerInfo,
                                    int *serverIndex);
 

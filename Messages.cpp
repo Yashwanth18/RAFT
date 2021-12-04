@@ -81,11 +81,12 @@ int VoteRequest::Get_candidateId() {
 }
 
 void VoteRequest::Print(){
-    std::cout << "\nterm: " << term << '\n';
+    std::cout << "-----------VoteRequest--------------" << '\n';
+    std::cout << "term: " << term << '\n';
     std::cout << "candidateId: " << candidateId << '\n';
     std::cout << "lastLogIndex: "<< lastLogIndex << '\n';
     std::cout << "lastLogTerm: "<< lastLogTerm << '\n';
-    std::cout<<"--------------------------" <<'\n';
+    std::cout<<"" <<'\n';
 }
 
 

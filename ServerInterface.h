@@ -11,7 +11,9 @@
 #include "Messages.h"
 #include "ServerSocket.h"
 #include "ServerTimer.h"
-#include "ServerIncomingStub.h"
+#include "ServerInStub.h"
+
+
 
 class Interface {
 private:
@@ -19,16 +21,16 @@ private:
 public:
     Interface(){}
 
-    void Listening_Client(ServerSocket *clientSocket,ServerState *serverState,
-                          std::mutex *lk_serverState, std::vector<std::thread> *thread_vector,
-                          std::map<int, int> *MapCustomerRecord, std::mutex *lk_MapRecord);
+    void Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
+                          std::vector<std::thread> *thread_vector,
+                          Map_Customer_Record *mapCustomerRecord, Bridge *bridge);
 
     void InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-                         std::mutex *lk_serverState, std::map<int, int> *MapCustomerRecord,
-                         std::mutex *lk_MapRecord);
+                         Map_Customer_Record *mapCustomerRecord, Bridge *bridge);
 
     void Fill_Customer_Record(CustomerRequest * request, CustomerRecord * record,
-                              std::map<int, int> *MapCustomerRecord, std::mutex *lk_MapRecord);
+                              Map_Customer_Record *mapCustomerRecord);
+
 
 };
 #endif // end of #ifndef __SERVERCLIENTTHREAD_H__

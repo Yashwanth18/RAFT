@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     num_customers = 1;
     num_orders = 1;
 
+
     timer.Start();
     for (int i = 0; i < num_customers; i++) {
         auto client_cls = std::shared_ptr<ClientThreadClass>(new ClientThreadClass());

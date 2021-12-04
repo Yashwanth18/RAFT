@@ -8,25 +8,25 @@
 #include "Messages.h"
 
 
-class ServerIncomingStub {
+class ServerInStub {
 private:
 	std::unique_ptr<ServerSocket> socket;
 
 public:
-	ServerIncomingStub();
+	ServerInStub();
 	void Init(std::unique_ptr<ServerSocket> socket);
 
     int Read_MessageType();
     bool Send_MessageType(int messageType);
 
     /* ---------------------Responding to Candidate----------------------------------*/
-    bool Handle_VoteRequest(ServerState *serverState, std::mutex *lk_serverState);
+    bool Handle_VoteRequest(ServerState *serverState);
     bool SendResponseVote(ResponseVote *ResponseVote);
     bool Decide_Vote(ServerState *serverState, VoteRequest *VoteRequest);
     bool Compare_Log(ServerState *serverState, VoteRequest * VoteRequest);
 
     /* ----------------------Responding to Leader -----------------------------------------*/
-    bool Handle_AppendEntryRequest(ServerState *serverState, std::mutex *lk_serverState);
+    bool Handle_AppendEntryRequest(ServerState *serverState);
     bool Send_ResponseAppendEntry(ResponseAppendEntry *ResponseAppendEntry);
     void Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState);
     void Set_CommitIndex(AppendEntryRequest *appendEntryRequest, ServerState * serverState);
@@ -39,6 +39,7 @@ public:
     /*----Client Interface---------*/
     CustomerRequest ReceiveOrder();
     bool Send_LeaderID(int leaderID); // return socket_status;
+    bool Send_Ack(int rep_success);
     bool ReturnRecord(CustomerRecord record);
 
 };

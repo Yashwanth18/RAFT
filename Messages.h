@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <future>
+#include <map>
+#include <queue>
 
 #define FOLLOWER 0
 #define CANDIDATE 1
@@ -18,6 +21,10 @@
 #define READ_ALL_REQUEST 3
 #define LEADER_ID_REQUEST 4
 
+struct Map_Customer_Record{
+    std::map<int, int> CustomerRecord_dict;
+    std::mutex lck;
+};
 
 struct Peer_Info{
   int unique_id;
@@ -57,6 +64,7 @@ struct ServerState{
     int role;
     int num_votes;
     int leader_id;
+    std::mutex lck;
 };
 
 struct NodeInfo{
@@ -226,6 +234,18 @@ public:
     int Size();
     bool IsValid();
     void Print();
+};
+
+
+struct WriteRequest {
+    CustomerRequest request;
+    std::promise <CustomerRequest> prom;
+};
+
+struct Bridge{
+    std::queue < std::unique_ptr<WriteRequest> > queue;
+    std::mutex lck;
+    std::condition_variable cv;
 };
 
 

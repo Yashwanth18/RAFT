@@ -1,14 +1,13 @@
 #include <iostream>
 #include <memory>
 #include "ServerThread.h"
-#include "ServerIncomingStub.h"
+#include "ServerInStub.h"
 #include "ServerOutStub.h"
 #include "ServerTimer.h"
 
 void Raft::
 ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
-                std::vector<std::thread> *thread_vector,
-                std::mutex *lk_serverState, ServerTimer *timer){
+                std::vector<std::thread> *thread_vector, ServerTimer *timer){
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
         new_socket = serverSocket -> Accept();
@@ -16,7 +15,7 @@ ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
 
         std::thread incoming_thread(&Raft::IncomingThread, this,
                                     std::move(new_socket), serverState,
-                                    lk_serverState, timer);
+                                    timer);
 
         thread_vector -> push_back(std::move(incoming_thread));
     }
@@ -27,13 +26,13 @@ ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
 
 void Raft::
 IncomingThread(std::unique_ptr<ServerSocket> socket,
-               ServerState *serverState, std::mutex *lk_serverState,
+               ServerState *serverState,
                ServerTimer *timer) {
 
     int messageType;
     int socket_status;
     int _role;
-    ServerIncomingStub In_Stub;
+    ServerInStub In_Stub;
     ServerTimer _timer;
     In_Stub.Init(std::move(socket));
 
@@ -49,18 +48,17 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
 
         if (messageType == VOTE_REQUEST) { // main functionality
             timer -> Atomic_Restart();
-            socket_status = In_Stub.Handle_VoteRequest(serverState, lk_serverState);
+            socket_status = In_Stub.Handle_VoteRequest(serverState);
         }
 
         else if (messageType == APPEND_ENTRY_REQUEST){
             timer -> Atomic_Restart();
-            socket_status = In_Stub.Handle_AppendEntryRequest(
-                                                serverState, lk_serverState);
+            socket_status = In_Stub.Handle_AppendEntryRequest(serverState);
         }
 
-        lk_serverState -> lock();       // lock
+        serverState -> lck.lock();       // lock
         _role = serverState -> role;
-        lk_serverState -> unlock();     // unlock
+        serverState -> lck.unlock();     // unlock
 
         if (_role == CANDIDATE){        // for candidate thread receiving AppendEntryRequest from leader
             break;
@@ -70,14 +68,13 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
             break;
         }
     }
-    std::cout << "Exiting IncomingThread\n" << '\n';
+    // std::cout << "Exiting IncomingThread that handled peer servers \n" << '\n';
 
 }
 
 void Raft::
 CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                NodeInfo *nodeInfo, ServerState *serverState,
-                std::mutex *lk_serverState) {
+                NodeInfo *nodeInfo, ServerState *serverState) {
 
     ServerTimer _timer;
     int still_trying;
@@ -86,25 +83,24 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
     while(!_timer.Check_Election_timeout()){
 
-        lk_serverState->lock();         // lock
+        serverState -> lck.lock();         // lock
         if (serverState -> role == LEADER){
             break;
         }
-        lk_serverState->unlock();       // unlock
+        serverState -> lck.unlock();       // unlock
 
         still_trying = Candidate_Quest(peer_index, PeerServerInfo, nodeInfo,
-                                       serverState, lk_serverState);
+                                       serverState);
         if (still_trying != 1){
             break;
         }
     }
-    std::cout << "Exiting Candidate Thread" << '\n';
+    // std::cout << "Exiting Candidate Thread" << '\n';
 
 }
 
 int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                          NodeInfo *nodeInfo, ServerState *serverState,
-                          std::mutex *lk_serverState){
+                          NodeInfo *nodeInfo, ServerState *serverState){
     bool socket_status;
     ServerOutStub Out_stub;
     std::string peer_IP;
@@ -128,7 +124,7 @@ int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo
         messageType = Out_stub.Read_MessageType();
 
         if (messageType == RESPONSE_VOTE) {
-            socket_status = Out_stub.Handle_ResponseVote(serverState, lk_serverState);
+            socket_status = Out_stub.Handle_ResponseVote(serverState);
             if (socket_status){
                 still_trying = 0;
             }
@@ -144,7 +140,7 @@ int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo
 
 void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-             NodeInfo *nodeInfo, ServerState *serverState, std::mutex *lk_serverState) {
+             NodeInfo *nodeInfo, ServerState *serverState, Bridge *bridge) {
 
     ServerOutStub Out_stub;
     std::string peer_IP;
@@ -171,7 +167,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
             if (socket_status) {
                 socket_status = Out_stub.SendAppendEntryRequest(
-                        serverState, nodeInfo, peer_index, heartbeat, lk_serverState);
+                        serverState, nodeInfo, peer_index, heartbeat);
             }
 
             if (socket_status) {
@@ -179,7 +175,7 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
                 if (messageType == RESPONSE_APPEND_ENTRY) {
                     socket_status = Out_stub.Handle_ResponseAppendEntry(
-                                serverState, peer_index, nodeInfo, lk_serverState);
+                                serverState, peer_index, nodeInfo);
 
                     if (socket_status) {
                         job_done = true;
@@ -187,9 +183,9 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                 }
             }
 
-            lk_serverState -> lock(); // lock
+            serverState -> lck.lock(); // lock
             _role  = serverState -> role;
-            lk_serverState -> unlock(); // unlock
+            serverState -> lck.unlock(); // unlock
 
             if (_role == FOLLOWER){     // if we detect that we are stale
                 break;
@@ -205,14 +201,14 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 }
 
 void Raft::Apply_Committed_Op(ServerState *serverState, std::map<int, int> MapCustomerRecord,
-                              std::mutex *lk_serverState, std::mutex *lk_Map){
+                              std::mutex *lk_Map){
     int commitIndex;
     LogEntry logEntry;
 
-    lk_serverState -> lock();       // lock
+    serverState -> lck.lock();       // lock
     commitIndex = serverState -> commitIndex;
     logEntry = serverState -> smr_log.at(commitIndex);
-    lk_serverState -> unlock();     // unlock
+    serverState -> lck.unlock();     // unlock
 
     MapOp mapOp_commited = {logEntry.opcode, logEntry.arg1, logEntry.arg2};
 

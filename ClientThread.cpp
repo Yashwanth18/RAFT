@@ -3,14 +3,71 @@
 
 ClientThreadClass::ClientThreadClass() {}
 
+
+void ClientThreadClass::
+ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdIndexMap,
+           int _customerId, int _num_orders, int _requestType) {
+
+    customer_id = _customerId;
+    num_orders = _num_orders;
+    request_type = _requestType;
+
+    int socket_status;
+    int leaderID;
+    int serverIndex;
+    int write_success;
+
+    CustomerRequest request;
+    CustomerRecord record;
+
+
+    if (request_type == WRITE_REQUEST){
+        Connect_Leader(PeerServerInfo, PeerIdIndexMap);
+        request.SetOrder(customer_id, 1, request_type);
+
+        write_success = stub.Order_WriteRequest(&request);
+        std::cout << "write_success: " << write_success << '\n';
+    }
+    else if (request_type == READ_REQUEST){
+        socket_status = Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
+
+        if (socket_status){
+            request.SetOrder(customer_id, 1, request_type);
+            socket_status = stub.ReadRecord(&request, &record);
+            record.Print();
+        }
+
+        else{
+            std::cout << "Server selected down"<< '\n';
+        }
+    }
+
+    else if (request_type == LEADER_ID_REQUEST){     // ask who the leader is
+        socket_status = Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
+        // to-do: make this robust. Keep connecting
+
+        request.SetOrder(customer_id, num_orders, request_type);
+        socket_status = stub.Order_LeaderID(request, &leaderID);
+        std::cout << "leaderID: " << leaderID << '\n';
+    }
+
+    else{
+        std::cout << "Undefined requestType"<< '\n';
+    }
+}
+
+
 bool::ClientThreadClass::
-Connect_ServerRandomIndex(std::vector<Peer_Info> *PeerServerInfo, int *serverIndex){
+Connect_ServerRandomIndex(std::vector<Peer_Info> *PeerServerInfo,
+                          int *serverIndex){
     int socket_status;
 
     srand(time(0)); /* arbitrary */
     *serverIndex= rand() % (PeerServerInfo -> size());
 
-    std::cout << "connecting to serverIndex: " << *serverIndex << '\n';
+    std::cout << "connecting to serverID: " <<
+                    PeerServerInfo ->at(*serverIndex).unique_id<< '\n';
+
     socket_status = Connect_ServerIndex(PeerServerInfo, *serverIndex);
 
     return socket_status;
@@ -48,7 +105,7 @@ Connect_Leader(std::vector<Peer_Info> *PeerServerInfo,
 
         if(socket_status){
             serverIndex = (*PeerIdIndexMap)[leaderID];
-            std::cout << "Connecting to: " << leaderID << '\n';
+            std::cout << "Connecting to serverID: " << leaderID << '\n';
             socket_status = Connect_ServerIndex(PeerServerInfo, serverIndex);
         }
 
@@ -74,56 +131,7 @@ Connect_Leader(std::vector<Peer_Info> *PeerServerInfo,
 
 }
 
-//if (!socket_status){ // if server down
-//srand(time(0)); /* arbitrary */
-//serverIndex = rand() % PeerServerInfo -> size();
-//}
 
-void ClientThreadClass::
-ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdIndexMap,
-           int _customerId, int _num_orders, int _requestType) {
-
-    customer_id = _customerId;
-    num_orders = _num_orders;
-    request_type = _requestType;
-
-    int socket_status;
-    int leaderID;
-    int serverIndex;
-    CustomerRequest customerRequest;
-
-
-    if (request_type == WRITE_REQUEST){
-        Connect_Leader(PeerServerInfo, PeerIdIndexMap);
-        // to-do: issue write request
-
-    }
-    else if (request_type == READ_REQUEST){
-        CustomerRequest request;
-        CustomerRecord record;
-        socket_status = Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
-
-        if (socket_status){
-            request.SetOrder(customer_id, -1, request_type);
-            socket_status = stub.ReadRecord(&request, &record);
-            record.Print();
-        }
-
-        else{
-            std::cout << "Server selected down"<< '\n';
-        }
-    }
-
-    else if (request_type == LEADER_ID_REQUEST){     // ask who the leader is
-        customerRequest.SetOrder(customer_id, num_orders, request_type);
-        socket_status = stub.Order_LeaderID(customerRequest, &leaderID);
-
-    }
-
-    else{
-        std::cout << "Undefined requestType"<< '\n';
-    }
-}
 
 
 

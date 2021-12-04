@@ -6,7 +6,7 @@
 #   ./client num_servers (repeat iD IP port_client)
 
 #------------user's configuration before running this script---------
-num_servers=2
+num_servers=3
 local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
@@ -68,6 +68,48 @@ elif [ $num_servers -eq 2 ]; then      # number of servers = 3
 
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
                           ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
+                          $requestType
+
+elif [ $num_servers -eq 3 ]; then      # number of servers = 3
+
+    unset 'ID_Server[${#ID_Server[@]}-1]'
+    unset 'Server_IP[${#Server_IP[@]}-1]'
+    unset 'Port_Server[${#Port_Server[@]}-1]'
+
+    requestType=$4
+
+    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
+                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
+                          ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
+                          $requestType
+
+elif [ $num_servers -eq 4 ]; then      # number of servers = 3
+
+    unset 'ID_Server[${#ID_Server[@]}-1]'
+    unset 'Server_IP[${#Server_IP[@]}-1]'
+    unset 'Port_Server[${#Port_Server[@]}-1]'
+
+    requestType=$5
+
+    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
+                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
+                          ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
+                          ${ID_Server[3]} ${Server_IP[3]} ${Port_Server[3]} \
+                          $requestType
+
+elif [ $num_servers -eq 5 ]; then      # number of servers = 3
+
+    unset 'ID_Server[${#ID_Server[@]}-1]'
+    unset 'Server_IP[${#Server_IP[@]}-1]'
+    unset 'Port_Server[${#Port_Server[@]}-1]'
+
+    requestType=$6
+
+    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
+                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
+                          ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
+                          ${ID_Server[3]} ${Server_IP[3]} ${Port_Server[3]} \
+                          ${ID_Server[4]} ${Server_IP[4]} ${Port_Server[4]} \
                           $requestType
 
 fi
