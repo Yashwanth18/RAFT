@@ -33,6 +33,12 @@ struct LogEntry{
     int arg2;
 };
 
+struct MapOp{
+    int opcode;
+    int arg1;
+    int arg2;
+};
+
 struct ServerState{
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     int currentTerm;

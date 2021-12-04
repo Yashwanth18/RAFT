@@ -12,18 +12,18 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
         new_socket = clientSocket -> Accept();
         std::cout << "Accepted Connection from client" << '\n';
 
-        std::thread newThread(&Interface::NewThread, this, std::move(new_socket),
+        std::thread interfaceThread(&Interface::InterfaceThread, this, std::move(new_socket),
                               serverState, lk_serverState, MapCustomerRecord,
                               lk_serverState);
 
-        thread_vector -> push_back(std::move(newThread));
+        thread_vector -> push_back(std::move(interfaceThread));
     }
 }
 
 void Interface::
-NewThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-          std::mutex *lk_serverState, std::map<int, int> *MapCustomerRecord,
-          std::mutex *lk_MapRecord){
+InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
+                std::mutex *lk_serverState, std::map<int, int> *MapCustomerRecord,
+                std::mutex *lk_MapRecord){
 
     ServerIncomingStub inStub;
     inStub.Init(std::move(socket));
@@ -41,10 +41,10 @@ NewThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
         }
 
         std::cout << "requestType: " << requestType << '\n';
+        request.Print();
 
         switch (requestType) {
-            case LEADER_ID_REQUEST:
-                std::cout << "Received request_type: LEADER_ID_REQUEST" << '\n';
+            case LEADER_ID_REQUEST:     /* MACRO defined to be number 4 */
 
                 lk_serverState -> lock();       // lock
                 leaderID = serverState -> leader_id;
@@ -52,10 +52,20 @@ NewThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 inStub.Send_LeaderID(leaderID);
                 break;
 
-            case READ_REQUEST:
+            case WRITE_REQUEST:     /* MACRO defined to be number 1 */
+
+                // check if we are the leader here
+                // notify the leaderThread
+
+                break;
+
+            case READ_REQUEST:      /* MACRO defined to be number 2 */
                 Fill_Customer_Record(&request, &record, MapCustomerRecord, lk_MapRecord);
                 inStub.ReturnRecord(record);
                 break;
+
+            default:
+                std::cout << "Undefined request_type: " << requestType << '\n';
         }
     }
 }

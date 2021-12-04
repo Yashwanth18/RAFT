@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    // debug only!
+    serverState.leader_id = 25;
+
     std::thread listen_clientThread(&Interface::Listening_Client, &interface,
                                     &clientSocket, &serverState, &lk_serverState,
                                     &thread_vector, &MapCustomerRecord, &lk_MapRecord);

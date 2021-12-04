@@ -6,7 +6,7 @@
 #   ./client num_servers (repeat iD IP port_client)
 
 #------------user's configuration before running this script---------
-num_servers=1
+num_servers=2
 local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
@@ -46,12 +46,28 @@ do
 done
 
 
+
 if [ $num_servers -eq 1 ]; then       # for testing purposes only
-    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]}
+
+    unset 'ID_Server[${#ID_Server[@]}-1]'
+    unset 'Server_IP[${#Server_IP[@]}-1]'
+    unset 'Port_Server[${#Port_Server[@]}-1]'
+
+    requestType=$2
+
+    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
+                          $requestType
 
 elif [ $num_servers -eq 2 ]; then      # number of servers = 3
 
+    unset 'ID_Server[${#ID_Server[@]}-1]'
+    unset 'Server_IP[${#Server_IP[@]}-1]'
+    unset 'Port_Server[${#Port_Server[@]}-1]'
+
+    requestType=$3
+
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
-                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]}
+                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
+                          $requestType
 
 fi

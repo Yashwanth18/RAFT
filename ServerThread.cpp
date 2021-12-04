@@ -191,18 +191,36 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
             _role  = serverState -> role;
             lk_serverState -> unlock(); // unlock
 
-            if (_role == FOLLOWER){
+            if (_role == FOLLOWER){     // if we detect that we are stale
                 break;
             }
 
-        }  // End: while (!job_done)
+        } // End: while (!job_done)
 
-        if (_role == FOLLOWER){
+        if (_role == FOLLOWER){         // if we detect that we are stale
             break;
         }
 
     }  // End: while (true)
 }
 
+void Raft::Apply_Committed_Op(ServerState *serverState, std::map<int, int> MapCustomerRecord,
+                              std::mutex *lk_serverState, std::mutex *lk_Map){
+    int commitIndex;
+    LogEntry logEntry;
+
+    lk_serverState -> lock();       // lock
+    commitIndex = serverState -> commitIndex;
+    logEntry = serverState -> smr_log.at(commitIndex);
+    lk_serverState -> unlock();     // unlock
+
+    MapOp mapOp_commited = {logEntry.opcode, logEntry.arg1, logEntry.arg2};
+
+    if (mapOp_commited.opcode == 1){    // only support update value operation for now
+        lk_Map -> lock();   // lock
+        MapCustomerRecord [mapOp_commited.arg1] = mapOp_commited.arg2;
+        lk_Map -> unlock();  // unlock
+    }
+}
 
 

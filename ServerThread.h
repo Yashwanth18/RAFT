@@ -40,6 +40,9 @@ public:
                       NodeInfo *nodeInfo, ServerState *serverState,
                       std::mutex *lk_serverState);
 
+    void Apply_Committed_Op(ServerState *serverState,  std::map<int, int> MapCustomerRecord,
+                            std::mutex *lk_serverState, std::mutex *lk_Map);
+
 
 };
 #endif // end of #ifndef __SERVERTHREAD_H__
