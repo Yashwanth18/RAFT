@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     request_type = atoi(argv[argc - 1]);    // last input from command line
 
     /* configure these two variables for evaluation purposes  */
-    num_customers = 1;
-    num_orders = 100000;
+    num_customers = 4;
+    num_orders = 100;
 
     timer.Start();
     for (int i = 0; i < num_customers; i++) {
@@ -40,6 +40,9 @@ int main(int argc, char *argv[]) {
     for (auto& cls : client_vector) {
         timer.Merge(cls->GetTimer());
     }
-    // timer.PrintStats();
+
+    if (request_type == WRITE_REQUEST){
+        timer.PrintStats();
+    }
 
 }

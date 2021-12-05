@@ -32,8 +32,6 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
             write_success = stub.Order_WriteRequest(&request);
             timer.EndAndMerge();
 
-            std::cout << "write_success for request " << i << ": " << write_success << '\n';
-
             if (!write_success){
                 std::cout << "write request failed: " << write_success << '\n';
             }
