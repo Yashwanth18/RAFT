@@ -47,7 +47,6 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> commitIndex = 0;
     serverState -> last_applied = 0;
 
-
     serverState -> num_votes = 1;            /* 1 because always vote for oneself */
     serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */

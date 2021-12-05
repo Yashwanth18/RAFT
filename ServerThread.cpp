@@ -149,6 +149,8 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int messageType;
     bool job_done;
     int _role;
+    int matchIndex;
+    int lastLogIndex;
 
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
@@ -157,6 +159,16 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         // to-do: wait for client's request
         job_done = false;
         int heartbeat = 1;
+
+        serverState -> lck.lock();  // lock
+        matchIndex = serverState -> matchIndex[peer_index];
+        lastLogIndex = serverState -> smr_log.size() - 1;
+        serverState -> lck.unlock();    // unlock
+
+        while(matchIndex < lastLogIndex){
+
+        }
+
 
         while(!job_done) {
             socket_status = outStub.Init(peer_IP, peer_port);
