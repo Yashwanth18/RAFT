@@ -78,9 +78,7 @@ Handle_ResponseVote(ServerState *serverState){
 
 
     if (responseVote.Get_voteGranted()) { /* vote granted */
-        serverState -> lck.lock();
-        serverState -> num_votes ++;
-        serverState -> lck.unlock();
+        serverState -> Increment_numVote();
     }
 
     else {  /* vote got rejected */

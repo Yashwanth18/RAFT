@@ -46,7 +46,8 @@ struct MapOp{
     int arg2;
 };
 
-struct ServerState{
+class ServerState{
+public:
     /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
     int currentTerm;
     int votedFor;
@@ -54,7 +55,7 @@ struct ServerState{
 
     /* volatile state on all servers */
     int commitIndex;
-    int last_applied;
+    int lastApplied;
 
     /* volatile state on leaders (Reinitialized after Raft) */
     std::vector<int> nextIndex;     // size = num_peers
@@ -62,9 +63,34 @@ struct ServerState{
 
     /* */
     int role;
-    int num_votes;
-    int leader_id;
+    int numVotes;
+    int leaderId;
     std::mutex lck;
+
+    ServerState(int num_peers, int role_);
+
+    /* For Leader Election Module */
+    void NewElection(int self_nodeId);
+    void Become_Leader(int self_nodeID);
+    void Increment_numVote();
+
+    int Get_numVotes();
+    int GetRole();
+    int Get_nodeTerm();
+    int Get_lastApplied();
+    int Get_VotedFor();
+    int Get_leaderID();
+
+    void SetRole(int _role);
+    void SetVotedFor(int id);
+    void Set_nodeTerm(int _term);
+    void Set_commitIndex(int _index);
+    void Set_lastApplied(int _index);
+    void Set_leaderID(int id);
+
+    /* For Log Module */
+    // void Push_log(LogEntry logEntry);
+
 };
 
 struct NodeInfo{

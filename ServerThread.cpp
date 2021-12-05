@@ -32,7 +32,7 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
 
     int messageType;
     int socket_status;
-    int _role;
+
     ServerInStub In_Stub;
     ServerTimer _timer;
     In_Stub.Init(std::move(socket));
@@ -59,11 +59,8 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
         }
 
 
-        serverState -> lck.lock();       // lock
-        _role = serverState -> role;
-        serverState -> lck.unlock();     // unlock
-
-        if (_role == CANDIDATE){        // for candidate thread receiving AppendEntryRequest from leader
+        /* if candidate thread receiving AppendEntryRequest from leader */
+        if (serverState -> GetRole() == CANDIDATE){
             break;
         }
 
@@ -86,11 +83,10 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
     while(!_timer.Check_Election_timeout()){
 
-        serverState -> lck.lock();         // lock
-        if (serverState -> role == LEADER){
+        if (serverState -> GetRole() == LEADER){
             break;
         }
-        serverState -> lck.unlock();       // unlock
+
 
         still_trying = Candidate_Quest(peer_index, PeerServerInfo, nodeInfo,
                                        serverState);
@@ -152,7 +148,6 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     int peer_port;
     int socket_status;
     int messageType;
-    int _role;
     bool heartbeat;
     bool upToDate;
 
@@ -190,11 +185,10 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 
         Apply_Committed_Op(serverState, mapRecord);
 
-        serverState -> lck.lock();      // lock
-        _role  = serverState -> role;
-        serverState -> lck.unlock();    // unlock
 
-        if (_role == FOLLOWER){         // if we detect that we are stale
+
+        /* if leader detects that it is stale */
+        if (serverState -> GetRole() == FOLLOWER){
             break;
         }
     }  // End: while (true)
@@ -219,23 +213,23 @@ bool Raft::Check_UpToDate(ServerState *serverState, int peer_index) {
 
 void Raft::Apply_Committed_Op(ServerState *serverState, MapClientRecord *mapRecord){
     int commitIndex;
-    int last_applied;
+    int lastApplied;
     int lastLogIndex;
 
     serverState -> lck.lock();      // lock
     commitIndex = serverState -> commitIndex;
-    last_applied = serverState -> last_applied;
+    lastApplied = serverState -> lastApplied;
     lastLogIndex = serverState -> smr_log.size() - 1;
     serverState -> lck.unlock();    // unlock
 
-    if (last_applied < commitIndex){
+    if (lastApplied < commitIndex){
 
         if (lastLogIndex < commitIndex){
             commitIndex = lastLogIndex;
         }
         serverState -> lck.lock();       // lock
         for (int i = commitIndex; i <= lastLogIndex; i++){
-            serverState -> last_applied = serverState -> commitIndex;
+            serverState -> lastApplied = serverState -> commitIndex;
             LogEntry logEntry = serverState -> smr_log.at(commitIndex);
             MapOp mapOp_commited = {logEntry.opcode, logEntry.arg1, logEntry.arg2};
 

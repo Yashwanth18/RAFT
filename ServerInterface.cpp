@@ -30,7 +30,6 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
 
     int requestType;
     int leaderID;
-    int role_;
     int rep_success;
     int opcode = 1;
     int arg1;
@@ -55,26 +54,27 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
 
             case WRITE_REQUEST: {    /* MACRO defined to be number 1 */
                 rep_success = 0;
-
-                serverState->lck.lock();       // lock
-                role_ = serverState->role;
-                serverState->lck.unlock();     // unlock
-                if (role_ != LEADER) { break; }
+                if (serverState -> GetRole() != LEADER) { break; }
 
                 /* Notify the leaderThread */
                 serverState->lck.lock();       // lock
+
                 nodeTerm = serverState -> currentTerm;
                 LogEntry logEntry{nodeTerm, opcode, arg1, arg2};
                 serverState -> smr_log.push_back(logEntry);
                 request_index = serverState -> smr_log.size() - 1;
+                std::cout << "waiting for req: " << request_index << '\n';
+
                 serverState->lck.unlock();     // unlock
 
+                serverState->lck.lock();       // lock
                 /* Wait until the request is considered Committed (not necessarily applied) */
                 while (!rep_success){
-                    serverState->lck.lock();       // lock
                     rep_success = (serverState -> commitIndex == request_index);
-                    serverState->lck.unlock();     // unlock
                 }
+
+                serverState->lck.unlock();     // unlock
+                std::cout << "done request" << '\n';
 
                 /* Send Acknowledgement back to client */
                 inStub.Send_Ack(rep_success);
@@ -87,7 +87,7 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
             }
             case LEADER_ID_REQUEST: {     /* MACRO defined to be number 4 */
                 serverState->lck.lock();       // lock
-                leaderID = serverState->leader_id;
+                leaderID = serverState->leaderId;
                 serverState->lck.unlock();     // unlock
 
                 inStub.Send_LeaderID(leaderID);

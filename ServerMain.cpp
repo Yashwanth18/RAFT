@@ -5,7 +5,6 @@ int main(int argc, char *argv[]) {
     NodeInfo nodeInfo;
     Raft raft; /* All server threads are here: Follower, Candidate, Leader */
     ServerSocket serverSocket;
-    ServerState serverState;
     ServerSocket clientSocket;
     Interface interface;
     std::vector<Peer_Info> PeerServerInfo;
@@ -14,7 +13,9 @@ int main(int argc, char *argv[]) {
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
     if (!Init_NodeInfo(&nodeInfo, argc, argv))                      { return 0; }
-    Init_ServerState(&serverState, nodeInfo.num_peers, argc, argv);
+
+    int _role = atoi(argv[argc - 1]); // for debugging and testing purposes
+    ServerState serverState(nodeInfo.num_peers, _role);
 
     /* init a listening port to listen to peer servers */
     if (!serverSocket.Init(nodeInfo.server_port)) {
@@ -38,13 +39,15 @@ int main(int argc, char *argv[]) {
                              &thread_vector,  &timer, &mapRecord);
     thread_vector.push_back(std::move(listenThread));
 
+    /* for testing purposes: allow the programmer time to run other nodes */
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
 
     while(true){
         timer.Atomic_Restart();
 
         if (serverState.role == FOLLOWER) {
             while(!timer.Check_Election_timeout()){}    /* do nothing */
-            SetRole_Atomic(&serverState, CANDIDATE);    /* if election timeout */
+            serverState.SetRole(CANDIDATE);    /* if election timeout */
         }
 
         else if (serverState.role == CANDIDATE) {
@@ -75,26 +78,15 @@ int main(int argc, char *argv[]) {
 /* -------------------------------End: Main Function------------------------------------ */
 
 /* ------------------Candidate Helper Functions  ------------------*/
-void NewElection_Atomic(ServerState *serverState, NodeInfo *nodeInfo){
-    serverState -> lck.lock();
-    serverState -> currentTerm ++;
-    serverState -> num_votes = 1;
-    serverState -> votedFor = nodeInfo -> node_id; // vote for itself
-    serverState -> lck.unlock();
-}
-
-
-
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     std::vector<Peer_Info> *PeerServerInfo,
                     std::vector <std::thread> *thread_vector,
                     Raft *raft){
 
+    ServerTimer _timer;
+    serverState -> NewElection(nodeInfo -> node_id);
     int half_peers = nodeInfo -> num_peers / 2;
     int num_votes;
-    ServerTimer _timer;
-
-    NewElection_Atomic(serverState, nodeInfo);
 
     for (int i = 0; i < nodeInfo -> num_peers; i++){
         std::thread candidate_thread(&Raft::CandidateThread, raft, i, PeerServerInfo,
@@ -105,27 +97,15 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
     _timer.Start();
 
     while(!_timer.Check_Election_timeout()){
-
-        serverState -> lck.lock();   // lock
-        num_votes = serverState -> num_votes;
-        serverState -> lck.unlock();   // unlock
+        num_votes = serverState -> Get_numVotes();
 
         if (num_votes > half_peers){
-
-            serverState -> lck.lock();   // lock
-            serverState -> role = LEADER;
-            serverState -> leader_id = nodeInfo -> node_id;
-            std::cout << "Becoming a leader now!" << '\n';
-            serverState -> lck.unlock();   // unlock
+            serverState -> Become_Leader(nodeInfo -> node_id);
             break;
         }
     }
 
-    serverState -> lck.lock();   // lock
-    if (serverState -> role != LEADER) {
-        std::cout << "Candidate timeout: resigning to be a follower" << '\n';
-        serverState -> role = FOLLOWER;
+    if (serverState -> GetRole() != LEADER) {
+        serverState -> SetRole(FOLLOWER);
     }
-    serverState -> lck.unlock();   // unlock
-
 }

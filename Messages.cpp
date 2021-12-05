@@ -4,6 +4,139 @@
 
 #include "Messages.h"
 
+/*----------------------Class : ServerState----------------------------------*/
+ServerState::ServerState(int num_peers, int _role) {
+    /* Persistent state on all servers: Updated on stable storage before responding to RPCs */
+    currentTerm = 0;
+    votedFor = -1;
+    LogEntry logEntry {-1, -1, -1, -1};
+    smr_log.push_back(logEntry);
+
+    /* volatile state on leaders (Reinitialized after Raft) */
+    for (int i = 0; i < num_peers; i++){
+        matchIndex.push_back(0);
+        nextIndex.push_back(1); // initialized to be last log index + 1
+    }
+
+    /* volatile state on all servers */
+    commitIndex = 0;
+    lastApplied = 0;
+
+    numVotes = 0;            /* 1 because always vote for oneself */
+    leaderId = -1;
+    role = _role;           /* for testing purpose only! */
+}
+void ServerState::SetRole(int _role){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+
+    role = _role;
+
+    if (_role == FOLLOWER){
+        std::cout << "Resigning to be a follower now!" << '\n';
+    }
+    else if (_role == CANDIDATE){
+        std::cout << "Becoming a candidate now!" << '\n';
+    }
+    ul.unlock();     // unlock
+}
+
+void ServerState::Set_nodeTerm(int _term) {
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    currentTerm = _term;
+}
+void ServerState::SetVotedFor(int id){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    votedFor = id;
+}
+
+void ServerState::Set_commitIndex(int _index){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    commitIndex = _index;
+}
+void ServerState::Set_lastApplied(int _index){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    lastApplied = _index;
+}
+void ServerState::Set_leaderID(int id){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    leaderId = id;
+}
+
+int ServerState::Get_nodeTerm() {
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    return currentTerm;
+}
+
+int ServerState::GetRole() {
+    int role_;
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    role_ = role;
+    return role_;
+}
+
+int ServerState::Get_numVotes() {
+    int num_votes;
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    num_votes = numVotes;
+    return num_votes;
+}
+
+int ServerState::Get_lastApplied(){
+    int last_applied;
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    last_applied = lastApplied;
+    return last_applied;
+}
+int ServerState::Get_VotedFor(){
+    int voted_for;
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    voted_for = votedFor;
+    return voted_for;
+}
+int ServerState::Get_leaderID(){
+    int leader_id;
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    leader_id = leaderId;
+    return leader_id;
+}
+
+void ServerState::Increment_numVote() {
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    numVotes ++;
+}
+
+void ServerState::NewElection(int self_nodeId) {
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+
+    ul.lock();        // lock
+    currentTerm ++;
+    numVotes = 1;
+    votedFor = self_nodeId; // vote for itself
+    ul.unlock();     // unlock
+}
+
+void ServerState::Become_Leader(int self_nodeID) {
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    role = LEADER;
+    leaderId = self_nodeID;
+    std::cout << "Becoming a leader now!" << '\n';
+}
+
+
 
 /*---------------------------------------Leader Raft----------------------------------*/
         /*-----------------VoteRequest Class----------------*/

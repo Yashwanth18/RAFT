@@ -98,7 +98,7 @@ Set_Leader(AppendEntryRequest *appendEntryRequest, ServerState *serverState){
     int localTerm = serverState -> currentTerm;
 
     if (remote_term >= localTerm) {
-        serverState -> leader_id = appendEntryRequest -> Get_leaderId();
+        serverState -> leaderId = appendEntryRequest -> Get_leaderId();
         serverState -> role =  FOLLOWER;
         serverState -> votedFor = -1;
         serverState -> currentTerm = remote_term;

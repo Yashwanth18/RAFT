@@ -45,10 +45,10 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
 
     /* volatile state on all servers */
     serverState -> commitIndex = 0;
-    serverState -> last_applied = 0;
+    serverState -> lastApplied = 0;
 
-    serverState -> num_votes = 1;            /* 1 because always vote for oneself */
-    serverState -> leader_id = -1;
+    serverState -> numVotes = 1;            /* 1 because always vote for oneself */
+    serverState -> leaderId = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
 }
 
@@ -78,22 +78,6 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
 
     } // END: for loop
     return 1;
-}
-
-void SetRole_Atomic(ServerState *serverState, int _role){
-    serverState -> lck.lock();        // lock
-
-    serverState -> role = _role;
-
-    if (_role == FOLLOWER){
-        std::cout << "num_votes: " << serverState -> num_votes << '\n';
-        std::cout << "Resigning to be a follower now!" << '\n';
-    }
-    else if (_role == CANDIDATE){
-        std::cout << "Becoming a candidate now!" << '\n';
-    }
-
-    serverState -> lck.unlock();     // unlock
 }
 
 /* --------------------------Functions Declaration-------------------------*/
