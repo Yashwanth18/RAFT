@@ -1,7 +1,5 @@
 #include "ServerMain.h"
 
-
-
 int main(int argc, char *argv[]) {
     ServerTimer timer;
     NodeInfo nodeInfo;
@@ -15,8 +13,6 @@ int main(int argc, char *argv[]) {
     std::vector <std::thread> thread_vector;
 
     Bridge bridge;  /* bridge between the client interface and leaderThread */
-
-
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
     if (!Init_NodeInfo(&nodeInfo, argc, argv))                      { return 0; }

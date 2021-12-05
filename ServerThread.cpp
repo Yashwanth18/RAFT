@@ -102,7 +102,7 @@ CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
 int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                           NodeInfo *nodeInfo, ServerState *serverState){
     bool socket_status;
-    ServerOutStub Out_stub;
+    ServerOutStub outStub;
     std::string peer_IP;
     int peer_port;
     int messageType;
@@ -111,20 +111,20 @@ int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo
     peer_IP = (*PeerServerInfo)[peer_index].IP;
     peer_port = (*PeerServerInfo)[peer_index].port;
 
-    socket_status = Out_stub.Init(peer_IP, peer_port);
+    socket_status = outStub.Init(peer_IP, peer_port);
     if (socket_status) {
-        socket_status = Out_stub.Send_MessageType(VOTE_REQUEST);
+        socket_status = outStub.Send_MessageType(VOTE_REQUEST);
     }
 
     if (socket_status) {
-        socket_status = Out_stub.Send_RequestVote(serverState, nodeInfo);
+        socket_status = outStub.Send_RequestVote(serverState, nodeInfo);
     }
 
     if (socket_status){
-        messageType = Out_stub.Read_MessageType();
+        messageType = outStub.Read_MessageType();
 
         if (messageType == RESPONSE_VOTE) {
-            socket_status = Out_stub.Handle_ResponseVote(serverState);
+            socket_status = outStub.Handle_ResponseVote(serverState);
             if (socket_status){
                 still_trying = 0;
             }
@@ -142,7 +142,7 @@ void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
              NodeInfo *nodeInfo, ServerState *serverState, Bridge *bridge) {
 
-    ServerOutStub Out_stub;
+    ServerOutStub outStub;
     std::string peer_IP;
     int peer_port;
     int socket_status;
@@ -159,22 +159,22 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         int heartbeat = 1;
 
         while(!job_done) {
-            socket_status = Out_stub.Init(peer_IP, peer_port);
+            socket_status = outStub.Init(peer_IP, peer_port);
 
             if (socket_status) {
-                socket_status = Out_stub.Send_MessageType(APPEND_ENTRY_REQUEST);
+                socket_status = outStub.Send_MessageType(APPEND_ENTRY_REQUEST);
             }
 
             if (socket_status) {
-                socket_status = Out_stub.SendAppendEntryRequest(
+                socket_status = outStub.SendAppendEntryRequest(
                         serverState, nodeInfo, peer_index, heartbeat);
             }
 
             if (socket_status) {
-                messageType = Out_stub.Read_MessageType();
+                messageType = outStub.Read_MessageType();
 
                 if (messageType == RESPONSE_APPEND_ENTRY) {
-                    socket_status = Out_stub.Handle_ResponseAppendEntry(
+                    socket_status = outStub.Handle_ResponseAppendEntry(
                                 serverState, peer_index, nodeInfo);
 
                     if (socket_status) {

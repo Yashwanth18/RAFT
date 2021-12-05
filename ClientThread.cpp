@@ -60,16 +60,18 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
 bool::ClientThreadClass::
 Connect_ServerRandomIndex(std::vector<Peer_Info> *PeerServerInfo,
                           int *serverIndex){
-    int socket_status;
 
-    srand(time(0)); /* arbitrary */
-    *serverIndex= rand() % (PeerServerInfo -> size());
+    int socket_status = 0;
 
-    std::cout << "connecting to serverID: " <<
-                    PeerServerInfo ->at(*serverIndex).unique_id<< '\n';
+    while(!socket_status){
+        srand(time(0)); /* arbitrary */
+        *serverIndex= rand() % (PeerServerInfo -> size());
 
-    socket_status = Connect_ServerIndex(PeerServerInfo, *serverIndex);
+        std::cout << "connecting to serverID: " <<
+                  PeerServerInfo ->at(*serverIndex).unique_id<< '\n';
 
+        socket_status = Connect_ServerIndex(PeerServerInfo, *serverIndex);
+    }
     return socket_status;
 }
 
