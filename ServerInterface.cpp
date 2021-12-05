@@ -28,7 +28,6 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
     CustomerRequest request;
     CustomerRecord record;
 
-
     int requestType;
     int leaderID;
     int role_;
