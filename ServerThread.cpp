@@ -163,11 +163,10 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
         socket_status = outStub.Init(peer_IP, peer_port);
         timer.Start();
 
-//        do {
-//            upToDate = Check_UpToDate(serverState, peer_index);
-//        } while(!timer.WaitRequest_timeout() && upToDate);
-//        heartbeat = upToDate;
-        heartbeat = true;
+        do {
+            upToDate = Check_UpToDate(serverState, peer_index);
+        } while(!timer.WaitRequest_timeout() && upToDate);
+        heartbeat = upToDate;
 
         if (socket_status) {
             socket_status = outStub.Send_MessageType(APPEND_ENTRY_REQUEST);
