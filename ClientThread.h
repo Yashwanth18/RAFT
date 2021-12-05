@@ -19,7 +19,7 @@ public:
 	ClientThreadClass();
 	void ThreadBody(std::vector<Peer_Info> *PeerServerInfo,
                     std::map<int,int> *PeerIdIndexMap,
-                    int id, int orders, int type);
+                    int id, int orders, int type, std::mutex *print_lck);
     ClientTimer GetTimer();
 
     bool Connect_ServerIndex(std::vector<Peer_Info> *PeerServerInfo,

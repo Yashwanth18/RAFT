@@ -41,8 +41,9 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
 
     while(!timer -> Check_Election_timeout()){      // for follower thread
 
-        messageType = In_Stub.Read_MessageType();
+        Apply_Committed_Op(serverState, mapRecord);
 
+        messageType = In_Stub.Read_MessageType();
         if (messageType == 0){
             break;
         }
@@ -56,7 +57,7 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
             timer -> Atomic_Restart();
             socket_status = In_Stub.Handle_AppendEntryRequest(serverState);
         }
-        Apply_Committed_Op(serverState, mapRecord);
+
 
         serverState -> lck.lock();       // lock
         _role = serverState -> role;

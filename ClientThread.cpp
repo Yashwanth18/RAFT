@@ -6,7 +6,7 @@ ClientThreadClass::ClientThreadClass() {}
 
 void ClientThreadClass::
 ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdIndexMap,
-           int _customerId, int _num_orders, int _requestType) {
+           int _customerId, int _num_orders, int _requestType, std::mutex *print_lck) {
 
     customer_id = _customerId;
     num_orders = _num_orders;
@@ -19,7 +19,7 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
 
     CustomerRequest request;
     CustomerRecord record;
-    std::mutex print_lck;
+
 
 
     if (request_type == WRITE_REQUEST){
@@ -31,6 +31,8 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
             timer.Start();
             write_success = stub.Order_WriteRequest(&request);
             timer.EndAndMerge();
+
+            std::cout << "write_success for request " << i << ": " << write_success << '\n';
 
             if (!write_success){
                 std::cout << "write request failed: " << write_success << '\n';
@@ -45,9 +47,9 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
             request.SetOrder(customer_id, 1, request_type);
             stub.ReadRecord(&request, &record);
 
-            print_lck.lock();   // lock
+            print_lck -> lock();   // lock
             record.Print();
-            print_lck.unlock();   // lock
+            print_lck -> unlock();   // lock
         }
 
         else{

@@ -11,7 +11,7 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
         new_socket = clientSocket -> Accept();
-        std::cout << "Accepted Connection from client" << '\n';
+        // std::cout << "Accepted Connection from client" << '\n';
 
         std::thread interfaceThread(&Interface::InterfaceThread, this, std::move(new_socket),
                               serverState, MapRecord);
@@ -31,7 +31,7 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
     int requestType;
     int leaderID;
     int role_;
-    int rep_success = 0;
+    int rep_success;
     int opcode = 1;
     int arg1;
     int arg2;
@@ -54,6 +54,8 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
         switch (requestType) {
 
             case WRITE_REQUEST: {    /* MACRO defined to be number 1 */
+                rep_success = 0;
+
                 serverState->lck.lock();       // lock
                 role_ = serverState->role;
                 serverState->lck.unlock();     // unlock
@@ -65,6 +67,7 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 LogEntry logEntry{nodeTerm, opcode, arg1, arg2};
                 serverState -> smr_log.push_back(logEntry);
                 request_index = serverState -> smr_log.size() - 1;
+
                 serverState->lck.unlock();     // unlock
 
                 /* Wait until the request is considered Committed (not necessarily applied) */

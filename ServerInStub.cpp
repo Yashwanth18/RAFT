@@ -61,8 +61,9 @@ Handle_AppendEntryRequest(ServerState *serverState) {
     if (!heartbeat){
         serverState -> lck.lock();       // lock
         serverState -> smr_log.push_back(logEntry);
-        serverState -> lck.unlock();     // unlock
+        std::cout << "logSize : "<< serverState -> smr_log.size() << '\n';
 
+        serverState -> lck.unlock();     // unlock
         // appendEntryRequest.Print();
     }
 

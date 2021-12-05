@@ -11,20 +11,22 @@ int main(int argc, char *argv[]) {
     int num_customers;
     int num_orders;
     int request_type;
+    std::mutex print_lck;
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap))    { return 0; }
 
     request_type = atoi(argv[argc - 1]);    // last input from command line
 
     /* configure these two variables for evaluation purposes  */
-    num_customers = 4;
-    num_orders = 1000;
+    num_customers = 1;
+    num_orders = 100000;
 
     timer.Start();
     for (int i = 0; i < num_customers; i++) {
         auto client_cls = std::shared_ptr<ClientThreadClass>(new ClientThreadClass());
         std::thread client_thread(&ClientThreadClass::ThreadBody, client_cls,
-                                  &PeerServerInfo, &PeerIdIndexMap, i, num_orders, request_type);
+                                  &PeerServerInfo, &PeerIdIndexMap, i, num_orders,
+                                  request_type, &print_lck);
 
         client_vector.push_back(std::move(client_cls));
         thread_vector.push_back(std::move(client_thread));
