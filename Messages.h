@@ -70,7 +70,7 @@ public:
     ServerState(int num_peers, int role_);
 
     /* For Leader Election Module */
-    void NewElection(int self_nodeId);
+    void NewElection(int self_nodeId, int num_peers);
     void Become_Leader(int self_nodeID);
 
     void Increment_numVote();

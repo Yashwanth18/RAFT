@@ -84,7 +84,7 @@ void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     Raft *raft){
 
     ServerTimer _timer;
-    serverState -> NewElection(nodeInfo -> node_id);
+    serverState -> NewElection(nodeInfo -> node_id, nodeInfo -> num_peers);
     int half_peers = nodeInfo -> num_peers / 2;
     int num_votes;
 

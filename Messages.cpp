@@ -149,13 +149,20 @@ void ServerState::Set_matchIndex(int peer_index, int log_index){
     matchIndex[peer_index] = log_index;
 }
 
-void ServerState::NewElection(int self_nodeId) {
+void ServerState::NewElection(int self_nodeId, int num_peers) {
     std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
 
     ul.lock();        // lock
     currentTerm ++;
     numVotes = 1;
     votedFor = self_nodeId; // vote for itself
+    int lastLogIndex = smr_log.size() - 1;
+
+    for (int i = 0; i < num_peers; i++){
+        matchIndex.push_back(0);
+        nextIndex.push_back(lastLogIndex + 1); // initialized to be last log index + 1
+    }
+
     ul.unlock();     // unlock
 }
 
