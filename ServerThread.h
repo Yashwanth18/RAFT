@@ -20,24 +20,26 @@ public:
     Raft(){}
 
     void ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
-                                  std::vector<std::thread> *thread_vector,
-                                  std::mutex *lk_serverState, ServerTimer *timer);
+                         std::vector<std::thread> *thread_vector, ServerTimer *timer);
+
 
 	void IncomingThread(std::unique_ptr<ServerSocket> socket,
-                        ServerState *serverState,
-                        std::mutex *lk_serverState, ServerTimer *timer);
+                        ServerState *serverState, ServerTimer *timer);
 
     void CandidateThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                         NodeInfo *nodeInfo, ServerState *serverState,
-                         std::mutex *lk_serverStater);
+                         NodeInfo *nodeInfo, ServerState *serverState);
 
     int Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                    NodeInfo *nodeInfo, ServerState *serverState,
-                    std::mutex *lk_serverState);
+                    NodeInfo *nodeInfo, ServerState *serverState);
 
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
-                      NodeInfo *nodeInfo, ServerState *serverState,
-                      std::mutex *lk_serverState);
+                      NodeInfo *nodeInfo, ServerState *serverState);
+
+    void Apply_Committed_Op(ServerState *serverState,  std::map<int, int> MapCustomerRecord,
+                            std::mutex *lk_Map);
+
+    bool Check_UpToDate(ServerState *serverState, int peer_index);
+    void Apply_Committed_Op(ServerState *serverState, Map_Customer_Record *mapCustomerRecord);
 
 
 };

@@ -5,7 +5,7 @@
 
 ServerTimer::ServerTimer() {
 	srand(time(0));
-    election_timeout = std::chrono::duration<double, std::milli>(1000 + rand() % 1000);
+    election_timeout = std::chrono::duration<double, std::milli>(150 + rand() % 5000);
 }
 
 void ServerTimer::Start() {

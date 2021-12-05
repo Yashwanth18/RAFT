@@ -6,13 +6,13 @@
 #   ./server port_server port_client ID num_peers (repeat ID Ip port_server)
 
 #------------user's configuration before running this script---------
-num_peers=4
+num_peers=2
 local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 
 port_server_root=1010
-port_client=101080
+port_client_root=1212
 IP_root="10.200.125."
 IP_local="127.0.0.1"
 
@@ -31,6 +31,7 @@ Print_init_server_role(){
 ###------------------------------ main function-------------------------###
 node_ID=$1
 port_server=${port_server_root}${node_ID}
+port_client=${port_client_root}${node_ID}
 
 if [ $num_peers -eq 1 ]; then       # for testing purposes only
       ID_Peer1=$2

@@ -61,7 +61,7 @@ void ServerOutStub::FillVoteRequest(ServerState * serverState, NodeInfo * nodeIn
 }
 
 bool ServerOutStub::
-Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
+Handle_ResponseVote(ServerState *serverState){
 
     ResponseVote responseVote;
     char buf[sizeof (ResponseVote)];
@@ -78,16 +78,16 @@ Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
 
 
     if (responseVote.Get_voteGranted()) { /* vote granted */
-        lk_serverState -> lock();
+        serverState -> lck.lock();
         serverState -> num_votes ++;
-        lk_serverState -> unlock();
+        serverState -> lck.unlock();
     }
 
     else {  /* vote got rejected */
         if (responseVote.Get_term() > serverState -> currentTerm){ // we are stale
-            lk_serverState->lock();
+            serverState -> lck.lock();
             serverState -> currentTerm = responseVote.Get_term();
-            lk_serverState -> unlock();
+            serverState -> lck.unlock();
         }
     }
 
@@ -98,14 +98,14 @@ Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState){
 
 bool ServerOutStub::
 SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_index,
-                       int heartbeat, std::mutex *lk_serverState) {
+                       int heartbeat) {
 
     AppendEntryRequest appendEntryRequest;
     char buf[sizeof(AppendEntryRequest)];
     bool socket_status;
 
     FillAppendEntryRequest(serverState, nodeInfo, &appendEntryRequest, peer_index,
-                           heartbeat, lk_serverState);
+                           heartbeat);
 
     appendEntryRequest.Marshal(buf);
     socket_status = socket.Send(buf, sizeof(AppendEntryRequest), 0);
@@ -116,19 +116,19 @@ SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo, int peer_i
 void ServerOutStub::
 FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
                        AppendEntryRequest *appendEntryRequest,
-                       int peer_index, int heartbeat, std::mutex *lk_serverState) {
+                       int peer_index, int heartbeat) {
 
     int leaderId = nodeInfo -> node_id;
     int prevLogTerm = -1;
 
-    lk_serverState -> lock();       // lock
+    serverState -> lck.lock();       // lock
     int sender_term = serverState -> currentTerm;
     int leaderCommit = serverState -> commitIndex;
     int prevLogIndex = serverState -> nextIndex[peer_index] - 1;
 
     int last_log_index = serverState -> smr_log.size() -1;
     int nextIndexPeer = serverState -> nextIndex[peer_index];
-    lk_serverState -> unlock();     // unlock
+    serverState -> lck.unlock();     // unlock
 
     LogEntry logEntry;
     if (heartbeat){
@@ -140,15 +140,15 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
             perror("nextIndexPeer out of range");
         }
 
-        lk_serverState -> lock();       // lock
+        serverState -> lck.lock();       // lock
         logEntry = serverState -> smr_log.at(nextIndexPeer);
-        lk_serverState -> unlock();     // unlock
+        serverState -> lck.unlock();     // unlock
     }
 
     if (prevLogIndex >= 0){
-        lk_serverState -> lock();     // lock
+        serverState -> lck.lock();     // lock
         prevLogTerm = serverState -> smr_log.at(prevLogIndex).logTerm;
-        lk_serverState -> unlock();  // unlock
+        serverState -> lck.unlock();  // unlock
     }
 
     appendEntryRequest -> Set(sender_term, leaderId, prevLogTerm, prevLogIndex,
@@ -157,7 +157,7 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
 
 bool ServerOutStub::
 Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
-                           NodeInfo *nodeInfo, std::mutex *lk_serverState) {
+                           NodeInfo *nodeInfo) {
 
     char buf[sizeof (ResponseAppendEntry)];
     ResponseAppendEntry responseAppendEntry;
@@ -175,40 +175,40 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
     responseAppendEntry.Unmarshal(buf);
     remote_term = responseAppendEntry.Get_term();
 
-    lk_serverState -> lock(); // lock
+    serverState -> lck.lock(); // lock
     local_term = serverState -> currentTerm;
-    lk_serverState -> unlock(); //unlock
+    serverState -> lck.unlock(); //unlock
 
     if (remote_term > local_term){   // check if we are stale
         std::cout << "\nremote_term: " << remote_term << '\n';
         std::cout << "local_term: " << local_term << '\n';
         std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
 
-        lk_serverState -> lock(); // lock
+        serverState -> lck.lock(); // lock
         serverState -> role = FOLLOWER;
         serverState -> currentTerm = responseAppendEntry.Get_term();
-        lk_serverState -> unlock(); // unlock
+        serverState -> lck.unlock(); // unlock
     }
 
     if (responseAppendEntry.Get_Heartbeat()){
-        responseAppendEntry.Print();
+        // responseAppendEntry.Print();
     }
 
     else{   // if response from proper log replication request
         responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {
-            lk_serverState -> lock(); // lock
+            serverState -> lck.lock(); // lock
             serverState -> matchIndex[peer_index] = serverState -> nextIndex[peer_index];
             serverState -> nextIndex[peer_index] ++;
             Update_CommitIndex(serverState, nodeInfo);
-            lk_serverState -> unlock(); // unlock
+            serverState -> lck.unlock(); // unlock
         }
 
         else {  /* rejected: the follower node lags behind */
-            lk_serverState -> lock(); // lock
+            serverState -> lck.lock(); // lock
             serverState -> nextIndex[peer_index] --;
-            lk_serverState -> unlock(); // unlock
+            serverState -> lck.unlock(); // unlock
         }
     }
 

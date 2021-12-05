@@ -1,11 +1,11 @@
 #include <string>
-#include "ServerOutSocket.h"
+#include "OutSocket.h"
 #include "Messages.h"
 #include <map>
 
 class ServerOutStub {
 private:
-	ServerOutSocket socket;
+	OutSocket socket;
 public:
 	ServerOutStub(){}
 
@@ -15,21 +15,21 @@ public:
     int Read_MessageType();     // return the messageType
 
 
-    bool Handle_ResponseVote(ServerState *serverState, std::mutex *lk_serverState);
+    bool Handle_ResponseVote(ServerState *serverState);
     bool Send_RequestVote(ServerState *serverState, NodeInfo *nodeInfo);
     void FillVoteRequest(ServerState * serverState, NodeInfo * nodeInfo,
                          VoteRequest *VoteRequest);
 
     /* ------------------------Leader Helper Functions----------------------------*/
     bool SendAppendEntryRequest(ServerState * serverState, NodeInfo *nodeInfo,
-                               int peer_index, int heartbeat, std::mutex *lk_serverState);
+                               int peer_index, int heartbeat);
 
     void FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
                                 AppendEntryRequest *appendEntryRequest,  int peer_index,
-                                int heartbeat, std::mutex *lk_serverState);
+                                int heartbeat);
 
     bool Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
-                                    NodeInfo *nodeInfo, std::mutex *lk_serverState);
+                                    NodeInfo *nodeInfo);
 
     void Update_CommitIndex(ServerState *serverState, NodeInfo *nodeInfo);
 };

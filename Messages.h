@@ -3,17 +3,28 @@
 
 #include <string>
 #include <vector>
+#include <future>
+#include <map>
+#include <queue>
 
 #define FOLLOWER 0
 #define CANDIDATE 1
 #define LEADER 2
-
 
 #define VOTE_REQUEST 1
 #define RESPONSE_VOTE 2
 #define APPEND_ENTRY_REQUEST 3
 #define RESPONSE_APPEND_ENTRY 4
 
+#define WRITE_REQUEST 1
+#define READ_REQUEST 2
+#define READ_ALL_REQUEST 3
+#define LEADER_ID_REQUEST 4
+
+struct Map_Customer_Record{
+    std::map<int, int> CustomerRecord_dict;
+    std::mutex lck;
+};
 
 struct Peer_Info{
   int unique_id;
@@ -24,6 +35,12 @@ struct Peer_Info{
 
 struct LogEntry{
     int logTerm;
+    int opcode;
+    int arg1;
+    int arg2;
+};
+
+struct MapOp{
     int opcode;
     int arg1;
     int arg2;
@@ -47,6 +64,7 @@ struct ServerState{
     int role;
     int num_votes;
     int leader_id;
+    std::mutex lck;
 };
 
 struct NodeInfo{
@@ -162,5 +180,64 @@ public:
 
     void Print();
 };
+
+
+/*---------------------------Class: CustomerRequest---------------------------*/
+class CustomerRequest {
+private:
+    int customer_id;
+    int order_number;
+    int request_type;
+
+public:
+    CustomerRequest();
+    void operator = (const CustomerRequest &order) {
+        customer_id = order.customer_id;
+        order_number = order.order_number;
+        request_type = order.request_type;
+    }
+    void SetOrder(int cid, int order_num, int type);
+    int GetCustomerId();
+    int GetOrderNumber();
+    int GetRequestType();
+
+    void Marshal(char *buffer);
+    void Unmarshal(char *buffer);
+
+    bool IsValid();
+    int Size();
+    void Print();
+};
+
+/*-------------------------Class: CustomerRecord-------------------------------*/
+class CustomerRecord {
+private:
+    int customer_id;    /* -1 if customer_id is not found in the map  */
+    int last_order;     /* -1 if customer_id is not found in the map  */
+
+public:
+    CustomerRecord();
+    void operator = (const CustomerRecord &record) {
+        customer_id = record.customer_id;
+        last_order = record.last_order;
+    }
+
+    void SetCustomerId(int customer_id);
+    void SetLastOrder(int last_order);
+
+    int GetCustomerId();
+    int GetLastOrder();
+
+    void Marshal(char *buffer);
+    void Unmarshal(char *buffer);
+
+    int Size();
+    bool IsValid();
+    void Print();
+};
+
+
+
+
 
 #endif // #ifndef __MESSAGES_H__

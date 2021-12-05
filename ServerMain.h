@@ -12,6 +12,7 @@
 #include "ServerThread.h"
 #include "Messages.h"
 #include "ServerTimer.h"
+#include "ServerInterface.h"
 
 /* Usage: ./server port_server port_client nodeID num_peers (repeat PeerID IP port_server) */
 
@@ -46,7 +47,6 @@ void Init_ServerState(ServerState * serverState, int num_peers, int argc, char *
     serverState -> commitIndex = 0;
     serverState -> last_applied = 0;
 
-
     serverState -> num_votes = 1;            /* 1 because always vote for oneself */
     serverState -> leader_id = -1;
     serverState -> role = atoi(argv[argc - 1]);    /* for testing purpose only! */
@@ -80,15 +80,12 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
     return 1;
 }
 
-void SetRole_Atomic(ServerState *serverState, std::mutex *lk_serverState, int _role){
-    lk_serverState -> lock();        // lock
+void SetRole_Atomic(ServerState *serverState, int _role){
+    serverState -> lck.lock();        // lock
 
     serverState -> role = _role;
-    if (_role == LEADER){
-        std::cout << "Becoming a leader now!" << '\n';
-    }
 
-    else if (_role == FOLLOWER){
+    if (_role == FOLLOWER){
         std::cout << "num_votes: " << serverState -> num_votes << '\n';
         std::cout << "Resigning to be a follower now!" << '\n';
     }
@@ -96,7 +93,7 @@ void SetRole_Atomic(ServerState *serverState, std::mutex *lk_serverState, int _r
         std::cout << "Becoming a candidate now!" << '\n';
     }
 
-    lk_serverState -> unlock();     // unlock
+    serverState -> lck.unlock();     // unlock
 }
 
 /* --------------------------Functions Declaration-------------------------*/
@@ -104,4 +101,4 @@ void SetRole_Atomic(ServerState *serverState, std::mutex *lk_serverState, int _r
 void Candidate_Role(ServerState *serverState, NodeInfo *nodeInfo,
                     std::vector<Peer_Info> *PeerServerInfo,
                     std::vector <std::thread> *thread_vector,
-                    Raft *raft, std::mutex *lk_serverState);
+                    Raft *raft);
