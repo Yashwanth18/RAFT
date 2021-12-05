@@ -23,13 +23,13 @@ public:
 
     void Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
                           std::vector<std::thread> *thread_vector,
-                          MapClientRecord *mapRecord);
+                          MapClientRecord *MapRecord);
 
     void InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-                         MapClientRecord *mapRecord);
+                         MapClientRecord *MapRecord);
 
     void Fill_Customer_Record(CustomerRequest * request, CustomerRecord * record,
-                              MapClientRecord *mapRecord);
+                              MapClientRecord *MapRecord);
 
 
 };

@@ -127,7 +127,7 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
     int prevLogIndex = serverState -> nextIndex[peer_index] - 1;
 
     int last_log_index = serverState -> smr_log.size() -1;
-    int nextIndexPeer = serverState -> nextIndex[peer_index];
+    int nextIndex = serverState -> nextIndex[peer_index];
     serverState -> lck.unlock();     // unlock
 
     LogEntry logEntry;
@@ -136,12 +136,12 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
     }
 
     else{   // if not heartbeat
-        if (nextIndexPeer > last_log_index){        // error checking
-            perror("nextIndexPeer out of range");
+        if (nextIndex > last_log_index){        // error checking
+            perror("nextIndex out of range");
         }
 
         serverState -> lck.lock();       // lock
-        logEntry = serverState -> smr_log.at(nextIndexPeer);
+        logEntry = serverState -> smr_log.at(nextIndex);
         serverState -> lck.unlock();     // unlock
     }
 
@@ -195,7 +195,7 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
     }
 
     else{   // if response from proper log replication request
-        responseAppendEntry.Print();
+        // responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {
             serverState -> lck.lock(); // lock

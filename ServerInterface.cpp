@@ -6,7 +6,7 @@
 void Interface::
 Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
                  std::vector<std::thread> *thread_vector,
-                 MapClientRecord *mapRecord) {
+                 MapClientRecord *MapRecord) {
 
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
@@ -14,7 +14,7 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
         std::cout << "Accepted Connection from client" << '\n';
 
         std::thread interfaceThread(&Interface::InterfaceThread, this, std::move(new_socket),
-                              serverState, mapRecord);
+                              serverState, MapRecord);
 
         thread_vector -> push_back(std::move(interfaceThread));
     }
@@ -22,28 +22,35 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
 
 void Interface::
 InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-                MapClientRecord *mapRecord){
+                MapClientRecord *MapRecord){
 
     ServerInStub inStub;
     CustomerRequest request;
     CustomerRecord record;
 
+
     int requestType;
     int leaderID;
     int role_;
-    int rep_success;
+    int rep_success = 0;
+    int opcode = 1;
+    int arg1;
+    int arg2;
+    int nodeTerm;
+    int request_index;
 
     inStub.Init(std::move(socket));
 
     while(true){
         request = inStub.ReceiveOrder();
         requestType = request.GetRequestType();
+        arg1 = request.GetCustomerId();
+        arg2 = request.GetOrderNumber();
 
         if (!request.IsValid()) {
             break;
         }
-
-        request.Print();
+        // request.Print();
 
         switch (requestType) {
 
@@ -53,14 +60,27 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 serverState->lck.unlock();     // unlock
                 if (role_ != LEADER) { break; }
 
+                /* Notify the leaderThread */
+                serverState->lck.lock();       // lock
+                nodeTerm = serverState -> currentTerm;
+                LogEntry logEntry{nodeTerm, opcode, arg1, arg2};
+                serverState -> smr_log.push_back(logEntry);
+                request_index = serverState -> smr_log.size() - 1;
+                serverState->lck.unlock();     // unlock
 
+                /* Wait until the request is considered Committed (not necessarily applied) */
+                while (!rep_success){
+                    serverState->lck.lock();       // lock
+                    rep_success = (serverState -> commitIndex == request_index);
+                    serverState->lck.unlock();     // unlock
+                }
 
-                rep_success = 1; // to-do
+                /* Send Acknowledgement back to client */
                 inStub.Send_Ack(rep_success);
                 break;
             }
             case READ_REQUEST: {      /* MACRO defined to be number 2 */
-                Fill_Customer_Record(&request, &record, mapRecord);
+                Fill_Customer_Record(&request, &record, MapRecord);
                 inStub.ReturnRecord(record);
                 break;
             }
@@ -82,23 +102,23 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
 
 void Interface::
 Fill_Customer_Record(CustomerRequest * request, CustomerRecord * record,
-                     MapClientRecord *mapRecord){
+                     MapClientRecord *MapRecord){
 
     std::map<int,int>::iterator iter;
 
-    mapRecord -> lck.lock();		// lock
-    iter = mapRecord -> Record_Dict.find(request -> GetCustomerId());
+    MapRecord -> lck.lock();		// lock
+    iter = MapRecord -> Record_Dict.find(request -> GetCustomerId());
 
-    /* record does not exist in map */
-    if (iter == mapRecord -> Record_Dict.end()){
+    /* if record does not exist in map */
+    if (iter == MapRecord -> Record_Dict.end()){
         record -> SetCustomerId(-1);
         record -> SetLastOrder(-1);
     }
-    else{   /* record exists in map */
+    else{   // if record exists in map
         record -> SetCustomerId(request -> GetCustomerId());
-        record -> SetLastOrder( mapRecord -> Record_Dict[ request -> GetCustomerId() ]);
+        record -> SetLastOrder( MapRecord -> Record_Dict[request -> GetCustomerId()]);
     }
-    mapRecord -> lck.unlock();	// Unlock
+    MapRecord -> lck.unlock();	// Unlock
 }
 
 

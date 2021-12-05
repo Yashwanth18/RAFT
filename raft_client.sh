@@ -1,9 +1,14 @@
 #!/bin/sh
-# usage: ./raft_client.sh iD (repeat iD_peer) server_role
-# server role initialization: 0 = follower, 1 = candiDate, 2 = leader
+# usage: ./raft_client.sh iD (repeat iD_peer) requestType
+# requestType --
+  # 1: write request
+  # 2: read your own request
+  # 3: read all customers records
+  # 4: ask for leader ID
+
 
 # command line format:
-#   ./client num_servers (repeat iD IP port_client)
+#   ./client num_servers (repeat iD IP port_client) requestType
 
 #------------user's configuration before running this script---------
 num_servers=3
@@ -47,34 +52,16 @@ done
 
 
 
-if [ $num_servers -eq 1 ]; then       # for testing purposes only
-
-    unset 'ID_Server[${#ID_Server[@]}-1]'
-    unset 'Server_IP[${#Server_IP[@]}-1]'
-    unset 'Port_Server[${#Port_Server[@]}-1]'
+if [ $num_servers -eq 1 ]; then       # number of servers = 1
 
     requestType=$2
 
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
                           $requestType
 
-elif [ $num_servers -eq 2 ]; then      # number of servers = 3
-
-    unset 'ID_Server[${#ID_Server[@]}-1]'
-    unset 'Server_IP[${#Server_IP[@]}-1]'
-    unset 'Port_Server[${#Port_Server[@]}-1]'
-
-    requestType=$3
-
-    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
-                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
-                          $requestType
 
 elif [ $num_servers -eq 3 ]; then      # number of servers = 3
 
-    unset 'ID_Server[${#ID_Server[@]}-1]'
-    unset 'Server_IP[${#Server_IP[@]}-1]'
-    unset 'Port_Server[${#Port_Server[@]}-1]'
 
     requestType=$4
 
@@ -83,25 +70,8 @@ elif [ $num_servers -eq 3 ]; then      # number of servers = 3
                           ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
                           $requestType
 
-elif [ $num_servers -eq 4 ]; then      # number of servers = 3
 
-    unset 'ID_Server[${#ID_Server[@]}-1]'
-    unset 'Server_IP[${#Server_IP[@]}-1]'
-    unset 'Port_Server[${#Port_Server[@]}-1]'
-
-    requestType=$5
-
-    ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
-                          ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
-                          ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
-                          ${ID_Server[3]} ${Server_IP[3]} ${Port_Server[3]} \
-                          $requestType
-
-elif [ $num_servers -eq 5 ]; then      # number of servers = 3
-
-    unset 'ID_Server[${#ID_Server[@]}-1]'
-    unset 'Server_IP[${#Server_IP[@]}-1]'
-    unset 'Port_Server[${#Port_Server[@]}-1]'
+elif [ $num_servers -eq 5 ]; then      # number of servers = 5
 
     requestType=$6
 

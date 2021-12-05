@@ -42,9 +42,10 @@ Handle_AppendEntryRequest(ServerState *serverState) {
     AppendEntryRequest appendEntryRequest;
 
     int success;
-    int Heartbeat;
+    bool heartbeat;
     char buf[sizeof (AppendEntryRequest)];
     bool socket_status;
+    LogEntry logEntry;
 
     socket_status = socket -> Recv(buf, sizeof(AppendEntryRequest), 0);
     if (!socket_status){
@@ -52,20 +53,30 @@ Handle_AppendEntryRequest(ServerState *serverState) {
     }
 
     appendEntryRequest.Unmarshal(buf);
-    // appendEntryRequest.Print();
+    logEntry = appendEntryRequest.Get_LogEntry();
+    heartbeat = (logEntry.logTerm == - 1);
 
-    Send_MessageType(RESPONSE_APPEND_ENTRY);    // to-do: handle error gracefully here
-    Heartbeat = (appendEntryRequest.Get_LogEntry().logTerm == - 1);
+
+    /* not heartbeat */
+    if (!heartbeat){
+        serverState -> lck.lock();       // lock
+        serverState -> smr_log.push_back(logEntry);
+        serverState -> lck.unlock();     // unlock
+
+        // appendEntryRequest.Print();
+    }
 
     serverState -> lck.lock();       // lock
     Set_Leader(&appendEntryRequest, serverState);
     Set_CommitIndex(&appendEntryRequest, serverState);
     success = Set_Result(serverState, &appendEntryRequest);
-    responseAppendEntry.Set(serverState -> currentTerm, success, Heartbeat);
+    responseAppendEntry.Set(serverState -> currentTerm, success, heartbeat);
     serverState -> lck.unlock();     // unlock
 
-    /* to-do: error checking send here */
-    socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
+    socket_status = Send_MessageType(RESPONSE_APPEND_ENTRY);
+    if (socket_status){
+        socket_status = Send_ResponseAppendEntry(&responseAppendEntry);
+    }
     return socket_status;
 }
 

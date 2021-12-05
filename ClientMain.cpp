@@ -17,8 +17,8 @@ int main(int argc, char *argv[]) {
     request_type = atoi(argv[argc - 1]);    // last input from command line
 
     /* configure these two variables for evaluation purposes  */
-    num_customers = 1;
-    num_orders = 1;
+    num_customers = 4;
+    num_orders = 1000;
 
 
     timer.Start();

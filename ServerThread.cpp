@@ -56,6 +56,7 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
             timer -> Atomic_Restart();
             socket_status = In_Stub.Handle_AppendEntryRequest(serverState);
         }
+        Apply_Committed_Op(serverState, mapRecord);
 
         serverState -> lck.lock();       // lock
         _role = serverState -> role;

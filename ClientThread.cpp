@@ -19,22 +19,35 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
 
     CustomerRequest request;
     CustomerRecord record;
+    std::mutex print_lck;
 
 
     if (request_type == WRITE_REQUEST){
         Connect_Leader(PeerServerInfo, PeerIdIndexMap);
-        request.SetOrder(customer_id, 1, request_type);
 
-        write_success = stub.Order_WriteRequest(&request);
-        std::cout << "write_success: " << write_success << '\n';
+        for (int i = 0; i < num_orders; i++) {
+            request.SetOrder(customer_id, i, request_type);
+
+            timer.Start();
+            write_success = stub.Order_WriteRequest(&request);
+            timer.EndAndMerge();
+
+            if (!write_success){
+                std::cout << "write request failed: " << write_success << '\n';
+            }
+        }
+
     }
     else if (request_type == READ_REQUEST){
         socket_status = Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
 
         if (socket_status){
             request.SetOrder(customer_id, 1, request_type);
-            socket_status = stub.ReadRecord(&request, &record);
+            stub.ReadRecord(&request, &record);
+
+            print_lck.lock();   // lock
             record.Print();
+            print_lck.unlock();   // lock
         }
 
         else{
@@ -43,11 +56,9 @@ ThreadBody(std::vector<Peer_Info> *PeerServerInfo,  std::map<int,int> *PeerIdInd
     }
 
     else if (request_type == LEADER_ID_REQUEST){     // ask who the leader is
-        socket_status = Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
-        // to-do: make this robust. Keep connecting
-
+        Connect_ServerRandomIndex(PeerServerInfo, &serverIndex);
         request.SetOrder(customer_id, num_orders, request_type);
-        socket_status = stub.Order_LeaderID(request, &leaderID);
+        stub.Order_LeaderID(request, &leaderID);
         std::cout << "leaderID: " << leaderID << '\n';
     }
 
@@ -67,10 +78,10 @@ Connect_ServerRandomIndex(std::vector<Peer_Info> *PeerServerInfo,
         srand(time(0)); /* arbitrary */
         *serverIndex= rand() % (PeerServerInfo -> size());
 
-        std::cout << "connecting to serverID: " <<
-                  PeerServerInfo ->at(*serverIndex).unique_id<< '\n';
-
         socket_status = Connect_ServerIndex(PeerServerInfo, *serverIndex);
+
+//        std::cout << "Talking to server ID: " <<
+//                    PeerServerInfo -> at(*serverIndex).unique_id<< '\n';
     }
     return socket_status;
 }
@@ -107,8 +118,8 @@ Connect_Leader(std::vector<Peer_Info> *PeerServerInfo,
 
         if(socket_status){
             serverIndex = (*PeerIdIndexMap)[leaderID];
-            std::cout << "Connecting to serverID: " << leaderID << '\n';
             socket_status = Connect_ServerIndex(PeerServerInfo, serverIndex);
+            std::cout << "Connected to serverID: " << leaderID << '\n';
         }
 
         if (socket_status){

@@ -11,7 +11,7 @@ local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
 
-port_server_root=1010
+port_server_root=1011
 port_client_root=1212
 IP_root="10.200.125."
 IP_local="127.0.0.1"
@@ -33,7 +33,24 @@ node_ID=$1
 port_server=${port_server_root}${node_ID}
 port_client=${port_client_root}${node_ID}
 
-if [ $num_peers -eq 1 ]; then       # for testing purposes only
+
+if [ $num_peers -eq 0 ]; then       # for testing purposes only
+      ID_Peer1=$2
+      server_role=$3
+
+      if [ $local -eq 0 ]; then
+        ip_peer1="${IP_root}${ID_Peer1}"
+      elif [ $local -eq 1 ]; then
+        ip_peer1=$IP_local
+      fi
+
+      echo Number of peer servers equal to $num_peers
+      echo ***********------------*********************
+
+      ./server "${port_server_root}${node_ID}" $port_client $node_ID $num_peers \
+                $server_role
+
+elif [ $num_peers -eq 1 ]; then       # for testing purposes only
       ID_Peer1=$2
       server_role=$3
 

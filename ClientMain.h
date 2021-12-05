@@ -12,8 +12,8 @@ void Print(std::vector <Peer_Info> *PeerServerInfo){
         std::cout << "id: " << peer_server_info.unique_id <<'\n';
         std::cout << "IP address: " << peer_server_info.IP <<'\n';
         std::cout << "port: " << peer_server_info.port <<'\n';
+        std::cout << "" <<'\n';
     }
-    std::cout << "" <<'\n';
 }
 
 /* return 0 on failure and 1 on success */
@@ -41,7 +41,7 @@ int FillPeerServerInfo(int argc, char *argv[], std::vector <Peer_Info> *PeerServ
         }
     } // END: for loop
 
-    Print(PeerServerInfo);
+    // Print(PeerServerInfo);
         
     return 1;
 }
