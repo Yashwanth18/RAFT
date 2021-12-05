@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     ServerSocket clientSocket;
     Interface interface;
     std::vector<Peer_Info> PeerServerInfo;
-    Map_Customer_Record mapCustomerRecord;
+    MapClientRecord mapRecord;
     std::vector <std::thread> thread_vector;
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo))           { return 0; }
@@ -30,12 +30,12 @@ int main(int argc, char *argv[]) {
 
     std::thread listen_clientThread(&Interface::Listening_Client, &interface,
                                     &clientSocket, &serverState,
-                                    &thread_vector, &mapCustomerRecord);
+                                    &thread_vector, &mapRecord);
     thread_vector.push_back(std::move(listen_clientThread));
 
 
     std::thread listenThread(&Raft::ListeningThread, &raft, &serverSocket, &serverState,
-                             &thread_vector,  &timer);
+                             &thread_vector,  &timer, &mapRecord);
     thread_vector.push_back(std::move(listenThread));
 
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread leader_thread(&Raft::LeaderThread, &raft, i, &PeerServerInfo,
-                                          &nodeInfo, &serverState);
+                                          &nodeInfo, &serverState, &mapRecord);
                 thread_vector.push_back(std::move(leader_thread));
             }
 

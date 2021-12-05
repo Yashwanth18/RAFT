@@ -6,7 +6,7 @@
 void Interface::
 Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
                  std::vector<std::thread> *thread_vector,
-                 Map_Customer_Record *mapCustomerRecord) {
+                 MapClientRecord *mapRecord) {
 
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
@@ -14,7 +14,7 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
         std::cout << "Accepted Connection from client" << '\n';
 
         std::thread interfaceThread(&Interface::InterfaceThread, this, std::move(new_socket),
-                              serverState, mapCustomerRecord);
+                              serverState, mapRecord);
 
         thread_vector -> push_back(std::move(interfaceThread));
     }
@@ -22,7 +22,7 @@ Listening_Client(ServerSocket *clientSocket, ServerState *serverState,
 
 void Interface::
 InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
-                Map_Customer_Record *mapCustomerRecord){
+                MapClientRecord *mapRecord){
 
     ServerInStub inStub;
     CustomerRequest request;
@@ -60,7 +60,7 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 break;
             }
             case READ_REQUEST: {      /* MACRO defined to be number 2 */
-                Fill_Customer_Record(&request, &record, mapCustomerRecord);
+                Fill_Customer_Record(&request, &record, mapRecord);
                 inStub.ReturnRecord(record);
                 break;
             }
@@ -82,23 +82,23 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
 
 void Interface::
 Fill_Customer_Record(CustomerRequest * request, CustomerRecord * record,
-                     Map_Customer_Record *mapCustomerRecord){
+                     MapClientRecord *mapRecord){
 
     std::map<int,int>::iterator iter;
-    std::map<int, int> CustomerRecord_dict = mapCustomerRecord -> CustomerRecord_dict;
 
-    mapCustomerRecord -> lck.lock();		// lock
-    iter = CustomerRecord_dict.find(request -> GetCustomerId());
+    mapRecord -> lck.lock();		// lock
+    iter = mapRecord -> Record_Dict.find(request -> GetCustomerId());
 
-    if (iter == CustomerRecord_dict.end()){				// record does not exist in map
+    /* record does not exist in map */
+    if (iter == mapRecord -> Record_Dict.end()){
         record -> SetCustomerId(-1);
         record -> SetLastOrder(-1);
     }
-    else{
+    else{   /* record exists in map */
         record -> SetCustomerId(request -> GetCustomerId());
-        record -> SetLastOrder( CustomerRecord_dict[ request -> GetCustomerId() ]);
+        record -> SetLastOrder( mapRecord -> Record_Dict[ request -> GetCustomerId() ]);
     }
-    mapCustomerRecord -> lck.unlock();	// Unlock
+    mapRecord -> lck.unlock();	// Unlock
 }
 
 

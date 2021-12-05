@@ -21,8 +21,8 @@
 #define READ_ALL_REQUEST 3
 #define LEADER_ID_REQUEST 4
 
-struct Map_Customer_Record{
-    std::map<int, int> CustomerRecord_dict;
+struct MapClientRecord{
+    std::map<int, int> Record_Dict;
     std::mutex lck;
 };
 
