@@ -72,7 +72,12 @@ public:
     /* For Leader Election Module */
     void NewElection(int self_nodeId);
     void Become_Leader(int self_nodeID);
+
     void Increment_numVote();
+    void Increment_nextIndex(int peer_index);
+    void Decrement_nextIndex(int peer_index);
+
+    void Set_matchIndex(int peer_index, int log_index);
 
     int Get_numVotes();
     int GetRole();
@@ -80,6 +85,7 @@ public:
     int Get_lastApplied();
     int Get_VotedFor();
     int Get_leaderID();
+    int Get_commitIndex(bool Atomic);
 
     void SetRole(int _role);
     void SetVotedFor(int id);
@@ -89,6 +95,7 @@ public:
     void Set_leaderID(int id);
 
     /* For Log Module */
+    LogEntry Get_LogEntry(int index);
     // void Push_log(LogEntry logEntry);
 
 };

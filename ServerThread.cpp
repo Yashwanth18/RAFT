@@ -140,9 +140,9 @@ int Raft::Candidate_Quest(int peer_index, std::vector<Peer_Info> *PeerServerInfo
 void Raft::
 LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
              NodeInfo *nodeInfo, ServerState *serverState,
-             MapClientRecord *mapRecord) {
+             MapClientRecord *mapRecord, ServerTimer *timer) {
 
-    ServerTimer timer;
+
     ServerOutStub outStub;
     std::string peer_IP;
     int peer_port;
@@ -158,11 +158,8 @@ LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
     while (true){
         /* wait for client's request or send heartbeat */
         socket_status = outStub.Init(peer_IP, peer_port);
-        timer.Start();
 
-        do {
-            upToDate = Check_UpToDate(serverState, peer_index);
-        } while(!timer.WaitRequest_timeout() && upToDate);
+        upToDate = Check_UpToDate(serverState, peer_index);
         heartbeat = upToDate;
 
         if (socket_status) {
@@ -202,6 +199,9 @@ bool Raft::Check_UpToDate(ServerState *serverState, int peer_index) {
     matchIndex = serverState -> matchIndex[peer_index];
     lastLogIndex = serverState -> smr_log.size() - 1;
     serverState -> lck.unlock();    // unlock
+
+//    std::cout << "matchIndex: " << matchIndex << '\n';
+//    std::cout << "lastLogIndex: " << lastLogIndex << '\n';
 
     if (matchIndex < lastLogIndex){
         return false;

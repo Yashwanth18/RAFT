@@ -112,10 +112,41 @@ int ServerState::Get_leaderID(){
     return leader_id;
 }
 
+int ServerState::Get_commitIndex(bool Atomic) {
+    int leader_id;
+    if (Atomic){
+        std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+        ul.lock();        // lock
+        leader_id = leaderId;
+    }
+    else{
+        leader_id = leaderId;
+    }
+
+    return leader_id;
+}
+
 void ServerState::Increment_numVote() {
     std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
     ul.lock();        // lock
     numVotes ++;
+}
+
+void ServerState::Increment_nextIndex(int peer_index){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    nextIndex[peer_index] ++;
+}
+void ServerState::Decrement_nextIndex(int peer_index){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    nextIndex[peer_index] --;
+}
+
+void ServerState::Set_matchIndex(int peer_index, int log_index){
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    matchIndex[peer_index] = log_index;
 }
 
 void ServerState::NewElection(int self_nodeId) {
@@ -134,6 +165,15 @@ void ServerState::Become_Leader(int self_nodeID) {
     role = LEADER;
     leaderId = self_nodeID;
     std::cout << "Becoming a leader now!" << '\n';
+}
+
+
+LogEntry ServerState::Get_LogEntry(int index){
+    LogEntry logEntry = {0, -1, -1, -1};
+    std::unique_lock<std::mutex> ul(this -> lck, std::defer_lock);
+    ul.lock();        // lock
+    logEntry = smr_log.at(index);
+    return logEntry;
 }
 
 

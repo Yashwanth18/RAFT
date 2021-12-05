@@ -36,7 +36,7 @@ public:
 
     void LeaderThread(int peer_index, std::vector<Peer_Info> *PeerServerInfo,
                       NodeInfo *nodeInfo, ServerState *serverState,
-                      MapClientRecord *mapRecord);
+                      MapClientRecord *mapRecord, ServerTimer *timer);
 
     void Apply_Committed_Op(ServerState *serverState,
                             MapClientRecord *mapRecord);

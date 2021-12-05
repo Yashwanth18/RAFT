@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
             for (int i = 0; i < nodeInfo.num_peers; i++){
                 std::thread leader_thread(&Raft::LeaderThread, &raft, i, &PeerServerInfo,
-                                          &nodeInfo, &serverState, &mapRecord);
+                                          &nodeInfo, &serverState, &mapRecord, &timer);
                 thread_vector.push_back(std::move(leader_thread));
             }
 

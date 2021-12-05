@@ -76,16 +76,12 @@ Handle_ResponseVote(ServerState *serverState){
     responseVote.Unmarshal(buf);
     responseVote.Print();
 
-
     if (responseVote.Get_voteGranted()) { /* vote granted */
         serverState -> Increment_numVote();
     }
-
     else {  /* vote got rejected */
-        if (responseVote.Get_term() > serverState -> currentTerm){ // we are stale
-            serverState -> lck.lock();
-            serverState -> currentTerm = responseVote.Get_term();
-            serverState -> lck.unlock();
+        if (responseVote.Get_term() > serverState -> Get_nodeTerm()){ // we are stale
+            serverState -> Set_nodeTerm(responseVote.Get_term());
         }
     }
 
@@ -137,16 +133,11 @@ FillAppendEntryRequest(ServerState * serverState, NodeInfo * nodeInfo,
         if (nextIndex > last_log_index){        // error checking
             perror("nextIndex out of range");
         }
-
-        serverState -> lck.lock();       // lock
-        logEntry = serverState -> smr_log.at(nextIndex);
-        serverState -> lck.unlock();     // unlock
+        logEntry = serverState -> Get_LogEntry(nextIndex);
     }
 
     if (prevLogIndex >= 0){
-        serverState -> lck.lock();     // lock
-        prevLogTerm = serverState -> smr_log.at(prevLogIndex).logTerm;
-        serverState -> lck.unlock();  // unlock
+        prevLogTerm = serverState -> Get_LogEntry(prevLogIndex).logTerm;
     }
 
     appendEntryRequest -> Set(sender_term, leaderId, prevLogTerm, prevLogIndex,
@@ -166,33 +157,26 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
     socket_status = socket.Recv(buf, sizeof(ResponseAppendEntry), 0);
 
     if (!socket_status){
-        perror("Handle_ResponseAppendEntry: Recv"); // to-do: handle error gracefully here
         return false;
     }
 
     responseAppendEntry.Unmarshal(buf);
     remote_term = responseAppendEntry.Get_term();
-
-    serverState -> lck.lock(); // lock
-    local_term = serverState -> currentTerm;
-    serverState -> lck.unlock(); //unlock
+    local_term = serverState -> Get_nodeTerm();
 
     if (remote_term > local_term){   // check if we are stale
-        std::cout << "\nremote_term: " << remote_term << '\n';
-        std::cout << "local_term: " << local_term << '\n';
-        std::cout << "Handle_ResponseEntry: Leader Resigning to be a follower "<< '\n';
+        std::cout << "\nStale Leader Resigning to be a follower "<< '\n';
+        std::cout << "remote_term: " << remote_term << '\n';
+        std::cout << "local_term: " << local_term << '\n' << '\n';
 
-        serverState -> lck.lock(); // lock
-        serverState -> role = FOLLOWER;
-        serverState -> currentTerm = responseAppendEntry.Get_term();
-        serverState -> lck.unlock(); // unlock
+        serverState -> SetRole(FOLLOWER);
+        serverState -> Set_nodeTerm(responseAppendEntry.Get_term());
     }
 
     if (responseAppendEntry.Get_Heartbeat()){
         // responseAppendEntry.Print();
     }
-
-    else{   // if response from proper log replication request
+    else{   /* if response from proper log replication request */
         // responseAppendEntry.Print();
 
         if (responseAppendEntry.Get_success()) {

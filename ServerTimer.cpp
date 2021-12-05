@@ -9,7 +9,10 @@ ServerTimer::ServerTimer() {
     waitRequest_timeout = election_timeout / 4;
 }
 
+
 void ServerTimer::Start() {
+    std::unique_lock<std::mutex> ul_timer(lock_timer, std::defer_lock);
+    ul_timer.lock();
 	start_time = high_resolution_clock::now();
 }
 
@@ -30,6 +33,8 @@ bool ServerTimer::Check_Election_timeout() {
 }
 
 bool  ServerTimer::WaitRequest_timeout() {
+    std::unique_lock<std::mutex> ul_timer(lock_timer, std::defer_lock);
+    ul_timer.lock();
     elapsed_time = high_resolution_clock::now() - start_time;
     return (elapsed_time > waitRequest_timeout);
 }

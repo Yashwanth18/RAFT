@@ -67,13 +67,14 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
 
                 serverState->lck.unlock();     // unlock
 
-                serverState->lck.lock();       // lock
+
                 /* Wait until the request is considered Committed (not necessarily applied) */
                 while (!rep_success){
-                    rep_success = (serverState -> commitIndex == request_index);
+                    serverState->lck.lock();       // lock
+                    rep_success = (serverState -> commitIndex >= request_index);
+                    serverState->lck.unlock();     // unlock
                 }
 
-                serverState->lck.unlock();     // unlock
                 std::cout << "done request" << '\n';
 
                 /* Send Acknowledgement back to client */
@@ -86,10 +87,7 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 break;
             }
             case LEADER_ID_REQUEST: {     /* MACRO defined to be number 4 */
-                serverState->lck.lock();       // lock
-                leaderID = serverState->leaderId;
-                serverState->lck.unlock();     // unlock
-
+                leaderID = serverState->Get_leaderID();
                 inStub.Send_LeaderID(leaderID);
                 break;
             }
