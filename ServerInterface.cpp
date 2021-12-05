@@ -90,7 +90,6 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 serverState->lck.unlock();     // unlock
 
                 inStub.Send_LeaderID(leaderID);
-                std::cout << "leaderID: " << leaderID << '\n';
                 break;
             }
             default:

@@ -12,7 +12,7 @@ ListeningThread(ServerSocket *serverSocket, ServerState *serverState,
     while (true) {
         std::unique_ptr<ServerSocket> new_socket;
         new_socket = serverSocket -> Accept();
-        std::cout << "Accepted Connection from peer server" << '\n';
+        // std::cout << "Accepted Connection from peer server" << '\n';
 
         std::thread incoming_thread(&Raft::IncomingThread, this,
                                     std::move(new_socket), serverState,
