@@ -6,9 +6,11 @@
     - Server:
         1. run the script with title - "Raft_server.sh" as:
         2. ./Raft_server.sh [server ID] [repeat([peer ID])] [server role]
-        ** Example: ./Raft-server.sh 36 37 38 39 40 1, this examples refers to a 5 server network, where 36 is the node id of the server, and 37, 38, 39, 40 are the node ids of the peers in the network. 1 is the server role,
+#Example: ./Raft-server.sh 36 37 38 39 40 1, this examples refers to a 5 server network, where 36 is the node id of the server, and 37, 38, 39, 40 are the node ids of the peers in the network. 1 is the server role,
         4. server role parameter accepts three types of roles: 0 - Follower, 1 - Candidate and 2- Leader
-    - Client:
+ 
+
+Client:
         1. run the script with title - "raft_client.sh" as:
         2. ./raft_client.sh [repeat(server ID)] [number of customers] [number of orders for each customer] [request type]
         3. example: According to the quoted example above to run the server, we have 5 servers running, whose IDs are 36, 37, 38, 39, 40, so the command line arguments for client would be:
