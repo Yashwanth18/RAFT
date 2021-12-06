@@ -11,8 +11,12 @@
 #   ./client num_servers (repeat iD IP port_client) requestType
 
 #------------user's configuration before running this script---------
-num_servers=5
-local=1     # 0: run on VDI, 1: run on local machines
+num_servers=3
+local=1           # 0: run on VDI, 1: run on local machines
+
+# if run on VDI
+    # ssh to num_servers + 1 different hosts, where 1 is for client.
+    # the last two digits of the output of the bash command "hostname -i" determines the nodeID
 #------------End: user's configuration------------------
 
 port_client_root=1212

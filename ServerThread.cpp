@@ -32,14 +32,20 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
 
     int messageType;
     int socket_status;
+    bool test_network_delay = false;
 
     ServerInStub In_Stub;
     ServerTimer _timer;
     In_Stub.Init(std::move(socket));
 
     timer -> Atomic_Restart();
-
     while(!timer -> Check_Election_timeout()){      // for follower thread
+
+        /* Test: simulate network delay */
+        if (test_network_delay){
+            srand(time(0));
+            std::this_thread::sleep_for(std::chrono::microseconds (rand() % 1000));
+        }
 
         Apply_Committed_Op(serverState, mapRecord);
 
