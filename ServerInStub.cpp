@@ -56,15 +56,13 @@ Handle_AppendEntryRequest(ServerState *serverState) {
     logEntry = appendEntryRequest.Get_LogEntry();
     heartbeat = (logEntry.logTerm == - 1);
 
+    // appendEntryRequest.Print();
 
     /* not heartbeat */
     if (!heartbeat){
         serverState -> lck.lock();       // lock
         serverState -> smr_log.push_back(logEntry);
-        // std::cout << "logSize : "<< serverState -> smr_log.size() << '\n';
-
         serverState -> lck.unlock();     // unlock
-        appendEntryRequest.Print();
     }
 
     serverState -> lck.lock();       // lock
@@ -145,22 +143,15 @@ bool ServerInStub::Set_Result(ServerState *serverState,
         return false;
     }
 
-    /* heartbeat message */
-    if (appendEntryRequest -> Get_LogEntry().logTerm == -1){
-        return true;
+    /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
+    if (local_log_length - 1 < remote_prevLogIndex) {
+        return false;
     }
 
-    else {  /* real log replication message */
-
-        /* Reply false if log does not contain an entry at prevLogIndex whose term matches prevLogTerm */
-        if (local_log_length - 1 < remote_prevLogIndex) {
-            return false;
-        }
-
-        else {   // if there is an entry in the local log at remote_prevLogIndex
-            return Check_ConflictingLog(serverState, appendEntryRequest);
-        }
+    else {   // if there is an entry in the local log at remote_prevLogIndex
+        return Check_ConflictingLog(serverState, appendEntryRequest);
     }
+
 }
 
 /* Reply false if log does not contain an entry at prevLogIndex whose term

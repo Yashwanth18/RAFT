@@ -119,7 +119,7 @@ Connect_Leader(std::vector<Peer_Info> *PeerServerInfo,
         if(socket_status){
             serverIndex = (*PeerIdIndexMap)[leaderID];
             socket_status = Connect_ServerIndex(PeerServerInfo, serverIndex);
-            std::cout << "Connected to serverID: " << leaderID << '\n';
+            // std::cout << "Connected to serverID: " << leaderID << '\n';
         }
 
         if (socket_status){

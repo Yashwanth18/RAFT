@@ -173,26 +173,23 @@ Handle_ResponseAppendEntry(ServerState *serverState, int peer_index,
         serverState -> Set_nodeTerm(responseAppendEntry.Get_term());
     }
 
-    if (responseAppendEntry.Get_Heartbeat()){
-        // responseAppendEntry.Print();
-    }
-    else{   /* if response from proper log replication request */
-        // responseAppendEntry.Print();
 
-        if (responseAppendEntry.Get_success()) {
+    if (responseAppendEntry.Get_success()) {    // success
+        if (!responseAppendEntry.Get_Heartbeat()){
             serverState -> lck.lock(); // lock
             serverState -> matchIndex[peer_index] = serverState -> nextIndex[peer_index];
             serverState -> nextIndex[peer_index] ++;
             Update_CommitIndex(serverState, nodeInfo);
             serverState -> lck.unlock(); // unlock
         }
-
-        else {  /* rejected: the follower node lags behind */
-            serverState -> lck.lock(); // lock
-            serverState -> nextIndex[peer_index] --;
-            serverState -> lck.unlock(); // unlock
-        }
     }
+    else {  /* rejected: the follower node lags behind */
+        serverState -> lck.lock(); // lock
+        serverState -> nextIndex[peer_index] --;
+        serverState -> matchIndex[peer_index] = 0;
+        serverState -> lck.unlock(); // unlock
+    }
+
 
     return socket_status;
 

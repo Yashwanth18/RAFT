@@ -63,10 +63,8 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                 LogEntry logEntry{nodeTerm, opcode, arg1, arg2};
                 serverState -> smr_log.push_back(logEntry);
                 request_index = serverState -> smr_log.size() - 1;
-                std::cout << "waiting for req: " << request_index << '\n';
 
                 serverState->lck.unlock();     // unlock
-
 
                 /* Wait until the request is considered Committed (not necessarily applied) */
                 while (!rep_success){
@@ -75,7 +73,6 @@ InterfaceThread(std::unique_ptr<ServerSocket> socket, ServerState *serverState,
                     serverState->lck.unlock();     // unlock
                 }
 
-                std::cout << "done request" << '\n';
 
                 /* Send Acknowledgement back to client */
                 inStub.Send_Ack(rep_success);

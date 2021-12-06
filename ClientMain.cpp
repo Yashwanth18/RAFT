@@ -15,11 +15,20 @@ int main(int argc, char *argv[]) {
 
     if (!FillPeerServerInfo(argc, argv, &PeerServerInfo, &PeerIdIndexMap))    { return 0; }
 
+
+
+    if (argc < 4){
+        std::cout << " Invalid command line format " << '\n';
+        return 0;
+    }
+
+    num_customers = atoi(argv[argc - 3]);
+    num_orders = atoi(argv[argc - 2]);
     request_type = atoi(argv[argc - 1]);    // last input from command line
 
-    /* configure these two variables for evaluation purposes  */
-    num_customers = 4;
-    num_orders = 100;
+    std::cout << "num_customers:  " << num_customers << '\n';
+    std::cout << "num_orders:  " << num_orders << '\n';
+    std::cout << "request_type:  " << request_type << '\n' << '\n';
 
     timer.Start();
     for (int i = 0; i < num_customers; i++) {

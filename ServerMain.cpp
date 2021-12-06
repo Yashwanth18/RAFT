@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     thread_vector.push_back(std::move(listenThread));
 
     /* for testing purposes: allow the programmer time to run other nodes */
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     while(true){
         timer.Atomic_Restart();

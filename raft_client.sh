@@ -11,7 +11,7 @@
 #   ./client num_servers (repeat iD IP port_client) requestType
 
 #------------user's configuration before running this script---------
-num_servers=3
+num_servers=5
 local=1     # 0: run on VDI, 1: run on local machines
 #------------End: user's configuration------------------
 
@@ -54,32 +54,39 @@ done
 
 if [ $num_servers -eq 1 ]; then       # number of servers = 1
 
-    requestType=$2
+
+    num_customers=$2
+    num_order=$3
+    requestType=$4
 
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
-                          $requestType
+                          "$num_customers" "$num_order" "$requestType"
 
 
 elif [ $num_servers -eq 3 ]; then      # number of servers = 3
 
-
-    requestType=$4
+    num_customers=$4
+    num_order=$5
+    requestType=$6
 
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
                           ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
                           ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
-                          $requestType
+                          "$num_customers" "$num_order" "$requestType"
 
 
 elif [ $num_servers -eq 5 ]; then      # number of servers = 5
 
-    requestType=$6
+
+    num_customers=$6
+    num_order=$7
+    requestType=$8
 
     ./client $num_servers ${ID_Server[0]} ${Server_IP[0]} ${Port_Server[0]} \
                           ${ID_Server[1]} ${Server_IP[1]} ${Port_Server[1]} \
                           ${ID_Server[2]} ${Server_IP[2]} ${Port_Server[2]} \
                           ${ID_Server[3]} ${Server_IP[3]} ${Port_Server[3]} \
                           ${ID_Server[4]} ${Server_IP[4]} ${Port_Server[4]} \
-                          $requestType
+                          "$num_customers" "$num_order" "$requestType"
 
 fi
