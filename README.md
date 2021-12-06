@@ -10,7 +10,7 @@ We have written 2 shell scripts - one to run the client and other to run the ser
                 1 - Candidate,  
                 2 - Leader
         3. For example, ./Raft-server.sh 36 37 38 39 40 1 
-        This starts a candidate node with ID 36 with 4 peers of ID 37, 38, 39, 40. 
+        This starts a candidate node with ID: 36 with 4 peers of IDs: 37, 38, 39, 40. 
 
 ## Client:
         1. run the script with title - "raft_client.sh" as: 
