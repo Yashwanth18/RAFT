@@ -5,9 +5,8 @@ We have written 2 shell scripts - one to run the client and other to run the ser
 
 ## Server:
 Since all the vdi machines belongs to a cluster, all the machines have the ip address ending with "10.200.125.", the last 2 digits represents the id of a machine, and we have used that to represent server id as the command line argument to run the script. 
-  * run the script with title - "Raft_server.sh" as:  ./Raft_server.sh [server ID] [repeat([peer ID])] [server role]
- 
-* ./Raft-server.sh 36 37 38 39 40 1, 
+        * run the script with title - "Raft_server.sh" as:  ./Raft_server.sh [server ID] [repeat([peer ID])] [server role]
+         ./Raft-server.sh 36 37 38 39 40 1, 
 > this command refers to a 5 server network, where 36 is the node id of the server, and 37, 38, 39, 40 are the node ids of the peers in the network. Server role parameter accepts three types of roles: 0 - Follower, 1 - Candidate and 2- Leader
  
 
