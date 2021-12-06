@@ -41,12 +41,6 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
     timer -> Atomic_Restart();
     while(!timer -> Check_Election_timeout()){      // for follower thread
 
-        /* Test: simulate network delay */
-        if (test_network_delay){
-            srand(time(0));
-            std::this_thread::sleep_for(std::chrono::microseconds (rand() % 1000));
-        }
-
         Apply_Committed_Op(serverState, mapRecord);
 
         messageType = In_Stub.Read_MessageType();
@@ -56,11 +50,23 @@ IncomingThread(std::unique_ptr<ServerSocket> socket,
 
         if (messageType == VOTE_REQUEST) { // main functionality
             timer -> Atomic_Restart();
+            /* Test: simulate network delay */
+            if (test_network_delay){
+                srand(time(0));
+                std::this_thread::sleep_for(std::chrono::microseconds (rand() % 1000));
+            }
             socket_status = In_Stub.Handle_VoteRequest(serverState);
         }
 
         else if (messageType == APPEND_ENTRY_REQUEST){
             timer -> Atomic_Restart();
+
+            /* Test: simulate network delay */
+            if (test_network_delay){
+                srand(time(0));
+                std::this_thread::sleep_for(std::chrono::microseconds (rand() % 1000));
+            }
+
             socket_status = In_Stub.Handle_AppendEntryRequest(serverState);
         }
 
